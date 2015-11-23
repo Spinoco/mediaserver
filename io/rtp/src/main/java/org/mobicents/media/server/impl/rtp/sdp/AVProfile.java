@@ -62,12 +62,12 @@ public class AVProfile {
     static {
         audio.add(pcma);
         audio.add(pcmu);
-        audio.add(gsm);
-        audio.add(g729);
-        audio.add(l16);
-        audio.add(ilbc);
+      //  audio.add(gsm);
+      //  audio.add(g729);
+      //  audio.add(l16);
+      //  audio.add(ilbc);
         audio.add(dtmf);
-        audio.add(dtmf126);
+      //  audio.add(dtmf126);
     }
 
     static {

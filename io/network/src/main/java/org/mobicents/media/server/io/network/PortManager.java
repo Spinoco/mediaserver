@@ -34,8 +34,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class PortManager {
 
-    private static final int DEFAULT_LOW_PORT = 1024;
-    private static final int DEFAULT_HIGH_PORT = 65534;
+    private static final int DEFAULT_LOW_PORT = 10000;
+    private static final int DEFAULT_HIGH_PORT = 20000;
 
     private int lowestPort;
     private int highestPort;
