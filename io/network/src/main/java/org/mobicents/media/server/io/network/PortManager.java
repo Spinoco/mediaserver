@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class PortManager {
     //the available range
-    private int low = 1024, high=65534;
+    private int low = 10000, high=20000;
     private int step=(high-low)/2;
     //pointers
     private AtomicInteger currPort = new AtomicInteger(0);
