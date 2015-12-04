@@ -43,8 +43,10 @@ import org.mobicents.media.server.impl.resource.dtmf.GeneratorImpl;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.scheduler.Clock;
-import org.mobicents.media.server.scheduler.DefaultClock;
 import org.mobicents.media.server.scheduler.Scheduler;
+import org.mobicents.media.server.scheduler.ServiceScheduler;
+import org.mobicents.media.server.scheduler.WallClock;
+import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.Connection;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.ConnectionType;
@@ -63,7 +65,8 @@ public class MediaGroupTest {
 
     // clock and scheduler
     private Clock clock;
-    private Scheduler scheduler;
+    private PriorityQueueScheduler mediaScheduler;
+    private final Scheduler scheduler = new ServiceScheduler();
 
     // RTP
     private ChannelsManager channelsManager;
@@ -80,34 +83,35 @@ public class MediaGroupTest {
     @Before
     public void setUp() throws ResourceUnavailableException, IOException, InterruptedException {
         // use default clock
-        clock = new DefaultClock();
+        clock = new WallClock();
 
         // create single thread scheduler
-        scheduler = new Scheduler();
-        scheduler.setClock(clock);
-        scheduler.start();
+        mediaScheduler = new PriorityQueueScheduler();
+        mediaScheduler.setClock(clock);
+        mediaScheduler.start();
 
-        udpManager = new UdpManager();
+        udpManager = new UdpManager(scheduler);
         udpManager.setBindAddress("127.0.0.1");
+        scheduler.start();
         udpManager.start();
 
         channelsManager = new ChannelsManager(udpManager);
-        channelsManager.setScheduler(scheduler);
+        channelsManager.setScheduler(mediaScheduler);
 
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.alaw.Encoder");
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.alaw.Decoder");
 
-        resourcesPool = new ResourcesPool(scheduler, channelsManager, dspFactory);
+        resourcesPool = new ResourcesPool(mediaScheduler, channelsManager, dspFactory);
 
         // assign scheduler to the endpoint
         endpoint1 = new IvrEndpoint("test");
-        endpoint1.setScheduler(scheduler);
+        endpoint1.setScheduler(mediaScheduler);
         endpoint1.setResourcesPool(resourcesPool);
         endpoint1.start();
         Thread.sleep(1000);
 
         endpoint2 = new IvrEndpoint("test 2");
-        endpoint2.setScheduler(scheduler);
+        endpoint2.setScheduler(mediaScheduler);
         endpoint2.setResourcesPool(resourcesPool);
         endpoint2.start();
         Thread.sleep(1000);
@@ -123,6 +127,7 @@ public class MediaGroupTest {
         endpoint2.stop();
         udpManager.stop();
         scheduler.stop();
+        mediaScheduler.stop();
     }
 
     /**
