@@ -35,7 +35,7 @@ public class DtmfBuffer implements Serializable {
     
     //The interval between two TDMF tones
     //measured in milliseconds
-    public int interdigitInterval = 160;
+    public int interdigitInterval = 240;
     
     //Queue for buffered events
     private ConcurrentCyclicFIFO<DtmfEventImpl> queue = new ConcurrentCyclicFIFO();
