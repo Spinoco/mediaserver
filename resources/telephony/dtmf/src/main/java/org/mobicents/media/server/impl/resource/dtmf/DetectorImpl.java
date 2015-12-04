@@ -71,7 +71,7 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector {
     /**
      * The default duration of the DTMF tone.
      */
-    private final static int TONE_DURATION = 120;
+    private final static int TONE_DURATION = 80;
     public final static String[][] events = new String[][]{
         {"1", "2", "3", "A"},
         {"4", "5", "6", "B"},
