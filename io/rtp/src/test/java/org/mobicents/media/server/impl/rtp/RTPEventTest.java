@@ -48,8 +48,10 @@ import org.mobicents.media.server.impl.resource.dtmf.DetectorImpl;
 import org.mobicents.media.server.impl.rtp.sdp.AVProfile;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.scheduler.Clock;
-import org.mobicents.media.server.scheduler.DefaultClock;
 import org.mobicents.media.server.scheduler.Scheduler;
+import org.mobicents.media.server.scheduler.ServiceScheduler;
+import org.mobicents.media.server.scheduler.WallClock;
+import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.dtmf.DtmfDetectorListener;
 import org.mobicents.media.server.spi.dtmf.DtmfEvent;
@@ -65,6 +67,7 @@ public class RTPEventTest implements DtmfDetectorListener {
 
     //clock and scheduler
     private Clock clock;
+    private PriorityQueueScheduler mediaScheduler;
     private Scheduler scheduler;
 
     private ChannelsManager channelsManager;
@@ -90,7 +93,8 @@ public class RTPEventTest implements DtmfDetectorListener {
     
     private int count=0;
     
-    public RTPEventTest() {    	
+    public RTPEventTest() {
+        scheduler = new ServiceScheduler();
     }
 
     @Before
@@ -112,20 +116,21 @@ public class RTPEventTest implements DtmfDetectorListener {
         dsp22 = dspFactory.newProcessor();
         
         //use default clock
-        clock = new DefaultClock();
+        clock = new WallClock();
 
         //create single thread scheduler
-        scheduler = new Scheduler();
-        scheduler.setClock(clock);
-        scheduler.start();
+        mediaScheduler = new PriorityQueueScheduler();
+        mediaScheduler.setClock(clock);
+        mediaScheduler.start();
 
-        udpManager = new UdpManager();
+        udpManager = new UdpManager(scheduler);
+        scheduler.start();
         udpManager.start();
         
         channelsManager = new ChannelsManager(udpManager);
-        channelsManager.setScheduler(scheduler);
+        channelsManager.setScheduler(mediaScheduler);
         
-        detector = new DetectorImpl("dtmf", scheduler);
+        detector = new DetectorImpl("dtmf", mediaScheduler);
         detector.setVolume(-35);
         detector.setDuration(40);
         detector.addListener(this);
@@ -139,7 +144,7 @@ public class RTPEventTest implements DtmfDetectorListener {
         channel.setInputDsp(dsp11);
         channel.setFormatMap(AVProfile.audio);
 
-        audioMixer=new AudioMixer(scheduler);
+        audioMixer=new AudioMixer(mediaScheduler);
         audioMixer.addComponent(channel.getAudioComponent());
         
         detectorComponent=new AudioComponent(1);
@@ -147,7 +152,7 @@ public class RTPEventTest implements DtmfDetectorListener {
         detectorComponent.updateMode(true,true);
         audioMixer.addComponent(detectorComponent);               
         
-        oobMixer=new OOBMixer(scheduler);
+        oobMixer=new OOBMixer(mediaScheduler);
         oobMixer.addComponent(channel.getOOBComponent());
         
         oobComponent=new OOBComponent(1);
@@ -162,6 +167,7 @@ public class RTPEventTest implements DtmfDetectorListener {
     	audioMixer.stop();
     	oobMixer.stop();
         udpManager.stop();
+        mediaScheduler.stop();
         scheduler.stop();
         sender.close();
     }
