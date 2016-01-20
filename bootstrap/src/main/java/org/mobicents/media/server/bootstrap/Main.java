@@ -73,7 +73,7 @@ public class Main {
         	System.err.println("Could not find configuration file for log4j. Defaults will be used.");
         }
         else {
-        	logger.info("log4j initialized from a configuration file.");        
+        	logger.info("log4j initialized from a configuration file.");
         }
         
         logger.info("Home directory: " + homeDir);
@@ -146,22 +146,9 @@ public class Main {
         final String Log4jURL = homeDir + LOG4J_URL;
 
         try {
-            URL log4jurl = getURL(Log4jURL);
-            InputStream inStreamLog4j = log4jurl.openStream();
-            Properties propertiesLog4j = new Properties();
-            try {
-                propertiesLog4j.load(inStreamLog4j);
-                PropertyConfigurator.configure(propertiesLog4j);
-            } catch (IOException e) {
-            	// e.printStackTrace();
-            	// Since log4j is not initialized yet, we can't rely on it for logging yet
-                //logger.info("Failed to initialize LOG4J with properties file.");
-                return false;
-            }
-        } catch (Exception e) {
-            // e.printStackTrace();
-        	// Since log4j is not initialized yet, we can't rely on it for logging yet
-            //logger.info("Failed to initialize LOG4J with properties file.");
+            PropertyConfigurator.configureAndWatch(Log4jURL);
+        } catch (Throwable e) {
+            e.printStackTrace(System.err); // just to stderr
             return false;
         }
         
@@ -173,12 +160,9 @@ public class Main {
         String Log4jURL = homeDir + LOG4J_URL_XML;
 
         try {
-            URL log4jurl = getURL(Log4jURL);
-            DOMConfigurator.configure(log4jurl);
-        } catch (Exception e) {
-        	// Since log4j is not initialized yet, we can't rely on it for logging yet
-            // e.printStackTrace();
-            //logger.info("Failed to initialize LOG4J with xml file.");
+            DOMConfigurator.configureAndWatch(Log4jURL);
+        } catch (Throwable e) {
+            e.printStackTrace(System.err); // just to stderr
             return false;
         }
         return true;
