@@ -121,6 +121,7 @@ public class MainDeployer {
         this.kernelDeployer = kernelDeployer;
 
         try {
+            logger.info("Configuring from: "+root);
             Configuration d = new Configuration("root", root);
             URL url = d.getConfig();
             deployment = kernelDeployer.deploy(url);

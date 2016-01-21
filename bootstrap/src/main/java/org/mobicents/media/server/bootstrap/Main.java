@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -65,11 +66,18 @@ public class Main {
         String homeDir = getHomeDir(args);
         System.setProperty(MMS_HOME, homeDir);
         System.setProperty(MMS_MEDIA, homeDir + File.separator + "media" + File.separator);
+        System.out.println("Running media server with args");
+        for(int i = 0; i < args.length; i++)
+        {
+            System.out.println("ARG: " + args[i]);
+        }
+        System.out.println("MMS HOME DIR: " + System.getProperty(MMS_HOME));
+        System.out.println("MMS MEDIA DIR: " + System.getProperty(MMS_MEDIA));
         
         //This is for SS7 configuration file persistence
         System.setProperty(LINKSET_PERSIST_DIR_KEY, homeDir + File.separator + "ss7" );
         
-        if (!initLOG4JProperties(homeDir) && !initLOG4JXml(homeDir)) {
+        if (!(initLOG4JProperties(homeDir) || initLOG4JXml(homeDir))) {
         	System.err.println("Could not find configuration file for log4j. Defaults will be used.");
         }
         else {
@@ -144,45 +152,35 @@ public class Main {
 
     private static boolean initLOG4JProperties(String homeDir) {
         final String Log4jURL = homeDir + LOG4J_URL;
-
-        try {
-            URL log4jurl = getURL(Log4jURL);
-            InputStream inStreamLog4j = log4jurl.openStream();
-            Properties propertiesLog4j = new Properties();
+        System.out.println("Searching for Log4J properties file at " + Log4jURL);
+        if (fileExists(Log4jURL)) {
             try {
-                propertiesLog4j.load(inStreamLog4j);
-                PropertyConfigurator.configure(propertiesLog4j);
-            } catch (IOException e) {
-            	// e.printStackTrace();
-            	// Since log4j is not initialized yet, we can't rely on it for logging yet
-                //logger.info("Failed to initialize LOG4J with properties file.");
+                PropertyConfigurator.configureAndWatch(Log4jURL);
+                logger.info("Configured (and watching) logging from properties file : " + Log4jURL);
+            } catch (Exception e) {
+                e.printStackTrace(System.err);
                 return false;
             }
-        } catch (Exception e) {
-            // e.printStackTrace();
-        	// Since log4j is not initialized yet, we can't rely on it for logging yet
-            //logger.info("Failed to initialize LOG4J with properties file.");
-            return false;
-        }
-        
-        logger.debug("LOG4J initialized with properties file: " + Log4jURL);
-        return true;
+
+            return true;
+        } else return false;
     }
 
     private static boolean initLOG4JXml(String homeDir) {
         String Log4jURL = homeDir + LOG4J_URL_XML;
-
-        try {
-            URL log4jurl = getURL(Log4jURL);
-            DOMConfigurator.configure(log4jurl);
-        } catch (Exception e) {
-        	// Since log4j is not initialized yet, we can't rely on it for logging yet
-            // e.printStackTrace();
-            //logger.info("Failed to initialize LOG4J with xml file.");
-            return false;
-        }
-        return true;
+        System.out.println("Searching for Log4J XML file at " + Log4jURL);
+        if (fileExists(Log4jURL)) {
+            try {
+                DOMConfigurator.configureAndWatch(Log4jURL);
+                logger.info("Configured (and watching) logging from XML file : " + Log4jURL);
+            } catch (Exception e) {
+                e.printStackTrace(System.err);
+                return false;
+            }
+            return true;
+        } else  return false;
     }
+
 
     /**
      * Gets the Media Server Home directory.
@@ -251,6 +249,12 @@ public class Main {
             throw new IllegalArgumentException("No such file: " + filePath);
         }
         return file.toURI().toURL();
+    }
+
+    public static boolean fileExists(String filePath) {
+        String path = StringPropertyReplacer.replaceProperties(filePath, System.getProperties());
+        File file = new File(path);
+        return file.exists();
     }
 
     protected void registerShutdownThread() {

@@ -183,4 +183,3 @@ echo ""
          org.mobicents.media.server.bootstrap.Main "$@"
       MMS_STATUS=$?
 
-#java -Djava.ext.dirs=`pwd`/lib -Dmms.home=. -cp .:mms-standalone-2.0.0.BETA1-SNAPSHOT.jar org.mobicents.media.server.bootstrap.jmx.JMXMain
