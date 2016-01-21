@@ -68,10 +68,10 @@
  	   <parameter><inject bean="DSP"/></parameter>
         </constructor>
         <property name="defaultPlayers">5</property>
-	<property name="defaultRecorders">5</property>
-	<property name="defaultDtmfDetectors">5</property>
+	    <property name="defaultRecorders">5</property>
+	    <property name="defaultDtmfDetectors">5</property>
         <property name="defaultDtmfGenerators">0</property>
-	<property name="defaultSignalDetectors">0</property>
+	    <property name="defaultSignalDetectors">0</property>
         <property name="defaultSignalGenerators">0</property>
         <property name="defaultLocalConnections">10</property>
         <property name="defaultRemoteConnections">10</property>
@@ -93,7 +93,7 @@
         <property name="clock"><inject bean="SystemClock"/></property>
         <property name="scheduler"><inject bean="Scheduler"/></property>
         <property name="udpManager"><inject bean="localhost"/></property>
-	<property name="resourcesPool"><inject bean="resourcesPool"/></property>
+	    <property name="resourcesPool"><inject bean="resourcesPool"/></property>
         <property name="heartBeatTime">0</property>
         <incallback method="addInstaller"/>
         <uncallback method="removeInstaller"/>
