@@ -94,7 +94,7 @@
 		</exec>
 		<copy overwrite="true" todir="${release.dir.standalone}">
 			<!--fileset file="${core.location}/server-standalone/target/mms-standalone-server/**" /-->
-			<fileset file="${core.location}/../bootstrap/target/restcomm-media-serve/**" />
+			<fileset file="${core.location}/../bootstrap/target/restcomm-media-server/**" />
 		</copy>
 
 		<copy overwrite="true" todir="${release.dir.standalone}/clients">
