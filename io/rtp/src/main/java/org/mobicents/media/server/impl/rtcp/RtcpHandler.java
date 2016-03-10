@@ -26,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.impl.rtp.RtpPacket;
@@ -68,10 +69,10 @@ public class RtcpHandler implements PacketHandler {
     private long tn;
 
     /** Flag that is true if the application has not yet sent an RTCP packet */
-    private boolean initial;
+    private AtomicBoolean initial;
 
     /** Flag that is true once the handler joined an RTP session */
-    private boolean joined;
+    private AtomicBoolean joined;
 
     /* WebRTC */
     /** Checks whether communication of this channel is secure. WebRTC calls only. */
@@ -94,8 +95,8 @@ public class RtcpHandler implements PacketHandler {
         this.scheduledTask = null;
         this.tp = 0;
         this.tn = -1;
-        this.initial = true;
-        this.joined = false;
+        this.initial = new AtomicBoolean(true);
+        this.joined = new AtomicBoolean(false);
 
         // webrtc
         this.secure = false;
@@ -133,7 +134,7 @@ public class RtcpHandler implements PacketHandler {
      * @return true if not rtcp packet has been sent, false otherwise.
      */
     public boolean isInitial() {
-        return initial;
+        return initial.get();
     }
 
     /**
@@ -142,7 +143,7 @@ public class RtcpHandler implements PacketHandler {
      * @return Return true if joined. Otherwise, returns false.
      */
     public boolean isJoined() {
-        return joined;
+        return joined.get();
     }
 
     /**
@@ -157,21 +158,21 @@ public class RtcpHandler implements PacketHandler {
      * The participant adds its own SSRC to the member table.
      */
     public void joinRtpSession() {
-        if (!this.joined) {
+        if (!this.joined.get()) {
             // Schedule first RTCP packet
-            long t = this.statistics.rtcpInterval(this.initial);
+            long t = this.statistics.rtcpInterval(this.initial.get());
             this.tn = this.statistics.getCurrentTime() + t;
             scheduleRtcp(this.tn, RtcpPacketType.RTCP_REPORT);
 
             // Start SSRC timeout timer
             this.ssrcTaskFuture = this.scheduler.scheduleWithFixedDelay(ssrcTask, SSRC_TASK_DELAY, SSRC_TASK_DELAY, TimeUnit.MILLISECONDS);
-            this.joined = true;
+            this.joined.set(true);
         }
     }
 
     public void leaveRtpSession() {
-        if (this.joined) {
-            this.joined = false;
+        if (this.joined.get()) {
+            this.joined.set(false);
 
             /*
              * When the participant decides to leave the system, tp is reset to tc, the current time, members and pmembers are
@@ -182,7 +183,7 @@ public class RtcpHandler implements PacketHandler {
              */
             this.tp = this.statistics.getCurrentTime();
             this.statistics.resetMembers();
-            this.initial = true;
+            this.initial.set(true);
             this.statistics.clearSenders();
 
             // XXX Sending the BYE packet NOW, since channel will be closed - hrosa
@@ -285,24 +286,31 @@ public class RtcpHandler implements PacketHandler {
 
     @Override
     public boolean canHandle(byte[] packet, int dataLength, int offset) {
-        // RTP version field must equal 2
-        int version = (packet[offset] & 0xC0) >> 6;
-        if (version == RtpPacket.VERSION) {
-            // The payload type field of the first RTCP packet in a compound
-            // packet must be equal to SR or RR.
-            int type = packet[offset + 1] & 0x000000FF;
-            if (type == RtcpHeader.RTCP_SR || type == RtcpHeader.RTCP_RR) {
-                /*
-                 * The padding bit (P) should be zero for the first packet of a compound RTCP packet because padding should only
-                 * be applied, if it is needed, to the last packet.
-                 */
-                int padding = (packet[offset] & 0x20) >> 5;
-                if (padding == 0) {
+        byte b0 = packet[offset];
+        int b0Int = b0 & 0xff;
+
+        // Differentiate between RTP, STUN and DTLS packets in the pipeline
+        // https://tools.ietf.org/html/rfc5764#section-5.1.2
+        if (b0Int > 127 && b0Int < 192) {
+            // RTP version field must equal 2
+            int version = (b0 & 0xC0) >> 6;
+            if (version == RtpPacket.VERSION) {
+                // The payload type field of the first RTCP packet in a compound
+                // packet must be equal to SR or RR.
+                int type = packet[offset + 1] & 0x000000FF;
+                if (type == RtcpHeader.RTCP_SR || type == RtcpHeader.RTCP_RR) {
                     /*
-                     * TODO The length fields of the individual RTCP packets must add up to the overall length of the compound
-                     * RTCP packet as received. This is a fairly strong check.
+                     * The padding bit (P) should be zero for the first packet of a compound RTCP packet because padding should
+                     * only be applied, if it is needed, to the last packet.
                      */
-                    return true;
+                    int padding = (packet[offset] & 0x20) >> 5;
+                    if (padding == 0) {
+                        /*
+                         * TODO The length fields of the individual RTCP packets must add up to the overall length of the
+                         * compound RTCP packet as received. This is a fairly strong check.
+                         */
+                        return true;
+                    }
                 }
             }
         }
@@ -318,6 +326,11 @@ public class RtcpHandler implements PacketHandler {
     @Override
     public byte[] handle(byte[] packet, int dataLength, int offset, InetSocketAddress localPeer, InetSocketAddress remotePeer)
             throws PacketHandlerException {
+        // Do NOT handle data if have not joined RTP session
+        if(!this.joined.get()) {
+            return null;
+        }
+        
         // Do NOT handle data while DTLS handshake is ongoing. WebRTC calls only.
         if (this.secure && !this.dtlsHandler.isHandshakeComplete()) {
             return null;
@@ -373,6 +386,11 @@ public class RtcpHandler implements PacketHandler {
     }
 
     private void sendRtcpPacket(RtcpPacket packet) throws IOException {
+        // Do NOT attempt to send packet if have not joined RTP session
+        if(this.joined.get()) {
+            return;
+        }
+        
         // DO NOT attempt to send packet while DTLS handshake is ongoing
         if (this.secure && !this.dtlsHandler.isHandshakeComplete()) {
             return;
@@ -400,7 +418,7 @@ public class RtcpHandler implements PacketHandler {
 
             // trace outgoing RTCP report
             if (logger.isDebugEnabled()) {
-                logger.info("\nSENDING " + packet.toString());
+                logger.debug("\nSENDING " + packet.toString());
             }
 
             // Make double sure channel is still open and connected before sending
@@ -416,7 +434,7 @@ public class RtcpHandler implements PacketHandler {
                 return;
             }
             // If we send at least one RTCP packet then initial = false
-            this.initial = false;
+            this.initial.set(false);
 
             // update RTCP statistics
             this.statistics.onRtcpSent(packet);
@@ -427,13 +445,13 @@ public class RtcpHandler implements PacketHandler {
         }
     }
 
-    public void reset() {
-        if (joined) {
+    public synchronized void reset() {
+        if (joined.get()) {
             throw new IllegalStateException("Cannot reset handler while is part of active RTP session.");
         }
 
         if (this.reportTaskFuture != null) {
-            this.reportTaskFuture.cancel(true);
+            this.reportTaskFuture.cancel(false);
             this.reportTaskFuture = null;
             this.scheduledTask = null;
         }
@@ -445,8 +463,8 @@ public class RtcpHandler implements PacketHandler {
 
         this.tp = 0;
         this.tn = -1;
-        this.initial = true;
-        this.joined = false;
+        this.initial.set(true);
+        this.joined.set(false);
 
         if (this.secure) {
             disableSRTCP();
@@ -503,7 +521,7 @@ public class RtcpHandler implements PacketHandler {
             try {
                 onExpire();
             } catch (IOException e) {
-                logger.error("An error occurred while executing a scheduled task. Stopping handler.", e);
+                logger.error("Cannot send scheduled RTCP report. Stopping handler.");
                 reset();
             }
         }
@@ -524,8 +542,8 @@ public class RtcpHandler implements PacketHandler {
             long tc = statistics.getCurrentTime();
             switch (this.packetType) {
                 case RTCP_REPORT:
-                    if (joined) {
-                        t = statistics.rtcpInterval(RtcpHandler.this.initial);
+                    if (joined.get()) {
+                        t = statistics.rtcpInterval(RtcpHandler.this.initial.get());
                         RtcpHandler.this.tn = RtcpHandler.this.tp + t;
 
                         if (tn <= tc) {
@@ -540,7 +558,7 @@ public class RtcpHandler implements PacketHandler {
                              * distributed the same, as we are conditioned on it being small enough to cause a packet to be
                              * sent.
                              */
-                            t = statistics.rtcpInterval(initial);
+                            t = statistics.rtcpInterval(initial.get());
                             tn = tc + t;
                         }
 
@@ -560,7 +578,7 @@ public class RtcpHandler implements PacketHandler {
                     t = 0;
                     tn = tp + t;
 
-                    if (tn <= tc) {
+//                    if (tn <= tc) {
                         // Send BYE and stop scheduling further packets
                         RtcpPacket bye = RtcpPacketFactory.buildBye(statistics);
 
@@ -572,11 +590,11 @@ public class RtcpHandler implements PacketHandler {
                         closeChannel();
                         reset();
                         return;
-                    } else {
+//                    } else {
                         // Delay BYE
-                        scheduleRtcp(tn, RtcpPacketType.RTCP_BYE);
-                    }
-                    break;
+//                        scheduleRtcp(tn, RtcpPacketType.RTCP_BYE);
+//                    }
+//                    break;
 
                 default:
                     logger.warn("Unkown scheduled event type!");

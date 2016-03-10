@@ -19,10 +19,8 @@
  */
 package org.mobicents.media.server.impl.rtp.sdp;
 
-import java.util.List;
-
 import org.mobicents.media.io.ice.IceCandidate;
-import org.mobicents.media.io.ice.LocalCandidateWrapper;
+import org.mobicents.media.io.ice.IceComponent;
 import org.mobicents.media.server.impl.rtp.channels.AudioChannel;
 import org.mobicents.media.server.impl.rtp.channels.MediaChannel;
 import org.mobicents.media.server.io.sdp.MediaProfile;
@@ -42,7 +40,6 @@ import org.mobicents.media.server.io.sdp.fields.TimingField;
 import org.mobicents.media.server.io.sdp.fields.VersionField;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
-import org.mobicents.media.server.io.sdp.format.RTPFormats;
 import org.mobicents.media.server.io.sdp.ice.attributes.CandidateAttribute;
 import org.mobicents.media.server.io.sdp.ice.attributes.IceLiteAttribute;
 import org.mobicents.media.server.io.sdp.ice.attributes.IcePwdAttribute;
@@ -143,48 +140,71 @@ public class SdpFactory {
 		if (channel.isIceEnabled()) {
 			md.setIceUfrag(new IceUfragAttribute(channel.getIceUfrag()));
 			md.setIcePwd(new IcePwdAttribute(channel.getIcePwd()));
-
-			List<LocalCandidateWrapper> rtpCandidates = channel.getRtpCandidates();
-			if(!rtpCandidates.isEmpty()) {
-				// Fix connection address based on default candidate
-				IceCandidate defaultCandidate = channel.getDefaultRtpCandidate().getCandidate();
-				md.getConnection().setAddress(defaultCandidate.getHostString());
-				md.setPort(defaultCandidate.getPort());
-				
-				// Fix RTCP if rtcp-mux is used
-				if(channel.isRtcpMux()) {
-					md.getRtcp().setAddress(defaultCandidate.getHostString());
-					md.getRtcp().setPort(defaultCandidate.getPort());
-				}
-				
-				// Add candidates list for ICE negotiation
-				for (LocalCandidateWrapper candidate : rtpCandidates) {
-					md.addCandidate(processCandidate(candidate.getCandidate()));
-				}
+			
+			// Fix connection address based on default (only) candidate
+			md.getConnection().setAddress(channel.getRtpAddress());
+			md.setPort(channel.getRtpPort());
+			
+			// Fix RTCP if rtcp-mux is used
+			if(channel.isRtcpMux()) {
+			    md.getRtcp().setAddress(channel.getRtpAddress());
+			    md.getRtcp().setPort(channel.getRtpPort());
 			}
 			
-			if (!channel.isRtcpMux()) {
-				List<LocalCandidateWrapper> rtcpCandidates = channel.getRtcpCandidates();
-				
-				if(!rtcpCandidates.isEmpty()) {
-					// Fix RTCP based on default RTCP candidate
-					IceCandidate defaultCandidate = channel.getDefaultRtcpCandidate().getCandidate();
-					md.getRtcp().setAddress(defaultCandidate.getHostString());
-					md.getRtcp().setPort(defaultCandidate.getPort());
-					
-					// Add candidates list for ICE negotiation
-					for (LocalCandidateWrapper candidate : rtcpCandidates) {
-						md.addCandidate(processCandidate(candidate.getCandidate()));
-					}
-				}
+			// Add HOST candidate
+			md.addCandidate(processHostCandidate(channel, IceComponent.RTP_ID));
+			if(!channel.isRtcpMux()) {
+			    md.addCandidate(processHostCandidate(channel, IceComponent.RTCP_ID));
 			}
+			
+			if(channel.getExternalAddress() != null && !channel.getExternalAddress().isEmpty()) {
+			    // Add SRFLX candidate
+			    md.addCandidate(processSrflxCandidate(channel, IceComponent.RTP_ID));
+			    if(!channel.isRtcpMux()) {
+			        md.addCandidate(processSrflxCandidate(channel, IceComponent.RTCP_ID));
+			    }
+			}
+			
+//			List<LocalCandidateWrapper> rtpCandidates = channel.getRtpCandidates();
+//			if(!rtpCandidates.isEmpty()) {
+//				// Fix connection address based on default candidate
+//				IceCandidate defaultCandidate = channel.getDefaultRtpCandidate().getCandidate();
+//				md.getConnection().setAddress(defaultCandidate.getHostString());
+//				md.setPort(defaultCandidate.getPort());
+//				
+//				// Fix RTCP if rtcp-mux is used
+//				if(channel.isRtcpMux()) {
+//					md.getRtcp().setAddress(defaultCandidate.getHostString());
+//					md.getRtcp().setPort(defaultCandidate.getPort());
+//				}
+//				
+//				// Add candidates list for ICE negotiation
+//				for (LocalCandidateWrapper candidate : rtpCandidates) {
+//					md.addCandidate(processCandidate(candidate.getCandidate()));
+//				}
+//			}
+			
+//			if (!channel.isRtcpMux()) {
+//				List<LocalCandidateWrapper> rtcpCandidates = channel.getRtcpCandidates();
+//				
+//				if(!rtcpCandidates.isEmpty()) {
+//					// Fix RTCP based on default RTCP candidate
+//					IceCandidate defaultCandidate = channel.getDefaultRtcpCandidate().getCandidate();
+//					md.getRtcp().setAddress(defaultCandidate.getHostString());
+//					md.getRtcp().setPort(defaultCandidate.getPort());
+//					
+//					// Add candidates list for ICE negotiation
+//					for (LocalCandidateWrapper candidate : rtcpCandidates) {
+//						md.addCandidate(processCandidate(candidate.getCandidate()));
+//					}
+//				}
+//			}
 		}
 
 		// Media formats
-		RTPFormats negotiatedFormats = channel.getFormats();
-		negotiatedFormats.rewind();
-		while (negotiatedFormats.hasMore()) {
-			RTPFormat f = negotiatedFormats.next();
+		RTPFormat[] negotiatedFormats = channel.getFormats().toArray();
+		for (int index = 0; index < negotiatedFormats.length; index++) {
+			RTPFormat f = negotiatedFormats[index];
 			// Fixes #61 - MMS SDP offer should offer only 101 telephone-event
 			if(offer && AVProfile.isDtmf(f) && !AVProfile.isDefaultDtmf(f)) {
 			    continue;
@@ -249,6 +269,54 @@ public class SdpFactory {
 		}
 		candidateSdp.setGeneration(0);
 		return candidateSdp;
+	}
+	
+	private static CandidateAttribute processHostCandidate(MediaChannel candidate, short componentId) {
+	       CandidateAttribute candidateSdp = new CandidateAttribute();
+	        candidateSdp.setFoundation("11111111");
+	        candidateSdp.setComponentId(componentId);
+	        candidateSdp.setProtocol("udp");
+	        candidateSdp.setPriority(1L);
+	        switch (componentId) {
+                case IceComponent.RTP_ID:
+                    candidateSdp.setAddress(candidate.getRtpAddress());
+                    candidateSdp.setPort(candidate.getRtpPort());
+                    break;
+                    
+                case IceComponent.RTCP_ID:
+                    candidateSdp.setAddress(candidate.getRtcpAddress());
+                    candidateSdp.setPort(candidate.getRtcpPort());
+                    break;
+
+                default:
+                    break;
+            }
+	        candidateSdp.setCandidateType(CandidateAttribute.TYP_HOST);
+	        candidateSdp.setGeneration(0);
+	        return candidateSdp;
+	}
+
+	private static CandidateAttribute processSrflxCandidate(MediaChannel candidate, short componentId) {
+	    CandidateAttribute candidateSdp = processHostCandidate(candidate, componentId);
+	    candidateSdp.setCandidateType(CandidateAttribute.TYP_SRFLX);
+        candidateSdp.setAddress(candidate.getExternalAddress());
+        
+        switch (componentId) {
+            case IceComponent.RTP_ID:
+                candidateSdp.setRelatedAddress(candidate.getRtpAddress());
+                candidateSdp.setRelatedPort(candidate.getRtpPort());
+                break;
+                
+            case IceComponent.RTCP_ID:
+                candidateSdp.setRelatedPort(candidate.getRtcpPort());
+                candidateSdp.setRelatedPort(candidate.getRtcpPort());
+                break;
+
+            default:
+                break;
+        }
+	    
+	    return candidateSdp;
 	}
 
 }
