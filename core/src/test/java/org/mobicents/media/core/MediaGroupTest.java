@@ -35,11 +35,27 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mobicents.media.ComponentType;
+import org.mobicents.media.core.connections.LocalConnectionFactory;
+import org.mobicents.media.core.connections.LocalConnectionPool;
+import org.mobicents.media.core.connections.RtpConnectionFactory;
+import org.mobicents.media.core.connections.RtpConnectionPool;
 import org.mobicents.media.core.endpoints.BaseMixerEndpointImpl;
 import org.mobicents.media.core.endpoints.impl.IvrEndpoint;
 import org.mobicents.media.server.component.DspFactoryImpl;
+import org.mobicents.media.server.impl.resource.audio.AudioRecorderFactory;
+import org.mobicents.media.server.impl.resource.audio.AudioRecorderPool;
 import org.mobicents.media.server.impl.resource.dtmf.DetectorImpl;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfDetectorFactory;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfDetectorPool;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfGeneratorFactory;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfGeneratorPool;
 import org.mobicents.media.server.impl.resource.dtmf.GeneratorImpl;
+import org.mobicents.media.server.impl.resource.mediaplayer.audio.AudioPlayerFactory;
+import org.mobicents.media.server.impl.resource.mediaplayer.audio.AudioPlayerPool;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorFactory;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorPool;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorFactory;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorPool;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.scheduler.Clock;
@@ -70,12 +86,29 @@ public class MediaGroupTest {
 
     // RTP
     private ChannelsManager channelsManager;
-
     protected DspFactoryImpl dspFactory = new DspFactoryImpl();
+    
+    // Resources
+    private ResourcesPool resourcesPool;
+    private RtpConnectionFactory rtpConnectionFactory;
+    private RtpConnectionPool rtpConnectionPool;
+    private LocalConnectionFactory localConnectionFactory;
+    private LocalConnectionPool localConnectionPool;
+    private AudioPlayerFactory playerFactory;
+    private AudioPlayerPool playerPool;
+    private AudioRecorderFactory recorderFactory;
+    private AudioRecorderPool recorderPool;
+    private DtmfDetectorFactory dtmfDetectorFactory;
+    private DtmfDetectorPool dtmfDetectorPool;
+    private DtmfGeneratorFactory dtmfGeneratorFactory;
+    private DtmfGeneratorPool dtmfGeneratorPool;
+    private PhoneSignalDetectorFactory signalDetectorFactory;
+    private PhoneSignalDetectorPool signalDetectorPool;
+    private PhoneSignalGeneratorFactory signalGeneratorFactory;
+    private PhoneSignalGeneratorPool signalGeneratorPool;
 
     // endpoint and connection
     private BaseMixerEndpointImpl endpoint1, endpoint2;
-    private ResourcesPool resourcesPool;
     protected UdpManager udpManager;
 
     private String tone;
@@ -101,7 +134,24 @@ public class MediaGroupTest {
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.alaw.Encoder");
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.alaw.Decoder");
 
-        resourcesPool = new ResourcesPool(mediaScheduler, channelsManager, dspFactory);
+        // Resource
+        this.rtpConnectionFactory = new RtpConnectionFactory(channelsManager, dspFactory);
+        this.rtpConnectionPool = new RtpConnectionPool(0, rtpConnectionFactory);
+        this.localConnectionFactory = new LocalConnectionFactory(channelsManager);
+        this.localConnectionPool = new LocalConnectionPool(0, localConnectionFactory);
+        this.playerFactory = new AudioPlayerFactory(mediaScheduler, dspFactory);
+        this.playerPool = new AudioPlayerPool(0, playerFactory);
+        this.recorderFactory = new AudioRecorderFactory(mediaScheduler);
+        this.recorderPool = new AudioRecorderPool(0, recorderFactory);
+        this.dtmfDetectorFactory = new DtmfDetectorFactory(mediaScheduler);
+        this.dtmfDetectorPool = new DtmfDetectorPool(0, dtmfDetectorFactory);
+        this.dtmfGeneratorFactory = new DtmfGeneratorFactory(mediaScheduler);
+        this.dtmfGeneratorPool = new DtmfGeneratorPool(0, dtmfGeneratorFactory);
+        this.signalDetectorFactory = new PhoneSignalDetectorFactory(mediaScheduler);
+        this.signalDetectorPool = new PhoneSignalDetectorPool(0, signalDetectorFactory);
+        this.signalGeneratorFactory = new PhoneSignalGeneratorFactory(mediaScheduler);
+        this.signalGeneratorPool = new PhoneSignalGeneratorPool(0, signalGeneratorFactory);
+        resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool);
 
         // assign scheduler to the endpoint
         endpoint1 = new IvrEndpoint("test");

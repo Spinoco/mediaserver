@@ -325,7 +325,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         // bind data channel
         this.udpManager.bind(this.dataChannel, PORT_ANY, isLocal);
 
-        this.rtcpMux = true;
+        this.rtcpMux = rtcpMux;
         this.bound = true;
 
         // activate media elements
@@ -505,11 +505,10 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     public void close() {
         if (rtcpMux) {
             this.rtcpHandler.leaveRtpSession();
-            reset();
-        } else {
-            super.close();
-            reset();
         }
+
+        super.close();
+        reset();
         this.bound = false;
     }
 
@@ -526,6 +525,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         if (this.rtcpMux) {
             this.handlers.removeHandler(this.rtcpHandler);
             this.rtcpHandler.reset();
+            this.rtcpMux = false;
         }
         
         if(this.ice) {

@@ -39,6 +39,18 @@ import org.mobicents.media.ComponentType;
 import org.mobicents.media.core.MyTestEndpoint;
 import org.mobicents.media.core.ResourcesPool;
 import org.mobicents.media.server.component.audio.SpectraAnalyzer;
+import org.mobicents.media.server.impl.resource.audio.AudioRecorderFactory;
+import org.mobicents.media.server.impl.resource.audio.AudioRecorderPool;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfDetectorFactory;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfDetectorPool;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfGeneratorFactory;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfGeneratorPool;
+import org.mobicents.media.server.impl.resource.mediaplayer.audio.AudioPlayerFactory;
+import org.mobicents.media.server.impl.resource.mediaplayer.audio.AudioPlayerPool;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorFactory;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorPool;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorFactory;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorPool;
 import org.mobicents.media.server.spi.Connection;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.ConnectionType;
@@ -48,8 +60,8 @@ import org.mobicents.media.server.spi.TooManyConnectionsException;
 import org.mobicents.media.server.utils.Text;
 
 /**
- *
  * @author oifa yulian
+ * @author Henrique Rosa (henrique.rosa@telestax.com)
  */
 public class BridgeTest extends RTPEnvironment {
 
@@ -58,8 +70,25 @@ public class BridgeTest extends RTPEnvironment {
     private MyTestEndpoint endpoint3;
     private MyTestEndpoint endpoint4;
 
+    // Resources
     private ResourcesPool resourcesPool;
-
+    private RtpConnectionFactory rtpConnectionFactory;
+    private RtpConnectionPool rtpConnectionPool;
+    private LocalConnectionFactory localConnectionFactory;
+    private LocalConnectionPool localConnectionPool;
+    private AudioPlayerFactory playerFactory;
+    private AudioPlayerPool playerPool;
+    private AudioRecorderFactory recorderFactory;
+    private AudioRecorderPool recorderPool;
+    private DtmfDetectorFactory dtmfDetectorFactory;
+    private DtmfDetectorPool dtmfDetectorPool;
+    private DtmfGeneratorFactory dtmfGeneratorFactory;
+    private DtmfGeneratorPool dtmfGeneratorPool;
+    private PhoneSignalDetectorFactory signalDetectorFactory;
+    private PhoneSignalDetectorPool signalDetectorPool;
+    private PhoneSignalGeneratorFactory signalGeneratorFactory;
+    private PhoneSignalGeneratorPool signalGeneratorPool;
+    
     Component sine1,sine2,sine3,sine4;
     Component analyzer1,analyzer2,analyzer3,analyzer4;
 
@@ -67,7 +96,25 @@ public class BridgeTest extends RTPEnvironment {
     public void setUp() throws ResourceUnavailableException, TooManyConnectionsException, IOException {
         super.setup();
         
-        resourcesPool=new ResourcesPool(mediaScheduler, channelsManager, dspFactory);
+        // Resource
+        this.rtpConnectionFactory = new RtpConnectionFactory(channelsManager, dspFactory);
+        this.rtpConnectionPool = new RtpConnectionPool(0, rtpConnectionFactory);
+        this.localConnectionFactory = new LocalConnectionFactory(channelsManager);
+        this.localConnectionPool = new LocalConnectionPool(0, localConnectionFactory);
+        this.playerFactory = new AudioPlayerFactory(mediaScheduler, dspFactory);
+        this.playerPool = new AudioPlayerPool(0, playerFactory);
+        this.recorderFactory = new AudioRecorderFactory(mediaScheduler);
+        this.recorderPool = new AudioRecorderPool(0, recorderFactory);
+        this.dtmfDetectorFactory = new DtmfDetectorFactory(mediaScheduler);
+        this.dtmfDetectorPool = new DtmfDetectorPool(0, dtmfDetectorFactory);
+        this.dtmfGeneratorFactory = new DtmfGeneratorFactory(mediaScheduler);
+        this.dtmfGeneratorPool = new DtmfGeneratorPool(0, dtmfGeneratorFactory);
+        this.signalDetectorFactory = new PhoneSignalDetectorFactory(mediaScheduler);
+        this.signalDetectorPool = new PhoneSignalDetectorPool(0, signalDetectorFactory);
+        this.signalGeneratorFactory = new PhoneSignalGeneratorFactory(mediaScheduler);
+        this.signalGeneratorPool = new PhoneSignalGeneratorPool(0, signalGeneratorFactory);
+        resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool);
+
         //assign scheduler to the endpoint
         endpoint1 = new MyTestEndpoint("test-1");
         endpoint1.setScheduler(mediaScheduler);

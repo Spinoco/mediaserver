@@ -24,7 +24,8 @@ package org.mobicents.media.core;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.core.endpoints.BaseEndpointImpl;
@@ -58,22 +59,22 @@ public class Server implements MediaServer {
     //udp manager
     private UdpManager udpManager;
     
-    private NamingService namingService;
+    private final NamingService namingService;
     
     //endpoint installers
-    private ArrayList<EndpointInstaller> installers = new ArrayList<EndpointInstaller>();
+    private final ArrayList<EndpointInstaller> installers = new ArrayList<EndpointInstaller>();
     
     //endpoints
-    private HashMap<String, Endpoint> endpoints = new HashMap<String, Endpoint>();
+    private final Map<String, Endpoint> endpoints = new ConcurrentHashMap<>();
     
     //managers
-    private ArrayList<ServerManager> managers = new ArrayList<ServerManager>();
+    private final ArrayList<ServerManager> managers = new ArrayList<ServerManager>();
     
     private HeartBeat heartbeat;
     private int heartbeatTime=0;
     private volatile long ttl;
     
-    public  Logger logger = Logger.getLogger(Server.class);
+    private static final Logger logger = Logger.getLogger(Server.class);
     
     public Server() {
         namingService = new NamingService();

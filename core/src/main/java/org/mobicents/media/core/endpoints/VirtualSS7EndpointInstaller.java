@@ -24,9 +24,10 @@ package org.mobicents.media.core.endpoints;
 
 import java.lang.reflect.Constructor;
 
+import org.apache.log4j.Logger;
 import org.mobicents.media.core.Server;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
-import org.mobicents.media.server.spi.ResourceUnavailableException;
+import org.mobicents.media.server.spi.dsp.DspFactory;
 
 /**
  * Endpoint installer is used for automatic creation and instalation of endpoints.
@@ -35,8 +36,11 @@ import org.mobicents.media.server.spi.ResourceUnavailableException;
  * @author oifa yulian
  */
 public class VirtualSS7EndpointInstaller extends VirtualEndpointInstaller {
+    
+    private static final Logger logger = Logger.getLogger(VirtualSS7EndpointInstaller.class);
 
     private ChannelsManager channelsManager;
+    private DspFactory dsp;
     private int startChannelID=1;
     private boolean isALaw=true;
     
@@ -99,15 +103,13 @@ public class VirtualSS7EndpointInstaller extends VirtualEndpointInstaller {
     public void setChannelsManager(ChannelsManager channelsManager) {
         this.channelsManager = channelsManager;
     }
-        
-    /**
-     * (Non Java-doc.)
-     *
-     * @throws ResourceUnavailableException
-     */
+    
+    public void setDsp(DspFactory dsp) {
+        this.dsp = dsp;
+    }
+
     @Override
     public void install() {
-        ClassLoader loader = Server.class.getClassLoader();
         int index=startChannelID;
         for(int i=0;i<initialSize;i++) {
         	newEndpoint(index++);                    
@@ -123,11 +125,11 @@ public class VirtualSS7EndpointInstaller extends VirtualEndpointInstaller {
     {
     	ClassLoader loader = Server.class.getClassLoader();
         try {
-            Constructor constructor = loader.loadClass(getEndpointClass()).getConstructor(String.class,ChannelsManager.class,int.class,boolean.class);
-            BaseSS7EndpointImpl endpoint = (BaseSS7EndpointImpl) constructor.newInstance(getNamePattern() + lastEndpointID.getAndIncrement(),channelsManager,index,isALaw);
+            Constructor<?> constructor = loader.loadClass(getEndpointClass()).getConstructor(String.class,ChannelsManager.class,int.class,boolean.class);
+            BaseSS7EndpointImpl endpoint = (BaseSS7EndpointImpl) constructor.newInstance(getNamePattern() + lastEndpointID.getAndIncrement(),channelsManager,index,isALaw, dsp);
             server.install(endpoint,this);
         } catch (Exception e) {
-            server.logger.error("Couldn't instantiate endpoint", e);
+            logger.error("Couldn't instantiate endpoint", e);
         }                
     }
     

@@ -25,9 +25,7 @@
 		</constructor>
 		<property name="bindAddress">127.0.0.1</property>
 		<property name="localBindAddress">127.0.0.1</property>
-		<property name="externalAddress">
-			<null />
-		</property>
+		<property name="externalAddress"><null /></property>
 		<property name="localNetwork">127.0.0.1</property>
 		<property name="localSubnet">255.255.255.255</property>
 		<property name="useSbc">false</property>
@@ -70,29 +68,145 @@
 			</list>
 		</property>
 	</bean>
-
-	<!-- Resources pool definition -->
-	<bean name="resourcesPool" class="org.mobicents.media.core.ResourcesPool">
+	
+	<!-- Resource Factories -->
+	<bean name="remoteConnectionFactory" class="org.mobicents.media.core.connections.RtpConnectionFactory">
 		<constructor>
+			<parameter><inject bean="channelsManager" /></parameter>
+			<parameter><inject bean="DSP" /></parameter>
+		</constructor>
+	</bean>
+
+	<bean name="localConnectionFactory" class="org.mobicents.media.core.connections.LocalConnectionFactory">
+		<constructor>
+			<parameter><inject bean="channelsManager" /></parameter>
+		</constructor>
+	</bean>
+
+	<bean name="playerFactory" class="org.mobicents.media.server.impl.resource.mediaplayer.audio.AudioPlayerFactory">
+		<constructor>
+			<parameter><inject bean="Scheduler" /></parameter>
+			<parameter><inject bean="DSP" /></parameter>
+		</constructor>
+	</bean>
+
+	<bean name="recorderFactory" class="org.mobicents.media.server.impl.resource.audio.AudioRecorderFactory">
+		<constructor>
+			<parameter><inject bean="Scheduler" /></parameter>
+		</constructor>
+	</bean>
+
+	<bean name="dtmfDetectorFactory" class="org.mobicents.media.server.impl.resource.dtmf.DtmfDetectorFactory">
+		<constructor>
+			<parameter><inject bean="Scheduler" /></parameter>
+			<parameter>-35</parameter>
+		</constructor>
+	</bean>
+
+	<bean name="dtmfGeneratorFactory" class="org.mobicents.media.server.impl.resource.dtmf.DtmfGeneratorFactory">
+		<constructor>
+			<parameter><inject bean="Scheduler" /></parameter>
+			<parameter>-20</parameter>
+			<parameter>80</parameter>
+		</constructor>
+	</bean>
+
+	<bean name="signalDetectorFactory" class="org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorFactory">
+		<constructor>
+			<parameter><inject bean="Scheduler" /></parameter>
+		</constructor>
+	</bean>
+
+	<bean name="signalGeneratorFactory" class="org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorFactory">
+		<constructor>
+			<parameter><inject bean="Scheduler" /></parameter>
+		</constructor>
+	</bean>
+
+	<!-- Resource Pools -->
+	<bean name="remoteConnectionPool" class="org.mobicents.media.core.connections.RtpConnectionPool">
+		<constructor>
+			<parameter>50</parameter>
 			<parameter>
-				<inject bean="Scheduler" />
-			</parameter>
-			<parameter>
-				<inject bean="channelsManager" />
-			</parameter>
-			<parameter>
-				<inject bean="DSP" />
+				<inject bean="remoteConnectionFactory" />
 			</parameter>
 		</constructor>
-		<property name="defaultPlayers">50</property>
-		<property name="defaultRecorders">50</property>
-		<property name="defaultDtmfDetectors">50</property>
-		<property name="defaultDtmfGenerators">0</property>
-		<property name="defaultSignalDetectors">0</property>
-		<property name="defaultSignalGenerators">0</property>
-		<property name="defaultLocalConnections">100</property>
-		<property name="defaultRemoteConnections">50</property>
-		<property name="dtmfDetectorDbi">0</property>
+	</bean>
+
+	<bean name="localConnectionPool" class="org.mobicents.media.core.connections.LocalConnectionPool">
+		<constructor>
+			<parameter>100</parameter>
+			<parameter>
+				<inject bean="localConnectionFactory" />
+			</parameter>
+		</constructor>
+	</bean>
+
+	<bean name="playerPool" class="org.mobicents.media.server.impl.resource.mediaplayer.audio.AudioPlayerPool">
+		<constructor>
+			<parameter>50</parameter>
+			<parameter>
+				<inject bean="playerFactory" />
+			</parameter>
+		</constructor>
+	</bean>
+
+	<bean name="recorderPool" class="org.mobicents.media.server.impl.resource.audio.AudioRecorderPool">
+		<constructor>
+			<parameter>50</parameter>
+			<parameter>
+				<inject bean="recorderFactory" />
+			</parameter>
+		</constructor>
+	</bean>
+
+	<bean name="dtmfDetectorPool" class="org.mobicents.media.server.impl.resource.dtmf.DtmfDetectorPool">
+		<constructor>
+			<parameter>50</parameter>
+			<parameter>
+				<inject bean="dtmfDetectorFactory" />
+			</parameter>
+		</constructor>
+	</bean>
+
+	<bean name="dtmfGeneratorPool" class="org.mobicents.media.server.impl.resource.dtmf.DtmfGeneratorPool">
+		<constructor>
+			<parameter>50</parameter>
+			<parameter>
+				<inject bean="dtmfGeneratorFactory" />
+			</parameter>
+		</constructor>
+	</bean>
+
+	<bean name="signalDetectorPool" class="org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorPool">
+		<constructor>
+			<parameter>50</parameter>
+			<parameter>
+				<inject bean="signalDetectorFactory" />
+			</parameter>
+		</constructor>
+	</bean>
+
+	<bean name="signalGeneratorPool" class="org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorPool">
+		<constructor>
+			<parameter>50</parameter>
+			<parameter>
+				<inject bean="signalGeneratorFactory" />
+			</parameter>
+		</constructor>
+	</bean>
+	
+	<bean name="resourcesPool" class="org.mobicents.media.core.ResourcesPool">
+		<constructor>
+			<parameter><inject bean="remoteConnectionPool" /></parameter>
+			<parameter><inject bean="localConnectionPool" /></parameter>
+			<parameter><inject bean="playerPool" /></parameter>
+			<parameter><inject bean="recorderPool" /></parameter>
+			<parameter><inject bean="dtmfDetectorPool" /></parameter>
+			<parameter><inject bean="dtmfGeneratorPool" /></parameter>
+			<parameter><inject bean="signalDetectorPool" /></parameter>
+			<parameter><inject bean="signalGeneratorPool" /></parameter>
+		</constructor>
 	</bean>
 
 	<!-- MGCP Controller definition -->
@@ -101,8 +215,11 @@
 			<inject bean="localhost" />
 		</property>
 		<property name="port">2427</property>
-		<property name="scheduler">
+		<property name="mediaScheduler">
 			<inject bean="Scheduler" />
+		</property>
+		<property name="taskScheduler">
+			<inject bean="ServiceScheduler" />
 		</property>
 		<property name="server">
 			<inject bean="MediaServer" />
@@ -183,6 +300,7 @@
 		<property name="startChannelID">125</property>
 		<property name="initialSize">15</property>
 		<property name="isALaw">true</property>
+		<property name="dsp"><inject bean="DSP" /></property>
 	</bean>
 	-->
 </deployment>

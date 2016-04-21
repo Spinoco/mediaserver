@@ -27,26 +27,35 @@
 
 package org.mobicents.media.core.connections;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.Random;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mobicents.media.core.MyTestEndpoint;
-
-import static org.junit.Assert.*;
-
 import org.mobicents.media.core.ResourcesPool;
-import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.component.DspFactoryImpl;
+import org.mobicents.media.server.impl.resource.audio.AudioRecorderFactory;
+import org.mobicents.media.server.impl.resource.audio.AudioRecorderPool;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfDetectorFactory;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfDetectorPool;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfGeneratorFactory;
+import org.mobicents.media.server.impl.resource.dtmf.DtmfGeneratorPool;
+import org.mobicents.media.server.impl.resource.mediaplayer.audio.AudioPlayerFactory;
+import org.mobicents.media.server.impl.resource.mediaplayer.audio.AudioPlayerPool;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorFactory;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorPool;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorFactory;
+import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorPool;
+import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.scheduler.Clock;
+import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.ServiceScheduler;
 import org.mobicents.media.server.scheduler.WallClock;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.ConnectionState;
 import org.mobicents.media.server.spi.ConnectionType;
 import org.mobicents.media.server.spi.ResourceUnavailableException;
@@ -59,33 +68,38 @@ public class BaseConnectionFSM_FR_Test {
 
     //clock and scheduler
     private Clock clock;
-    private PriorityQueueScheduler scheduler;
+    private PriorityQueueScheduler mediaScheduler;
 
     //endpoint and connection
     private BaseConnection connection;
     private MyTestEndpoint endpoint;
 
-    //RTP
+    // Resources
     private ResourcesPool resourcesPool;
-    
+    private RtpConnectionFactory rtpConnectionFactory;
+    private RtpConnectionPool rtpConnectionPool;
+    private LocalConnectionFactory localConnectionFactory;
+    private LocalConnectionPool localConnectionPool;
+    private AudioPlayerFactory playerFactory;
+    private AudioPlayerPool playerPool;
+    private AudioRecorderFactory recorderFactory;
+    private AudioRecorderPool recorderPool;
+    private DtmfDetectorFactory dtmfDetectorFactory;
+    private DtmfDetectorPool dtmfDetectorPool;
+    private DtmfGeneratorFactory dtmfGeneratorFactory;
+    private DtmfGeneratorPool dtmfGeneratorPool;
+    private PhoneSignalDetectorFactory signalDetectorFactory;
+    private PhoneSignalDetectorPool signalDetectorPool;
+    private PhoneSignalGeneratorFactory signalGeneratorFactory;
+    private PhoneSignalGeneratorPool signalGeneratorPool;
+        
+    //RTP
     private ChannelsManager channelsManager;
-    
     protected DspFactoryImpl dspFactory = new DspFactoryImpl();
         
     private volatile int failureRate;
 
     private Random rnd = new Random();
-
-    public BaseConnectionFSM_FR_Test() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
 
     @Before
     public void setUp() throws ResourceUnavailableException, IOException {    	
@@ -96,18 +110,35 @@ public class BaseConnectionFSM_FR_Test {
         clock = new WallClock();
         
         //create single thread scheduler 
-        scheduler = new PriorityQueueScheduler();
-        scheduler.setClock(clock);
-        scheduler.start();
+        mediaScheduler = new PriorityQueueScheduler();
+        mediaScheduler.setClock(clock);
+        mediaScheduler.start();
 
         channelsManager = new ChannelsManager(new UdpManager(new ServiceScheduler()));
-        channelsManager.setScheduler(scheduler);
+        channelsManager.setScheduler(mediaScheduler);
         
-        resourcesPool=new ResourcesPool(scheduler, channelsManager, dspFactory);
+        // Resource
+        this.rtpConnectionFactory = new RtpConnectionFactory(channelsManager, dspFactory);
+        this.rtpConnectionPool = new RtpConnectionPool(0, rtpConnectionFactory);
+        this.localConnectionFactory = new LocalConnectionFactory(channelsManager);
+        this.localConnectionPool = new LocalConnectionPool(0, localConnectionFactory);
+        this.playerFactory = new AudioPlayerFactory(mediaScheduler, dspFactory);
+        this.playerPool = new AudioPlayerPool(0, playerFactory);
+        this.recorderFactory = new AudioRecorderFactory(mediaScheduler);
+        this.recorderPool = new AudioRecorderPool(0, recorderFactory);
+        this.dtmfDetectorFactory = new DtmfDetectorFactory(mediaScheduler);
+        this.dtmfDetectorPool = new DtmfDetectorPool(0, dtmfDetectorFactory);
+        this.dtmfGeneratorFactory = new DtmfGeneratorFactory(mediaScheduler);
+        this.dtmfGeneratorPool = new DtmfGeneratorPool(0, dtmfGeneratorFactory);
+        this.signalDetectorFactory = new PhoneSignalDetectorFactory(mediaScheduler);
+        this.signalDetectorPool = new PhoneSignalDetectorPool(0, signalDetectorFactory);
+        this.signalGeneratorFactory = new PhoneSignalGeneratorFactory(mediaScheduler);
+        this.signalGeneratorPool = new PhoneSignalGeneratorPool(0, signalGeneratorFactory);
+        resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool);
         
         //assign scheduler to the endpoint
         endpoint = new MyTestEndpoint("test");
-        endpoint.setScheduler(scheduler);
+        endpoint.setScheduler(mediaScheduler);
         endpoint.setResourcesPool(resourcesPool);
         endpoint.start();    	
     }
@@ -120,7 +151,7 @@ public class BaseConnectionFSM_FR_Test {
         }
         endpoint.deleteAllConnections();
         endpoint.stop();
-        scheduler.stop();
+        mediaScheduler.stop();
         
     }
 

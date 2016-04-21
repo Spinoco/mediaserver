@@ -24,7 +24,6 @@ package org.mobicents.media.server.io.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -108,7 +107,7 @@ public class UdpManager {
         this.pollTaskFutures = new ArrayList<Future<?>>(ServiceScheduler.POOL_SIZE);
         this.currSelectorIndex = new AtomicInteger(0);
     }
-    
+
     public Scheduler getScheduler() {
         return scheduler;
     }
@@ -496,26 +495,33 @@ public class UdpManager {
         @Override
         public void run() {
             if (active) {
-                // select channels ready for IO and ignore error
                 try {
+                    // Select channels enabled for reading operation (without blocking!)
                     int selected = localSelector.selectNow();
-                    if(selected == 0) {
+                    if (selected == 0) {
                         return;
                     }
-                    
-                    Iterator<SelectionKey> it = localSelector.selectedKeys().iterator();
-                    while (it.hasNext() && active) {
-                        SelectionKey key = it.next();
-                        it.remove();
+                } catch (IOException e) {
+                    logger.error("Could not select channels from Selector!");
+                }
 
-                        // get references to channel and associated RTP socket
-                        DatagramChannel udpChannel = (DatagramChannel) key.channel();
-                        Object attachment = key.attachment();
+                // Iterate over selected channels
+                Iterator<SelectionKey> it = localSelector.selectedKeys().iterator();
+                while (it.hasNext() && active) {
+                    SelectionKey key = it.next();
+                    it.remove();
 
-                        if (attachment == null) {
-                            continue;
-                        }
+                    // Get references to channel and associated RTP socket
+                    DatagramChannel udpChannel = (DatagramChannel) key.channel();
+                    Object attachment = key.attachment();
+
+                    if (attachment == null) {
+                        continue;
+                    }
+
+                    try {
                         if (attachment instanceof ProtocolHandler) {
+                            // Legacy - MGCP channel
                             ProtocolHandler handler = (ProtocolHandler) key.attachment();
 
                             if (!udpChannel.isOpen()) {
@@ -545,11 +551,11 @@ public class UdpManager {
                                 channel.close();
                             }
                         }
+                    } catch (Exception e) {
+                        logger.error("An unexpected problem occurred while reading from channel.", e);
                     }
-                    localSelector.selectedKeys().clear();
-                } catch (Exception e) {
-                    logger.error("Error while reading from channel", e);
                 }
+                localSelector.selectedKeys().clear();
             }
         }
     }

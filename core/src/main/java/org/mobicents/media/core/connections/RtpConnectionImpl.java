@@ -45,6 +45,7 @@ import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.ConnectionType;
 import org.mobicents.media.server.spi.ModeNotSupportedException;
 import org.mobicents.media.server.spi.dsp.DspFactory;
+import org.mobicents.media.server.spi.pooling.PooledObject;
 import org.mobicents.media.server.utils.Text;
 
 /**
@@ -55,7 +56,7 @@ import org.mobicents.media.server.utils.Text;
  * 
  * @see BaseConnection
  */
-public class RtpConnectionImpl extends BaseConnection implements RtpListener {
+public class RtpConnectionImpl extends BaseConnection implements RtpListener, PooledObject {
 
 	private static final Logger logger = Logger.getLogger(RtpConnectionImpl.class);
 
@@ -564,5 +565,16 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener {
 		releaseConnection(ConnectionType.RTP);
 		this.connectionFailureListener = null;
 	}
+
+    @Override
+    public void checkIn() {
+        closeResources();
+        reset();
+    }
+
+    @Override
+    public void checkOut() {
+        generateCname();
+    }
 
 }
