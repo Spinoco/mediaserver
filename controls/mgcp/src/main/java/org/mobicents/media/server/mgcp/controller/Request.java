@@ -42,7 +42,7 @@ import org.mobicents.media.server.utils.Text;
 public class Request {
     
     //request identifier provided by call agent.
-    private Text ID = new Text(new byte[15], 0, 15);
+    private Text ID = new Text(new byte[32], 0, 32);
     
     //notified entity parameter
     private NotifiedEntity callAgent = new NotifiedEntity();
