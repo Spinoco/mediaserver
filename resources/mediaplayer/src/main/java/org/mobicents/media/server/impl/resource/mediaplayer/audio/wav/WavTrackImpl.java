@@ -105,10 +105,10 @@ public class WavTrackImpl implements Track {
 
     private void skip(long timestamp) {
         try {
-            long offset = frameSize * (timestamp / period / 1000000L);
-            byte[] skip = new byte[(int) offset];
-            int bytesRead = 0;
-            while (bytesRead < skip.length) {
+            long offset = frameSize * (timestamp / period/ 1000000L);
+            byte[] skip = new byte[(int)offset];
+            int bytesRead=0;
+            while(bytesRead<skip.length)
                 int len = inStream.read(skip, bytesRead, skip.length - bytesRead);
                 if (len == -1)
                     return;
@@ -125,8 +125,8 @@ public class WavTrackImpl implements Track {
     private void getFormat(InputStream stream) throws IOException {
         byte[] header = new byte[36];
         byte[] headerEnd = null;
-        int bytesRead = 0;
-        while (bytesRead < 36) {
+    	int bytesRead=0;
+    	while (bytesRead < 36) {
             int len = stream.read(header, bytesRead, 36 - bytesRead);
             if (len == -1) {
                 return;
@@ -171,10 +171,10 @@ public class WavTrackImpl implements Track {
                 break;
         }
 
-        headerEnd = new byte[8 + ckSize - 16];
-        bytesRead = 0;
-        extraHeaderSize = headerEnd.length;
-        while (bytesRead < extraHeaderSize) {
+    	headerEnd=new byte[8+ckSize-16];
+		bytesRead=0;   	
+    	extraHeaderSize=headerEnd.length;
+    	while (bytesRead < extraHeaderSize) {
             int len = stream.read(headerEnd, bytesRead, extraHeaderSize - bytesRead);
             if (len == -1) {
                 return;
