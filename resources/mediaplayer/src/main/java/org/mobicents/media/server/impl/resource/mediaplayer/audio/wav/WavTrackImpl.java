@@ -108,7 +108,7 @@ public class WavTrackImpl implements Track {
             long offset = frameSize * (timestamp / period/ 1000000L);
             byte[] skip = new byte[(int)offset];
             int bytesRead=0;
-            while(bytesRead<skip.length)
+            while(bytesRead<skip.length) {
                 int len = inStream.read(skip, bytesRead, skip.length - bytesRead);
                 if (len == -1)
                     return;
