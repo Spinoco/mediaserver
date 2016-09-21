@@ -10,6 +10,7 @@ package org.mobicents.media.server.impl.rtp.crypto;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.apache.log4j.Logger;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.Mac;
 import org.bouncycastle.crypto.digests.SHA1Digest;
@@ -44,6 +45,9 @@ import org.mobicents.media.server.impl.rtp.RtpPacket;
  * @author Bing SU (nova.su@gmail.com)
  */
 public class SRTPCryptoContext {
+
+	private static final Logger logger = Logger.getLogger(SRTPCryptoContext.class);
+
 	/**
 	 * The replay check windows size
 	 */
@@ -523,7 +527,12 @@ public class SRTPCryptoContext {
 		ByteBuffer buf = pkt.getBuffer();
 		buf.rewind();
 		int len = buf.remaining();
-		buf.get(tempBuffer, 0, len);
+		try {
+			buf.get(tempBuffer, 0, len);
+		} catch (Exception ex) {
+			logger.error("Failed to get into temp buffer (rethrow): " + len + "buf pos: " + buf.position() + ", buf cap: " + buf.capacity() + "buf limit" + buf.limit(), ex);
+			throw ex;
+		}
 		mac.update(tempBuffer, 0, len);
 		rbStore[0] = (byte) (rocIn >> 24);
 		rbStore[1] = (byte) (rocIn >> 16);

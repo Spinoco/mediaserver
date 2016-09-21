@@ -135,7 +135,7 @@ public class Transaction implements ActionListener {
     public void process(MgcpEvent event) {
         action = selector.getAction(event);
         if (action != null) {
-            logger.info("tx=" + id + " Started, message= " + event.getMessage() + ", call agent = " + event.getAddress());
+            logger.info("tx=" + id + " Started, message=[" + event.getMessage() + "], call agent = " + event.getAddress() );
             action.setEvent(event);
             process(action);
         } else {

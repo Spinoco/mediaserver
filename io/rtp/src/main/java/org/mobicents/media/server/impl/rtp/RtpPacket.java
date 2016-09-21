@@ -22,6 +22,8 @@
 
 package org.mobicents.media.server.impl.rtp;
 
+import org.apache.log4j.Logger;
+
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 
@@ -38,6 +40,8 @@ import java.nio.ByteBuffer;
  * @author ivelin.ivanov@telestax.com
  */
 public class RtpPacket implements Serializable {
+
+    private static final Logger logger = Logger.getLogger(RtpPacket.class);
 
     public static final int RTP_PACKET_MAX_SIZE = 8192;
 
@@ -296,7 +300,12 @@ public class RtpPacket implements Serializable {
      */
     public void getPayload(byte[] buff, int offset) {
         buffer.position(FIXED_HEADER_SIZE);
-        buffer.get(buff, offset, buffer.limit() - FIXED_HEADER_SIZE);
+        try {
+            buffer.get(buff, offset, buffer.limit() - FIXED_HEADER_SIZE);
+        } catch (Exception ex) {
+            logger.error("Failed to access payload (rethrow): "+ ex.getMessage()+ " offset: " + offset + ",  size: " + (buffer.limit() - FIXED_HEADER_SIZE) + " position" + buffer.position() , ex);
+            throw ex;
+        }
     }
 
     /**

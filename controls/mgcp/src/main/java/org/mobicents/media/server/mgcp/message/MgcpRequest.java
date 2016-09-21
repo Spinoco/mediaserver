@@ -231,6 +231,18 @@ public class MgcpRequest extends MgcpMessage {
     
     @Override
     public String toString() {
-        return this.command.toString() +" " + this.endpointID;
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.command.toString());
+        sb.append(" ");
+        sb.append(this.endpointID.toString());
+        for (int i = 0; i < count; i++) {
+            Parameter par = parameters.get(i);
+            sb.append(par.getKey().toString());
+            sb.append("=");
+            sb.append(par.getValue().toString());
+            sb.append(", ");
+        }
+
+        return sb.toString();
     }
 }

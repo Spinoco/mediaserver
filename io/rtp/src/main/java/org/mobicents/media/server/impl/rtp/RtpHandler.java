@@ -322,7 +322,7 @@ public class RtpHandler implements PacketHandler {
 				dump.append("size: " + dataLength + ", ");
 				dump.append("data: " + DatatypeConverter.printHexBinary(packet));
 			}
-			logger.error("Failed to decode / handle RTP packet, dropping it. Packet is : " + dump.toString(), ex);
+			logger.error("Failed to decode / handle RTP packet, dropping it. Packet is : " + dump.toString() + "cause: " + ", msg: " + ex.getMessage() + ", local: " + localPeer.toString() + ", remote: " + remotePeer.toString(), ex);
 			return null; // this shall indicate drop of the packet
 		}
 	}

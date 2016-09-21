@@ -9,7 +9,9 @@ package org.mobicents.media.server.impl.rtp.crypto;
 
 import java.nio.ByteBuffer;
 
+import org.apache.log4j.Logger;
 import org.bouncycastle.crypto.BlockCipher;
+import org.mobicents.media.server.impl.rtp.RtpHandler;
 
 /**
  * SRTPCipherCTR implements SRTP Counter Mode AES Encryption (AES-CM).
@@ -46,6 +48,8 @@ public class SRTPCipherCTR {
     private final byte[] tmpCipherBlock = new byte[BLKLEN];
     private byte[] streamBuf = new byte[1024];
 
+    private static final Logger logger = Logger.getLogger(SRTPCipherCTR.class);
+
     public SRTPCipherCTR() {
     }
 
@@ -66,9 +70,14 @@ public class SRTPCipherCTR {
 		}
 
 		getCipherStream(cipher, cipherStream, len, iv);
-		for (int i = 0; i < len; i++) {
-			data.put(i + off, (byte) (data.get(i + off) ^ cipherStream[i]));
-		}
+        try {
+            for (int i = 0; i < len; i++) {
+                data.put(i + off, (byte) (data.get(i + off) ^ cipherStream[i]));
+            }
+        } catch (Exception ex) {
+            logger.error("Failed to process SRTP Cipher (rethrow) len: " + len + ", off: " + off + ", data.limit= " + data.limit() + ", cipherStream.length=" + cipherStream.length , ex);
+            throw ex;
+        }
     }
 
     /**
