@@ -22,6 +22,7 @@
 
 package org.mobicents.media.server.impl.rtp;
 
+import java.net.InetSocketAddress;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -43,6 +44,9 @@ public class JitterBufferTest {
     
     private MockWallClock wallClock = new MockWallClock();
     private RtpClock rtpClock = new RtpClock(wallClock);
+
+    private InetSocketAddress local = new InetSocketAddress(7777);
+    private InetSocketAddress remote = new InetSocketAddress(7778);
 
     private int period = 20;
     private int jitter = 40;
@@ -86,20 +90,12 @@ public class JitterBufferTest {
 
     @Test
     public void testInnerSort() throws Exception {
-        RtpPacket p1 = new RtpPacket(172, false);
-        p1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-
-        RtpPacket p2 = new RtpPacket(172, false);
-        p2.wrap(false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-
-        RtpPacket p3 = new RtpPacket(172, false);
-        p3.wrap(false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
-
-        RtpPacket p4 = new RtpPacket(172, false);
-        p4.wrap(false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
-
-        RtpPacket p5 = new RtpPacket(172, false);
-        p5.wrap(false, 8, 5, 160 * 5, 123, new byte[160], 0, 160);
+        // todo fix
+        RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+        RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
+        RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
+        RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
+        RtpPacket p5 = RtpPacket.outgoing(local,remote,false, 8, 5, 160 * 5, 123, new byte[160], 0, 160);
 
         jitterBuffer.write(p1,AVProfile.audio.find(8));
         jitterBuffer.write(p2,AVProfile.audio.find(8));
@@ -122,20 +118,11 @@ public class JitterBufferTest {
 
     @Test
     public void testOutstanding() throws Exception {
-        RtpPacket p1 = new RtpPacket(172, false);
-        p1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-
-        RtpPacket p2 = new RtpPacket(172, false);
-        p2.wrap(false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-
-        RtpPacket p3 = new RtpPacket(172, false);
-        p3.wrap(false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
-
-        RtpPacket p4 = new RtpPacket(172, false);
-        p4.wrap(false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
-
-        RtpPacket p5 = new RtpPacket(172, false);
-        p5.wrap(false, 8, 5, 160 * 5, 123, new byte[160], 0, 160);
+        RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+        RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
+        RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
+        RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
+        RtpPacket p5 =RtpPacket.outgoing(local,remote,false, 8, 5, 160 * 5, 123, new byte[160], 0, 160);
 
         jitterBuffer.write(p1,AVProfile.audio.find(8));
         jitterBuffer.write(p3,AVProfile.audio.find(8));
@@ -167,14 +154,9 @@ public class JitterBufferTest {
 
     @Test
     public void testEmpty() throws Exception {
-        RtpPacket p1 = new RtpPacket(172, false);
-        p1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-
-        RtpPacket p2 = new RtpPacket(172, false);
-        p2.wrap(false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-
-        RtpPacket p3 = new RtpPacket(172, false);
-        p3.wrap(false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
+        RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160); //new RtpPacket(172, false);
+        RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160); //new RtpPacket(172, false);
+        RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 3, 123, new byte[160], 0, 160); //new RtpPacket(172, false);
 
         jitterBuffer.write(p1,AVProfile.audio.find(8));
         jitterBuffer.write(p2,AVProfile.audio.find(8));
@@ -213,38 +195,29 @@ public class JitterBufferTest {
      * http://tools.ietf.org/html/rfc3550#appendix-A.8
      */
     public void testJitter() {
-            // the timestamp for each packet increases by 10ms=160 timestamp units for sampling rate 8KHz 
-        RtpPacket p1 = new RtpPacket(172, false);
-        p1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+        //     the timestamp for each packet increases by 10ms=160 timestamp units for sampling rate 8KHz
+        RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+        RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
+        RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 3, 123, new byte[160], 0, 160);
+        RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 4, 123, new byte[160], 0, 160);
+        RtpPacket p5 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 5, 123, new byte[160], 0, 160);
 
-        RtpPacket p2 = new RtpPacket(172, false);
-        p2.wrap(false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
 
-        RtpPacket p3 = new RtpPacket(172, false);
-        p3.wrap(false, 8, 2, 160 * 3, 123, new byte[160], 0, 160);
-
-        RtpPacket p4 = new RtpPacket(172, false);
-        p4.wrap(false, 8, 3, 160 * 4, 123, new byte[160], 0, 160);
-
-        RtpPacket p5 = new RtpPacket(172, false);
-        p5.wrap(false, 8, 3, 160 * 5, 123, new byte[160], 0, 160);
-
-        
         long jitterDeltaLimit = 1; // 1 sampling units delta for timing and rounding errors , i.e. 1/8ms
-        
+
         //write first packet, expected jitter = 0
         jitterBuffer.write(p1,AVProfile.audio.find(8));
         assertEquals(0, jitterBuffer.getEstimatedJitter(), jitterDeltaLimit);
 
         // move time forward by 20ms and write the second packet
-        // the transit time should remain approximately the same - near 0ms. 
+        // the transit time should remain approximately the same - near 0ms.
         // expected jitter = 0;
         wallClock.tick(20000000L);
         jitterBuffer.write(p2,AVProfile.audio.find(8));
         assertEquals(0, jitterBuffer.getEstimatedJitter(), jitterDeltaLimit);
 
         // move time forward by 30ms and write the next packet
-        // the transit time should increase by 10ms, 
+        // the transit time should increase by 10ms,
         // as suggested by the difference in the third packet timestamp (160*3) and the 20ms delay for the server to receive the second packet
         // expected jitter should be close to the 10ms delay in timestamp units/16, i.e. 80/16.
         wallClock.tick(30000000L);
@@ -252,14 +225,14 @@ public class JitterBufferTest {
         assertEquals(5, jitterBuffer.getEstimatedJitter(), jitterDeltaLimit);
 
         //move time forward by 20ms and write the next packet
-        //the transit time does not change from the previous packet. 
-        // The jitter should stay approximately the same. 
+        //the transit time does not change from the previous packet.
+        // The jitter should stay approximately the same.
         wallClock.tick(20000000L);
         jitterBuffer.write(p4,AVProfile.audio.find(8));
         assertEquals(4, jitterBuffer.getEstimatedJitter(), jitterDeltaLimit);
 
         //move time forward by 30ms and write the next packet
-        //packet was delayed 10ms again.  
+        //packet was delayed 10ms again.
         // The estimated jitter should increase significantly, by nearly 5ms (80/16)
         wallClock.tick(30000000L);
         jitterBuffer.write(p5,AVProfile.audio.find(8));
@@ -273,8 +246,7 @@ public class JitterBufferTest {
         int it = 12345;
 
         for (int i = 0; i < stream.length; i++) {
-            stream[i] = new RtpPacket(172, false);
-            stream[i].wrap(false, 8, i + 1, 160 * (i+1) + it, 123, new byte[160], 0, 160);
+            stream[i] =  RtpPacket.outgoing(local,remote,false, 8, i + 1, 160 * (i+1) + it, 123, new byte[160], 0, 160);
         }
         return stream;
     }

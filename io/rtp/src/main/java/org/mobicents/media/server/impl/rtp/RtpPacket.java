@@ -23,9 +23,16 @@
 package org.mobicents.media.server.impl.rtp;
 
 import org.apache.log4j.Logger;
+import org.mobicents.media.server.impl.srtp.DtlsHandler;
+import org.mobicents.media.server.io.sdp.format.RTPFormat;
+import org.mobicents.media.server.spi.memory.Frame;
+import org.mobicents.media.server.spi.memory.Memory;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
 
 /**
  * A data packet consisting of the fixed RTP header, a possibly empty list of
@@ -65,35 +72,79 @@ public class RtpPacket implements Serializable {
      */
     public static final int VERSION = 2;
     
-    //underlying byte buffer
+    // underlying byte buffer
+    // always kept with position = 0
     private ByteBuffer buffer;
 
+    private SocketAddress localPeer;
+    private SocketAddress remotePeer;
+
+
+    /** construct this rtp packet from data ecrypted by supplied DtlsHandler **/
+    public static RtpPacket fromDtlsEncrypted(DtlsHandler handler, SocketAddress localPeer, SocketAddress remotePeer, byte[] packet, int offset, int dataLength) {
+        byte[] decoded = handler.decodeRTP(packet,offset,dataLength);
+        return fromRaw(localPeer,remotePeer,decoded,0,decoded.length);
+    }
+
+    /** construct packet from raw, unencrypted data **/
+    public static RtpPacket fromRaw(SocketAddress localPeer, SocketAddress remotePeer, byte[] packet, int offset, int dataLength) {
+        return new RtpPacket(ByteBuffer.wrap(packet,offset,dataLength), localPeer,remotePeer);
+    }
+
     /**
-     * Creates new instance of RTP packet.
+     * Consturct pakcet to be further sent with RTP
      *
-     * @param capacity the maximum available size for packet.
-     * @param allocateDirect if false then packet will use backing array to hold
-     * raw data and if true a direct OS buffer will be allocated
+     * @param mark mark field
+     * @param payloadType payload type field.
+     * @param seqNumber sequence number field
+     * @param timestamp timestamp field
+     * @param ssrc synchronization source field
+     * @param data data buffer
+     * @param offset offset in the data buffer
+     * @param len the number of bytes
      */
-    public RtpPacket(int capacity, boolean allocateDirect) {
-    	this.buffer = allocateDirect ? ByteBuffer.allocateDirect(capacity) : ByteBuffer.allocate(capacity);
+    public static RtpPacket outgoing(SocketAddress localPeer, SocketAddress remotePeer, boolean mark, int payloadType, int seqNumber, long timestamp, long ssrc, byte[] data, int offset, int len) {
+        ByteBuffer buffer = ByteBuffer.allocate(RtpPacket.FIXED_HEADER_SIZE + len);
+
+        //no extensions, paddings and cc
+        buffer.put((byte)0x80);
+
+        byte b = (byte) (payloadType);
+        if (mark) {
+            b = (byte) (b | 0x80);
+        }
+
+        buffer.put(b);
+
+        //sequence number
+        buffer.put((byte) ((seqNumber & 0xFF00) >> 8));
+        buffer.put((byte) (seqNumber & 0x00FF));
+
+        //timestamp
+        buffer.put((byte) ((timestamp & 0xFF000000) >> 24));
+        buffer.put((byte) ((timestamp & 0x00FF0000) >> 16));
+        buffer.put((byte) ((timestamp & 0x0000FF00) >> 8));
+        buffer.put((byte) ((timestamp & 0x000000FF)));
+
+        //ssrc
+        buffer.put((byte) ((ssrc & 0xFF000000) >> 24));
+        buffer.put((byte) ((ssrc & 0x00FF0000) >> 16));
+        buffer.put((byte) ((ssrc & 0x0000FF00) >> 8));
+        buffer.put((byte) ((ssrc & 0x000000FF)));
+
+        buffer.put(data, offset, len);
+        buffer.rewind();
+
+        return new RtpPacket(buffer, localPeer, remotePeer);
     }
-    
-    public RtpPacket(boolean allocateDirect) {
-    	this(RTP_PACKET_MAX_SIZE, allocateDirect);
+
+
+    RtpPacket(ByteBuffer buffer,  SocketAddress localPeer, SocketAddress remotePeer) {
+        this.buffer = buffer.asReadOnlyBuffer();
+        this.localPeer = localPeer;
+        this.remotePeer = remotePeer;
     }
-    
-    /**
-     * Provides access to the underlying buffer.
-     * Any modifications to the returned buffer 
-     * can affect all other operations on this packet.
-     *
-     * @return the underlying buffer instance.
-     */
-    public ByteBuffer getBuffer() {
-        return buffer;
-    }
-    
+
     /**
      * Verion field.
      *
@@ -284,11 +335,10 @@ public class RtpPacket implements Serializable {
      */
     public long readUnsignedIntAsLong(int off)
     {
-    	buffer.position(off);
-        return (((long)(buffer.get() & 0xff) << 24) |
-                ((long)(buffer.get() & 0xff) << 16) |
-                ((long)(buffer.get() & 0xff) << 8) |
-                ((long)(buffer.get() & 0xff))) & 0xFFFFFFFFL;
+        return (((long)(buffer.get(off) & 0xff) << 24) |
+                ((long)(buffer.get(off+1) & 0xff) << 16) |
+                ((long)(buffer.get(off+2) & 0xff) << 8) |
+                ((long)(buffer.get(off+3) & 0xff))) & 0xFFFFFFFFL;
     }
     
     /**
@@ -299,88 +349,29 @@ public class RtpPacket implements Serializable {
      * @param offset the initial offset inside buffer.
      */
     public void getPayload(byte[] buff, int offset) {
-        buffer.position(FIXED_HEADER_SIZE);
+        ByteBuffer tmp = buffer.duplicate(); // defensive copy
+        tmp.position(FIXED_HEADER_SIZE);
         try {
-            buffer.get(buff, offset, buffer.limit() - FIXED_HEADER_SIZE);
+            tmp.duplicate().get(buff, offset, buffer.limit() - FIXED_HEADER_SIZE);
         } catch (Exception ex) {
-            logger.error("Failed to access payload (rethrow): "+ ex.getMessage()+ " offset: " + offset + ",  size: " + (buffer.limit() - FIXED_HEADER_SIZE) + " position" + buffer.position() , ex);
+            logger.error("Failed to access payload (rethrow): "+ ex.getMessage() + " offset: " + offset + ",  size: " + (buffer.limit() - FIXED_HEADER_SIZE) + " position" + buffer.position() , ex);
             throw ex;
         }
+
     }
 
-    /**
-     * Encapsulates data into the packet for transmission via RTP.
-     *
-     * @param mark mark field
-     * @param payloadType payload type field.
-     * @param seqNumber sequence number field
-     * @param timestamp timestamp field
-     * @param ssrc synchronization source field
-     * @param data data buffer
-     * @param offset offset in the data buffer
-     * @param len the number of bytes
-     */
-    public void wrap(boolean mark, int payloadType, int seqNumber, long timestamp, long ssrc, byte[] data, int offset, int len) {
-        buffer.clear();
-        buffer.rewind();
 
-        //no extensions, paddings and cc
-        buffer.put((byte)0x80);
-
-        byte b = (byte) (payloadType);
-        if (mark) {
-            b = (byte) (b | 0x80);
-        }
-
-        buffer.put(b);
-
-        //sequence number
-         buffer.put((byte) ((seqNumber & 0xFF00) >> 8));
-         buffer.put((byte) (seqNumber & 0x00FF));
-
-         //timestamp
-         buffer.put((byte) ((timestamp & 0xFF000000) >> 24));
-         buffer.put((byte) ((timestamp & 0x00FF0000) >> 16));
-         buffer.put((byte) ((timestamp & 0x0000FF00) >> 8));
-         buffer.put((byte) ((timestamp & 0x000000FF)));
-
-         //ssrc
-         buffer.put((byte) ((ssrc & 0xFF000000) >> 24));
-         buffer.put((byte) ((ssrc & 0x00FF0000) >> 16));
-         buffer.put((byte) ((ssrc & 0x0000FF00) >> 8));
-         buffer.put((byte) ((ssrc & 0x000000FF)));
-
-         buffer.put(data, offset, len);
-         buffer.flip();
-         buffer.rewind();
-    }
 
     @Override
     public String toString() {
         return "RTP Packet[marker=" + getMarker() + ", seq=" + getSeqNumber() +
                 ", timestamp=" + getTimestamp() + ", payload_size=" + getPayloadLength() +
-                ", payload=" + getPayloadType() + "]";
+                ", payload=" + getPayloadType() +
+                ", local=" + this.localPeer +
+                ", remote=" + this.remotePeer +
+                "]";
     }
     
-    /**
-     * Shrink the buffer of this packet by specified length
-     *
-     * @param len length to shrink
-     */
-    public void shrink(int delta)
-    {
-        if (delta <= 0)
-        {
-            return;
-        }
-
-        int newLimit = buffer.limit() - delta;
-        if (newLimit <= 0)
-        {
-            newLimit = 0;
-        }
-        this.buffer.limit(newLimit);
-    }    
 
     /**
      * Get RTP header length from a RTP packet
@@ -434,8 +425,7 @@ public class RtpPacket implements Serializable {
      */
     public boolean getExtensionBit()
     {
-    	buffer.rewind();
-        return (buffer.get() & 0x10) == 0x10;
+        return (buffer.get(0) & 0x10) == 0x10;
     }    
 
     /**
@@ -445,24 +435,10 @@ public class RtpPacket implements Serializable {
      */
     public int getCsrcCount()
     {
-    	buffer.rewind();
-        return (buffer.get() & 0x0f);
+        return (buffer.get(0) & 0x0f);
     }
     
-    /**
-     * Get RTP padding size from a RTP packet
-     *
-     * @return RTP padding size from source RTP packet
-     */
-    public int getPaddingSize()
-    {
-    	buffer.rewind();
-        if ((buffer.get() & 0x4) == 0) {
-            return 0;
-        } else {
-            return buffer.get(buffer.limit() - 1);
-        }
-    }
+
     
 
     /**
@@ -476,75 +452,68 @@ public class RtpPacket implements Serializable {
     }
     
     /**
-     * Grow the internal packet buffer.
-     *
-     * This will change the data buffer of this packet but not the
-     * length of the valid data. Use this to grow the internal buffer
-     * to avoid buffer re-allocations when appending data.
-     *
-     * @param delta number of bytes to grow
+     * Function that wil encode with dtls payload of this packet and returns beytebuffer of this packet that can be used
+     * to send packet to the network.
+     * @param dtlsHandler
+     * @return null, if decoding of rtp data failed
      */
-    public void grow(int delta) {
-        if (delta == 0) {
-            return;
-        }
-        int newLen = buffer.limit()+delta; 
-        if (newLen <= buffer.capacity()) {
-        	// there is more room in the underlying reserved buffer memory 
-        	buffer.limit(newLen);
-        	return;
+    public ByteBuffer dtlsEncodeToSend(DtlsHandler dtlsHandler) {
+        byte[] rtpData = payloadToArray();
+        byte[] srtpData = dtlsHandler.encodeRTP(rtpData, 0, rtpData.length);
+        if(srtpData == null || srtpData.length == 0) {
+            logger.warn("Could not secure RTP packet! Packet dropped: " + this.toString());
+            return null;
         } else {
-        	// create a new bigger buffer
-            ByteBuffer newBuffer = buffer.isDirect() ? ByteBuffer.allocateDirect(newLen) : ByteBuffer.allocate(newLen);
-            buffer.rewind();
-            newBuffer.put(buffer);
-            newBuffer.limit(newLen);
-            // switch to new buffer
-            buffer = newBuffer;
+            return ByteBuffer.wrap(srtpData);
         }
-    }
-    
-    /**
-     * Append a byte array to the end of the packet. This may change the data
-     * buffer of this packet.
-     *
-     * @param data byte array to append
-     * @param len the number of bytes to append
-     */
-    public void append(byte[] data, int len) {
-        if (data == null || len <= 0 || len > data.length)  {
-            throw new IllegalArgumentException("Invalid combination of parameters data and length to append()");
-        }
-
-        int oldLimit = buffer.limit();
-        // grow buffer if necessary
-        grow(len);
-        // set positing to begin writing immediately after the last byte of the current buffer
-        buffer.position(oldLimit);
-        // set the buffer limit to exactly the old size plus the new appendix length
-        buffer.limit(oldLimit + len);
-        // append data
-        buffer.put(data, 0, len);
     }
 
     /**
-     * Read a byte region from specified offset in the RTP packet 
-     * and with specified length into a given buffer
-     *
-     * @param off start offset in the RTP packet of the region to be read
-     * @param len length of the region to be read
-     * @param outBuff output buffer
+     * Buidls a frame from this packet.
+     * @return
      */
-    public void readRegionToBuff(int off, int len, byte[] outBuff)
-    {
-    	assert off >= 0;
-    	assert len > 0;
-    	assert outBuff != null;
-    	assert outBuff.length >= len;
-    	assert buffer.limit() >= off + len;
+    public Frame toFrame(RtpClock clock, RTPFormat format) {
+        Frame f = Memory.allocate(getPayloadLength());
+        // put packet into buffer irrespective of its sequence number
+        f.setHeader(null);
+        f.setSequenceNumber(getSeqNumber());
+        // here time is in milliseconds
+        f.setTimestamp(clock.convertToAbsoluteTime(getTimestamp()));
+        f.setOffset(0);
+        f.setLength(getPayloadLength());
+        getPayload(f.getData(), 0);
 
-    	buffer.position(off);
-    	buffer.get(outBuff, 0, len);
-    }    
-    
+        // set format
+        f.setFormat(format.getFormat());
+
+        return f;
+    }
+
+    /** sends content of this packet to channel **/
+    public int sendTo(DatagramChannel channel) throws IOException {
+        return channel.send(buffer, remotePeer);
+    }
+
+    public SocketAddress getLocalPeer() {
+        return localPeer;
+    }
+
+    public SocketAddress getRemotePeer() {
+        return remotePeer;
+    }
+
+    /** copy content of this packet payload to new array of bytes **/
+    public byte[] payloadToArray() {
+        byte[] array = new byte[buffer.limit() - RtpPacket.FIXED_HEADER_SIZE];
+        getPayload(array,0);
+        return array;
+    }
+
+    /** copy content of this packet (header + payload) to new array of bytes **/
+    public byte[] toArray() {
+        byte[] array = new byte[buffer.limit()];
+        ByteBuffer tmp = buffer.duplicate(); // defensive copy
+        tmp.get(array);
+        return array;
+    }
 }

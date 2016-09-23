@@ -568,29 +568,34 @@ public class RTPDataChannel {
 	 */
 	private class RxTask {
 
+		//todo: remove this
 		// RTP packet representation
-		private RtpPacket rtpPacket = new RtpPacket(RtpPacket.RTP_PACKET_MAX_SIZE, true);
 		private RTPFormat format;
 		private SocketAddress currAddress;
+
+		private ByteBuffer buffer = ByteBuffer.allocateDirect(RtpPacket.RTP_PACKET_MAX_SIZE);
+
 
 		private RxTask() {
 			super();
 		}
-		
-		private void flush() {
-			SocketAddress currAddress;
-			try {
-				// lets clear the receiver
-				currAddress = rtpChannel.receive(rtpPacket.getBuffer());
-				rtpPacket.getBuffer().clear();
 
-				while (currAddress != null) {
-					currAddress = rtpChannel.receive(rtpPacket.getBuffer());
-					rtpPacket.getBuffer().clear();
-				}
-			} catch (Exception e) {
-				logger.error(e.getMessage(), e);
-			}
+
+		private void flush() {
+			// todo: this is only invoked in tests. I'd like to see if we can somehow get rid of this completely
+//			SocketAddress currAddress;
+//			try {
+//				// lets clear the receiver
+//				currAddress = rtpChannel.receive(rtpPacket.getBuffer());
+//				rtpPacket.getBuffer().clear();
+//
+//				while (currAddress != null) {
+//					currAddress = rtpChannel.receive(rtpPacket.getBuffer());
+//					rtpPacket.getBuffer().clear();
+//				}
+//			} catch (Exception e) {
+//				logger.error(e.getMessage(), e);
+//			}
 		}
 
 		/**
@@ -616,13 +621,13 @@ public class RTPDataChannel {
 		}
 		
 		private void perform2() {
+			RtpPacket rtpPacket = null;
 			try {
-                currAddress=null;
                 try {
-                	currAddress = receiveRtpPacket(rtpPacket);
-					if (currAddress != null && !rtpChannel.isConnected()) {
+					rtpPacket = receiveRtpPacket(buffer);
+					if (rtpPacket != null && !rtpChannel.isConnected()) {
 						rxBuffer.restart();
-						rtpChannel.connect(currAddress);
+						rtpChannel.connect(rtpPacket.getRemotePeer());
 					} else if (currAddress != null && rxCount == 0) {
 						rxBuffer.restart();
 					}
@@ -640,30 +645,30 @@ public class RTPDataChannel {
                 	logger.error(e.getMessage(), e);                	
                 }
                                 	
-				while (currAddress != null) {
+				while (rtpPacket != null) {
 					lastPacketReceived = scheduler.getClock().getTime();
 
 					if (rtpPacket.getVersion() != 0 && (shouldReceive || shouldLoop)) {
 						// RTP v0 packets is used in some application.
 						// Discarding since we do not handle them
 						// Queue packet into the receiver jitter buffer
-						if (rtpPacket.getBuffer().limit() > 0) {
-							if (shouldLoop && rtpChannel.isConnected()) {
-								sendRtpPacket(rtpPacket);
-								rxCount++;
-								txCount++;
-							} else if (!shouldLoop) {
-								format = rtpFormats.find(rtpPacket.getPayloadType());
-								if (format != null && format.getFormat().matches(DTMF_FORMAT)) {
-									dtmfInput.write(rtpPacket);
-								} else {
-									rxBuffer.write(rtpPacket, format);
-								}
-								rxCount++;
+
+						if (shouldLoop && rtpChannel.isConnected()) {
+							sendRtpPacket(rtpPacket);
+							rxCount++;
+							txCount++;
+						} else if (!shouldLoop) {
+							format = rtpFormats.find(rtpPacket.getPayloadType());
+							if (format != null && format.getFormat().matches(DTMF_FORMAT)) {
+								dtmfInput.write(rtpPacket);
+							} else {
+								rxBuffer.write(rtpPacket, format);
 							}
+							rxCount++;
 						}
+
 					}
-					currAddress = receiveRtpPacket(rtpPacket);
+					rtpPacket = receiveRtpPacket(buffer);
                 }
             }
         	catch(PortUnreachableException e) {
@@ -685,10 +690,6 @@ public class RTPDataChannel {
 	 * Writer job.
 	 */
 	private class TxTask {
-		private RtpPacket rtpPacket = new RtpPacket(
-				RtpPacket.RTP_PACKET_MAX_SIZE, true);
-		private RtpPacket oobPacket = new RtpPacket(
-				RtpPacket.RTP_PACKET_MAX_SIZE, true);
 		private RTPFormat fmt;
 		private long timestamp = -1;
 		private long dtmfTimestamp = -1;
@@ -724,12 +725,24 @@ public class RTPDataChannel {
 
 			// convert to rtp time units
 			dtmfTimestamp = rtpClock.convertToRtpTime(dtmfTimestamp);
-			oobPacket.wrap(false, AVProfile.telephoneEventsID, sn++,
-					dtmfTimestamp, ssrc, frame.getData(), frame.getOffset(),
-					frame.getLength());
 
-			frame.recycle();
 			try {
+				RtpPacket oobPacket =
+					RtpPacket.outgoing(
+							rtpChannel.getLocalAddress()
+							, rtpChannel.getRemoteAddress()
+							, false
+							, AVProfile.telephoneEventsID
+							, sn++
+							, dtmfTimestamp
+							, ssrc
+							, frame.getData()
+							, frame.getOffset()
+							, frame.getLength()
+					);
+
+				frame.recycle();
+
 				if (rtpChannel.isConnected()) {
 					sendRtpPacket(oobPacket);
 					txCount++;
@@ -777,11 +790,24 @@ public class RTPDataChannel {
 
 			// convert to rtp time units
 			timestamp = rtpClock.convertToRtpTime(timestamp);
-			rtpPacket.wrap(false, fmt.getID(), sn++, timestamp, ssrc,
-					frame.getData(), frame.getOffset(), frame.getLength());
 
-			frame.recycle();
+
 			try {
+				RtpPacket rtpPacket =
+						RtpPacket.outgoing(
+								rtpChannel.getLocalAddress()
+								, rtpChannel.getRemoteAddress()
+								, false
+								, fmt.getID()
+								, sn++
+								, timestamp
+								, ssrc
+								, frame.getData()
+								, frame.getOffset()
+								, frame.getLength()
+						);
+				frame.recycle();
+
 				if (rtpChannel.isConnected()) {
 					sendRtpPacket(rtpPacket);
 					txCount++;
@@ -842,27 +868,16 @@ public class RTPDataChannel {
 		return new Text();
 	}
 
-	private SocketAddress receiveRtpPacket(RtpPacket packet) throws IOException {
-		SocketAddress address = null;
-		
-		if (this.isWebRtc) {
-			// XXX not used anymore
-//			this.webRtcHandler.decodeRTP(packet);
-		}
-		
-		// WebRTC handler can return null if packet is not valid
-		if(packet != null) {
-			// Clear the buffer for a fresh read
-			ByteBuffer buf = packet.getBuffer();
-			buf.clear();
-			
-			// receive RTP packet from the network
-			address = rtpChannel.receive(buf);
-			
-			// put the pointer at the beginning of the buffer 
-			buf.flip();
-		}
-		return address;
+	private RtpPacket receiveRtpPacket(ByteBuffer buff) throws IOException {
+		buff.clear();
+		SocketAddress address = rtpChannel.receive(buff);
+		if (address != null) {
+			byte[] packet = new byte[buff.position()];
+			buff.rewind();
+			buff.get(packet);
+			return RtpPacket.fromRaw(rtpChannel.getLocalAddress(), address, packet, 0, packet.length);
+
+		} else return null;
 	}
 
 	private void sendRtpPacket(RtpPacket packet) throws IOException {
@@ -870,22 +885,8 @@ public class RTPDataChannel {
 		if(isWebRtc && !this.webRtcHandler.isHandshakeComplete()) {
 			return;
 		}
-		
-		// Secure RTP packet. WebRTC calls only. 
-		if (isWebRtc) {
-			// XXX not used anymore
-//			this.webRtcHandler.encodeRTP(packet);
-		}
-		
-		// SRTP handler returns null if an error occurs
-		if(packet != null) {
-			// Rewind buffer
-			ByteBuffer buf = packet.getBuffer();
-			buf.rewind();
-			
-			// send RTP packet to the network
-			rtpChannel.send(buf, rtpChannel.socket().getRemoteSocketAddress());
-		}
+
+		packet.sendTo(this.rtcpChannel);
 	}
 	
 	public String getExternalAddress() {

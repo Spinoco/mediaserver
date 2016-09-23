@@ -31,8 +31,13 @@ import org.mobicents.media.server.concurrent.ConcurrentMap;
 public class Memory 
 {
     private static ConcurrentMap<Partition> partitions = new ConcurrentMap<Partition>();
-    
-    public static Frame allocate(int size) 
+
+	/**
+	 * Allocates frame from the pool of sized partitions. Always returns instance either from cached frames or new fresh allocated frame.
+	 * @param size
+	 * @return
+	 */
+	public static Frame allocate(int size)
     {
     	Partition currPartition=partitions.get(size);
     	if(currPartition==null)

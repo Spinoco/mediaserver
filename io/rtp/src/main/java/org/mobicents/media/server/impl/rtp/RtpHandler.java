@@ -62,7 +62,6 @@ public class RtpHandler implements PacketHandler {
 	private boolean receivable;
 	
 	private final RtpStatistics statistics;
-	private final RtpPacket rtpPacket;
 	
 	// SRTP
 	private boolean secure;
@@ -83,7 +82,6 @@ public class RtpHandler implements PacketHandler {
 		
 		this.rtpFormats = new RTPFormats();
 		this.statistics = statistics;
-		this.rtpPacket = new RtpPacket(RtpPacket.RTP_PACKET_MAX_SIZE, true);
 		this.receivable = false;
 		this.loopable = false;
 		
@@ -252,28 +250,11 @@ public class RtpHandler implements PacketHandler {
 			if (this.secure && !this.dtlsHandler.isHandshakeComplete()) {
 				return null;
 			}
+			RtpPacket receivedRtp =
+					(this.secure) ?
+					RtpPacket.fromDtlsEncrypted(this.dtlsHandler,localPeer,remotePeer,packet,offset,dataLength) :
+					RtpPacket.fromRaw(localPeer,remotePeer,packet,offset,dataLength);
 
-			if (this.secure) {
-				// Decode SRTP packet into RTP. WebRTC calls only.
-				byte[] decoded = decoded = this.dtlsHandler.decodeRTP(packet, offset, dataLength);
-
-				if (decoded == null || decoded.length == 0) {
-					logger.warn("SRTP packet is not valid! Dropping packet.");
-					return null;
-				} else {
-					// Transform incoming data directly into an RTP Packet
-					ByteBuffer buffer = this.rtpPacket.getBuffer();
-					buffer.clear();
-					buffer.put(decoded);
-					buffer.flip();
-				}
-			} else {
-				// Transform incoming data directly into an RTP Packet
-				ByteBuffer buffer = this.rtpPacket.getBuffer();
-				buffer.clear();
-				buffer.put(packet, offset, dataLength);
-				buffer.flip();
-			}
 
 			// Restart jitter buffer for first received packet
 			if (this.statistics.getRtpPacketsReceived() == 0) {
@@ -285,34 +266,32 @@ public class RtpHandler implements PacketHandler {
 			this.statistics.setLastHeartbeat(this.rtpClock.getWallClock().getTime());
 
 			// RTP v0 packets are used in some applications. Discarded since we do not handle them.
-			if (rtpPacket.getVersion() != 0 && (receivable || loopable)) {
+			if (receivedRtp.getVersion() != 0 && (receivable || loopable)) {
 				// Queue packet into the jitter buffer
-				if (rtpPacket.getBuffer().limit() > 0) {
-					if (loopable) {
-						// Update statistics for RTCP
-						this.statistics.onRtpReceive(rtpPacket);
-						this.statistics.onRtpSent(rtpPacket);
-						// Return same packet (looping) so it can be transmitted
-						return packet;
-					} else {
-						// Update statistics for RTCP
-						this.statistics.onRtpReceive(rtpPacket);
-						// Write packet
-						int payloadType = rtpPacket.getPayloadType();
-						RTPFormat format = rtpFormats.find(payloadType);
-						if (format != null) {
-							if (RtpChannel.DTMF_FORMAT.matches(format.getFormat())) {
-								dtmfInput.write(rtpPacket);
-							} else {
-								jitterBuffer.write(rtpPacket, format);
-							}
-						} else {
-							logger.warn("Dropping packet because payload type (" + payloadType + ") is unknown.");
-						}
-					}
+
+				if (loopable) {
+					// Update statistics for RTCP
+					this.statistics.onRtpReceive(receivedRtp);
+					this.statistics.onRtpSent(receivedRtp);
+					// Return same packet (looping) so it can be transmitted
+					return packet;
 				} else {
-					logger.warn("Skipping packet because limit of the packets buffer is zero");
+					// Update statistics for RTCP
+					this.statistics.onRtpReceive(receivedRtp);
+					// Write packet
+					int payloadType = receivedRtp.getPayloadType();
+					RTPFormat format = rtpFormats.find(payloadType);
+					if (format != null) {
+						if (RtpChannel.DTMF_FORMAT.matches(format.getFormat())) {
+							dtmfInput.write(receivedRtp);
+						} else {
+							jitterBuffer.write(receivedRtp, format);
+						}
+					} else {
+						logger.warn("Dropping packet because payload type (" + payloadType + ") is unknown.");
+					}
 				}
+
 			}
 			return null;
 		} catch (Exception ex) {

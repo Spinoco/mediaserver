@@ -22,6 +22,7 @@ package org.mobicents.media.server.impl.rtp.statistics;
 
 import static org.junit.Assert.assertEquals;
 
+import java.net.InetSocketAddress;
 import java.util.Date;
 
 import org.apache.commons.net.ntp.TimeStamp;
@@ -42,6 +43,9 @@ public class RtpMemberTest {
 	
 	private final MockWallClock wallClock;
 	private final RtpClock rtpClock;
+
+	private InetSocketAddress local = new InetSocketAddress(7777);
+	private InetSocketAddress remote = new InetSocketAddress(7778);
 
 	public RtpMemberTest() {
 		this.wallClock = new MockWallClock();
@@ -68,8 +72,7 @@ public class RtpMemberTest {
 	public void testOnReceiveRtpPacket() {
 		// given
 		RtpMember member = new RtpMember(rtpClock, 123);
-		RtpPacket p1 = new RtpPacket(172, false);
-		p1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
 
 		// when
 		member.onReceiveRtp(p1);
@@ -91,14 +94,11 @@ public class RtpMemberTest {
 	public void testOnReceiveRtpPackets() {
 		// given
 		RtpMember member = new RtpMember(rtpClock, 123);
-		RtpPacket p1 = new RtpPacket(172, false);
-		RtpPacket p2 = new RtpPacket(172, false);
-		RtpPacket p3 = new RtpPacket(172, false);
-		RtpPacket p4 = new RtpPacket(172, false);
-		p1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-		p2.wrap(false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-		p3.wrap(false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
-		p4.wrap(false, 8, 3, 160 * 4, 123, new byte[160], 0, 160);
+		RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
+		RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 4, 123, new byte[160], 0, 160);
+
 
 		// when
 		receiveRtpPackets(member, p1, p2, p3, p4);
@@ -119,18 +119,13 @@ public class RtpMemberTest {
 	public void testSequenceCycleIncrement() {
 		// given
 		RtpMember member = new RtpMember(rtpClock, 123);
-		RtpPacket p1 = new RtpPacket(172, false);
-		RtpPacket p2 = new RtpPacket(172, false);
-		RtpPacket p3 = new RtpPacket(172, false);
-		RtpPacket p4 = new RtpPacket(172, false);
-		RtpPacket p5 = new RtpPacket(172, false);
-		
-		p1.wrap(false, 8, 100, 160 * 1, 123, new byte[160], 0, 160);
-		p2.wrap(false, 8, 101, 160 * 2, 123, new byte[160], 0, 160);
-		p3.wrap(false, 8, 102, 160 * 3, 123, new byte[160], 0, 160);
-		p4.wrap(false, 8, 103, 160 * 4, 123, new byte[160], 0, 160);
-		// The 100+ sequence number gap will cause the sequence cycle to increment
-		p5.wrap(false, 8, 50, 160 * 5, 123, new byte[160], 0, 160);
+		RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 100, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 101, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 102, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 103, 160 * 1, 123, new byte[160], 0, 160);
+	    // The 100+ sequence number gap will cause the sequence cycle to increment
+		RtpPacket p5 = RtpPacket.outgoing(local,remote,false, 8, 50, 160 * 5, 123, new byte[160], 0, 160);
+
 		
 		// when
 		receiveRtpPackets(member, p1, p2, p3, p4, p5);
@@ -155,24 +150,17 @@ public class RtpMemberTest {
 		
 		// the timestamp for each packet increases by 10ms=160 timestamp units
 		// for sampling rate 8KHz
-		RtpPacket p1 = new RtpPacket(172, false);
-		RtpPacket p2 = new RtpPacket(172, false);
-		RtpPacket p3 = new RtpPacket(172, false);
-		RtpPacket p4 = new RtpPacket(172, false);
-		RtpPacket p5 = new RtpPacket(172, false);
-		RtpPacket p6 = new RtpPacket(172, false);
-		RtpPacket p7 = new RtpPacket(172, false);
+		// valid packets
+		RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 4, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 5, 160 * 3, 123, new byte[160], 0, 160);
+		RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 6, 160 * 4, 123, new byte[160], 0, 160);
+		RtpPacket p5 = RtpPacket.outgoing(local,remote,false, 8, 7, 160 * 5, 123, new byte[160], 0, 160);
 
 		// packets in probation
-		p6.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-		p7.wrap(false, 8, 3, 160 * 1, 123, new byte[160], 0, 160);
-		
-		// valid packets
-		p1.wrap(false, 8, 3, 160 * 1, 123, new byte[160], 0, 160);
-		p2.wrap(false, 8, 4, 160 * 2, 123, new byte[160], 0, 160);
-		p3.wrap(false, 8, 5, 160 * 3, 123, new byte[160], 0, 160);
-		p4.wrap(false, 8, 6, 160 * 4, 123, new byte[160], 0, 160);
-		p5.wrap(false, 8, 7, 160 * 5, 123, new byte[160], 0, 160);
+		RtpPacket p6 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p7 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 1, 123, new byte[160], 0, 160);
+
 
 		// 1 sampling units delta for timing and rounding errors , i.e. 1/8ms
 		long jitterDeltaLimit = 1;
@@ -249,16 +237,11 @@ public class RtpMemberTest {
 		// given
 		RtpMember member = new RtpMember(rtpClock, 123);
 		
-		RtpPacket p1 = new RtpPacket(172, false);
-		RtpPacket p2 = new RtpPacket(172, false);
-		RtpPacket p3 = new RtpPacket(172, false);
-		RtpPacket p4 = new RtpPacket(172, false);
-		RtpPacket p5 = new RtpPacket(172, false);
-		p1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-		p2.wrap(false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-		p3.wrap(false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
-		p4.wrap(false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
-		p5.wrap(false, 8, 5, 160 * 5, 123, new byte[160], 0, 160);
+		RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
+		RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
+		RtpPacket p5 = RtpPacket.outgoing(local,remote,false, 8, 5, 160 * 5, 123, new byte[160], 0, 160);
 		
 		TimeStamp ntp = new TimeStamp(new Date());
 		RtcpSenderReport sendReport = new RtcpSenderReport(false, 123, ntp.getSeconds(), ntp.getFraction(), 160 * 2, 100, 100 * 130);
@@ -294,17 +277,13 @@ public class RtpMemberTest {
 	public void testLostPackets() {
 		// given
 		RtpMember member = new RtpMember(rtpClock, 123);
-		
-		RtpPacket p1 = new RtpPacket(172, false);
-		RtpPacket p2 = new RtpPacket(172, false);
-		RtpPacket p3 = new RtpPacket(172, false);
-		RtpPacket p4 = new RtpPacket(172, false);
-		RtpPacket p5 = new RtpPacket(172, false);
-		p1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-		p2.wrap(false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-		p3.wrap(false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
-		p4.wrap(false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
-		p5.wrap(false, 8, 24, 160 * 5, 123, new byte[160], 0, 160);
+
+		RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
+		RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
+		RtpPacket p5 = RtpPacket.outgoing(local,remote,false, 8, 5, 160 * 5, 123, new byte[160], 0, 160);
+
 		
 		TimeStamp ntp = new TimeStamp(new Date());
 		RtcpSenderReport sendReport = new RtcpSenderReport(false, 123, ntp.getSeconds(), ntp.getFraction(), 160 * 2, 100, 100 * 130);

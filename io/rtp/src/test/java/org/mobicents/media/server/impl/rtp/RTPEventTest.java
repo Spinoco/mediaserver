@@ -90,6 +90,9 @@ public class RTPEventTest implements DtmfDetectorListener {
     
     private AudioComponent detectorComponent;
     private OOBComponent oobComponent;
+
+    private InetSocketAddress local = new InetSocketAddress(7777);
+    private InetSocketAddress remote = new InetSocketAddress(7778);
     
     private int count=0;
     
@@ -242,31 +245,34 @@ public class RTPEventTest implements DtmfDetectorListener {
             boolean marker = false;
             int t=0;
             int count = 0;
-            
+
             int it = 12345;
             for (int i = 0; i < len; i++) {
-                RtpPacket p = new RtpPacket(172, false);
-                
+                // todo fix;
+                RtpPacket p = null ; // new RtpPacket(172, false);
+
                 if (i % 50 == 0 && i > 0) {
-                   event = true;  
+                   event = true;
                    marker = true;
                    t = 160 * (i + 1);
                    count = 0;
-                } 
-                
+                }
+
                 if (event) {
-                    p.wrap(marker, 101, i + 1, t + it, 123, evt1[count++], 0, 4);
+                    p = RtpPacket.outgoing(local,remote,marker, 101, i + 1, t + it, 123, evt1[count++], 0, 4);
+                    //p.wrap(marker, 101, i + 1, t + it, 123, evt1[count++], 0, 4);
                     marker = false;
                     if (count == evt1.length) {
                         event = false;
                     }
                 } else {
-                    p.wrap(marker, 8, i + 1, 160 * (i + 1) + it, 123, zeroContent, 0, 160);
+                    p = RtpPacket.outgoing(local,remote,marker, 8, i + 1, 160 * (i + 1) + it, 123, zeroContent, 0, 160);
+                   // p.wrap(marker, 8, i + 1, 160 * (i + 1) + it, 123, zeroContent, 0, 160);
                 }
-                
-                byte[] data = new byte[p.getBuffer().limit()];
-                p.getBuffer().get(data);
-                stream.add(data);
+                // todo: find much more elegant method than this copy
+//                byte[] data = new byte[p.getBuffer().limit()];
+//                p.getBuffer().get(data);
+                stream.add(p.toArray());
             }
         }
         

@@ -24,6 +24,7 @@ package org.mobicents.media.server.impl.rtp;
 
 import static org.junit.Assert.assertEquals;
 
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
 import org.junit.After;
@@ -39,7 +40,13 @@ import org.junit.Test;
  */
 public class RtpPacketTest {
 
-    private RtpPacket rtpPacket = new RtpPacket(172, true);
+    // todo: fix
+    private RtpPacket rtpPacket()  {
+        return RtpPacket.fromRaw(local,remote,p,0,p.length);
+    }
+
+    private InetSocketAddress local = new InetSocketAddress(7777);
+    private InetSocketAddress remote = new InetSocketAddress(7778);
 
     //These values are from wireshark trace
     private byte[] p = new byte[]{(byte) 0x80, 0x08, 0x6a, 0x6c, (byte) 0xc1, (byte) 0xab, 0x74, (byte) 0x8d,
@@ -65,13 +72,6 @@ public class RtpPacketTest {
     public static void tearDownClass() throws Exception {
     }
 
-    @Before
-    public void setUp() {
-        rtpPacket.getBuffer().clear();
-        rtpPacket.getBuffer().rewind();
-        rtpPacket.getBuffer().put(p);
-        rtpPacket.getBuffer().flip();
-    }
 
     @After
     public void tearDown() {
@@ -79,54 +79,58 @@ public class RtpPacketTest {
 
     @Test
     public void testGetMarker() {
-        assertEquals(false, rtpPacket.getMarker());
+        assertEquals(false, rtpPacket().getMarker());
     }
 
     @Test
     public void testGetPayloadType() {
-        assertEquals(8, rtpPacket.getPayloadType());
+        assertEquals(8, rtpPacket().getPayloadType());
     }
 
     @Test
     public void testGetSequenceNumber() {
-        assertEquals(27244, rtpPacket.getSeqNumber());
+        assertEquals(27244, rtpPacket().getSeqNumber());
     }
 
     @Test
     public void testGetTimestamp() {
-        assertEquals(3249239181l, rtpPacket.getTimestamp());
+        assertEquals(3249239181l, rtpPacket().getTimestamp());
     }
 
     @Test
     public void testSyncSource() {
-        assertEquals(3001189225l, rtpPacket.getSyncSource());
+        assertEquals(3001189225l, rtpPacket().getSyncSource());
     }
 
     @Test
     public void testGetPayloadLength() {
-        assertEquals(p.length - 12, rtpPacket.getPayloadLength());
-        rtpPacket.getTimestamp();
-        assertEquals(p.length - 12, rtpPacket.getPayloadLength());
+        RtpPacket packet = rtpPacket();
+        assertEquals(p.length - 12, packet.getPayloadLength());
+        packet.getTimestamp();
+        assertEquals(p.length - 12, packet.getPayloadLength());
     }
 
     @Test
     public void testWrap() {
-        rtpPacket.wrap(false, 8, 27244, 3249239181l, 3001189225l, p, 12, p.length - 12);
+        RtpPacket packet = RtpPacket.outgoing(local,remote,false, 8, 27244, 3249239181l, 3001189225l, p, 12, p.length - 12);
         ByteBuffer buffer = ByteBuffer.wrap(p);
-        assertEquals(0, buffer.compareTo(rtpPacket.getBuffer()));
+        assertEquals(0, buffer.compareTo(ByteBuffer.wrap(packet.toArray())));
     }
 
     @Test
     public void testMark() {
-        rtpPacket.wrap(true, 8, 27244, 3249239181l, 3001189225l, p, 12, p.length - 12);
-        assertEquals(true, rtpPacket.getMarker());
+        RtpPacket packet = RtpPacket.outgoing(local,remote,true, 8, 27244, 3249239181l, 3001189225l, p, 12, p.length - 12);
+        assertEquals(true, packet.getMarker());
     }
 
     @Test
     public void testWrapTime() {
         long s = System.nanoTime();
+        RtpPacket packet = null;
+
+
         for (int i = 0; i < 1000; i++) {
-            rtpPacket.wrap(false, 8, 27244, 3249239181l, 3001189225l, p, 12, p.length - 12);
+            packet = RtpPacket.outgoing(local,remote,false, 8, 27244, 3249239181l, 3001189225l, p, 12, p.length - 12);
         }
         long d = System.nanoTime() - s;
         System.out.println("Execution time=" + d);

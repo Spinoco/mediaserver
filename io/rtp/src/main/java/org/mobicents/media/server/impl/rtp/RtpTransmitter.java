@@ -21,6 +21,7 @@
 package org.mobicents.media.server.impl.rtp;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.PortUnreachableException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
@@ -55,9 +56,7 @@ public class RtpTransmitter {
 	private final DtmfOutput dtmfOutput;
 
 	// Packet representations with internal buffers
-	private final RtpPacket rtpPacket = new RtpPacket(RtpPacket.RTP_PACKET_MAX_SIZE, true);
-	private final RtpPacket oobPacket = new RtpPacket(RtpPacket.RTP_PACKET_MAX_SIZE, true);
-	
+
 	// WebRTC
 	private DtlsHandler dtlsHandler;
 	private boolean secure;
@@ -96,6 +95,7 @@ public class RtpTransmitter {
 	}
 	
 	public void enableSrtp(final DtlsHandler handler) {
+		System.out.println("XXXY ENABLING SRTP" + handler + " (" + this + ")");
 		this.secure = true;
 		this.dtlsHandler = handler;
 	}
@@ -148,30 +148,32 @@ public class RtpTransmitter {
 		if(this.secure && !this.dtlsHandler.isHandshakeComplete()) {
 			return;
 		}
-		
-		// Secure RTP packet. WebRTC calls only. 
+
+		// Secure RTP packet. WebRTC calls only.
 		// SRTP handler returns null if an error occurs
-		ByteBuffer buffer = packet.getBuffer();
 		if (this.secure) {
-			byte[] rtpData = new byte[buffer.limit()];
-			buffer.get(rtpData, 0, rtpData.length);
-			byte[] srtpData = this.dtlsHandler.encodeRTP(rtpData, 0, rtpData.length);
-			if(srtpData == null || srtpData.length == 0) {
-				LOGGER.warn("Could not secure RTP packet! Packet dropped.");
-				return;
+			ByteBuffer srtpData = packet.dtlsEncodeToSend(this.dtlsHandler);
+			if(srtpData != null) {
+				channel.send(srtpData, channel.socket().getRemoteSocketAddress());
+				statistics.onRtpSent(packet);
 			} else {
-				buffer.clear();
-				buffer.put(srtpData);
-				buffer.flip();
+				LOGGER.warn("Could not secure RTP packet! Packet dropped :  " + packet);
 			}
-		}
-		
-		if(packet != null) {
-			channel.send(buffer, channel.socket().getRemoteSocketAddress());
-			// send RTP packet to the network and update statistics for RTCP
+
+			ByteBuffer securedContent = packet.dtlsEncodeToSend(this.dtlsHandler);
+
+			if(securedContent != null) {
+				channel.send(securedContent, channel.socket().getRemoteSocketAddress());
+				// send RTP packet to the network and update statistics for RTCP
+				statistics.onRtpSent(packet);
+			}
+		} else {
+			packet.sendTo(channel);
 			statistics.onRtpSent(packet);
-			
 		}
+
+
+
 	}
 	
 	public void sendDtmf(Frame frame) {
@@ -190,11 +192,22 @@ public class RtpTransmitter {
 		dtmfTimestamp = frame.getTimestamp() / 1000000L;
 		// convert to rtp time units
 		dtmfTimestamp = rtpClock.convertToRtpTime(dtmfTimestamp);
-		oobPacket.wrap(false, AVProfile.telephoneEventsID, this.sequenceNumber++, dtmfTimestamp, this.statistics.getSsrc(), frame.getData(), frame.getOffset(), frame.getLength());
-
-		frame.recycle();
-		
 		try {
+			RtpPacket oobPacket = RtpPacket.outgoing(
+					this.channel.getLocalAddress()
+					, this.channel.getRemoteAddress()
+					, false
+					, AVProfile.telephoneEventsID
+					, this.sequenceNumber++
+					, dtmfTimestamp
+					, this.statistics.getSsrc()
+					, frame.getData()
+					, frame.getOffset()
+					, frame.getLength()
+			);
+
+			frame.recycle();
+
 			if(isConnected()) {
 				send(oobPacket);
 			}
@@ -240,10 +253,23 @@ public class RtpTransmitter {
 		timestamp = frame.getTimestamp() / 1000000L;
 		// convert to rtp time units
 		timestamp = rtpClock.convertToRtpTime(timestamp);
-		rtpPacket.wrap(false, currentFormat.getID(), this.sequenceNumber++, timestamp, this.statistics.getSsrc(), frame.getData(), frame.getOffset(), frame.getLength());
 
-		frame.recycle();
 		try {
+			RtpPacket rtpPacket = RtpPacket.outgoing(
+					this.channel.getLocalAddress()
+					, this.channel.getRemoteAddress()
+					, false
+					, currentFormat.getID()
+					, this.sequenceNumber++
+					, timestamp
+					, this.statistics.getSsrc()
+					, frame.getData()
+					, frame.getOffset()
+					, frame.getLength()
+			);
+
+			frame.recycle();
+
 			if (isConnected()) {
 				send(rtpPacket);
 			}

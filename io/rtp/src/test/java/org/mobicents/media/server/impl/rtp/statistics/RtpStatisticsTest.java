@@ -42,6 +42,8 @@ import org.mobicents.media.server.impl.rtp.MockWallClock;
 import org.mobicents.media.server.impl.rtp.statistics.RtpMember;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
 
+import java.net.InetSocketAddress;
+
 /**
  * 
  * @author Henrique Rosa
@@ -54,6 +56,9 @@ public class RtpStatisticsTest {
 	
 	private final MockWallClock wallClock;
 	private final RtpClock rtpClock;
+
+	private InetSocketAddress local = new InetSocketAddress(7777);
+	private InetSocketAddress remote = new InetSocketAddress(7778);
 	
 	public RtpStatisticsTest() {
 		wallClock = new MockWallClock();
@@ -87,10 +92,10 @@ public class RtpStatisticsTest {
 	public void testOnRtpSent() {
 		// given
 		RtpStatistics stats = new RtpStatistics(rtpClock, SSRC, CNAME);
-		RtpPacket p1 = new RtpPacket(172, false);
-		RtpPacket p2 = new RtpPacket(172, false);
-		p1.wrap(false, 8, 1, 160 * 1, stats.getSsrc(), new byte[160], 0, 160);
-		p2.wrap(false, 8, 1, 160 * 2, stats.getSsrc(), new byte[160], 0, 160);
+		RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, stats.getSsrc(), new byte[160], 0, 160); //new RtpPacket(172, false);
+		RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 2, stats.getSsrc(), new byte[160], 0, 160); //new RtpPacket(172, false);
+//		p1.wrap(false, 8, 1, 160 * 1, stats.getSsrc(), new byte[160], 0, 160);
+//		p2.wrap(false, 8, 1, 160 * 2, stats.getSsrc(), new byte[160], 0, 160);
 		
 		// when
 		stats.onRtpSent(p1);
@@ -110,10 +115,9 @@ public class RtpStatisticsTest {
 	public void testOnRtpReceive() {
 		// given
 		RtpStatistics stats = new RtpStatistics(rtpClock, SSRC, CNAME);
-		RtpPacket p1 = new RtpPacket(172, false);
-		RtpPacket p2 = new RtpPacket(172, false);
-		p1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-		p2.wrap(false, 8, 1, 160 * 2, 456, new byte[160], 0, 160);
+		RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 2, 456, new byte[160], 0, 160);
+
 		
 		// when
 		stats.onRtpReceive(p1);
@@ -167,10 +171,8 @@ public class RtpStatisticsTest {
 		double initialAvgSize = stats.getRtcpAvgSize();
 		stats.setRtcpPacketType(RtcpPacketType.RTCP_REPORT);
 		
-		RtpPacket rtp1 = new RtpPacket(172, false);
-		RtpPacket rtp2 = new RtpPacket(172, false);
-		rtp1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-		rtp2.wrap(false, 8, 1, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket rtp1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket rtp2 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 2, 123, new byte[160], 0, 160);
 		
 		TimeStamp ntp = new TimeStamp(System.currentTimeMillis());
 		RtcpSenderReport sr = new RtcpSenderReport(false, 123, ntp.getSeconds(), ntp.getFraction(), 160 * 1, 5, 5 * 160);
@@ -208,10 +210,8 @@ public class RtpStatisticsTest {
 		double initialAvgSize = stats.getRtcpAvgSize();
 		stats.setRtcpPacketType(RtcpPacketType.RTCP_BYE);
 		
-		RtpPacket rtp1 = new RtpPacket(172, false);
-		RtpPacket rtp2 = new RtpPacket(172, false);
-		rtp1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-		rtp2.wrap(false, 8, 1, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket rtp1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket rtp2 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 2, 123, new byte[160], 0, 160);
 		
 		TimeStamp ntp = new TimeStamp(System.currentTimeMillis());
 		RtcpSenderReport sr = new RtcpSenderReport(false, 123, ntp.getSeconds(), ntp.getFraction(), 160 * 1, 5, 5 * 160);
@@ -255,12 +255,9 @@ public class RtpStatisticsTest {
 		double initialAvgSize = stats.getRtcpAvgSize();
 		stats.setRtcpPacketType(RtcpPacketType.RTCP_REPORT);
 		
-		RtpPacket rtp1 = new RtpPacket(172, false);
-		RtpPacket rtp2 = new RtpPacket(172, false);
-		RtpPacket rtp3 = new RtpPacket(172, false);
-		rtp1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-		rtp2.wrap(false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-		rtp3.wrap(false, 8, 3, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket rtp1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket rtp2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket rtp3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 2, 123, new byte[160], 0, 160);
 		
 		TimeStamp ntp = new TimeStamp(System.currentTimeMillis());
 		RtcpSenderReport sr = new RtcpSenderReport(false, 123, ntp.getSeconds(), ntp.getFraction(), 160 * 1, 5, 5 * 160);
@@ -316,12 +313,10 @@ public class RtpStatisticsTest {
 		double initialAvgSize = stats.getRtcpAvgSize();
 		stats.setRtcpPacketType(RtcpPacketType.RTCP_REPORT);
 		
-		RtpPacket rtp1 = new RtpPacket(172, false);
-		RtpPacket rtp2 = new RtpPacket(172, false);
-		RtpPacket rtp3 = new RtpPacket(172, false);
-		rtp1.wrap(false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-		rtp2.wrap(false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-		rtp3.wrap(false, 8, 3, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket rtp1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
+		RtpPacket rtp2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
+		RtpPacket rtp3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 2, 123, new byte[160], 0, 160);
+
 		
 		TimeStamp ntp = new TimeStamp(System.currentTimeMillis());
 		RtcpSenderReport sr = new RtcpSenderReport(false, 123, ntp.getSeconds(), ntp.getFraction(), 160 * 1, 5, 5 * 160);

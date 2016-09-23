@@ -251,76 +251,65 @@ public class JitterBuffer implements Serializable {
 				}
 			}
 
-			Frame f = Memory.allocate(packet.getPayloadLength());
-			// put packet into buffer irrespective of its sequence number
-			f.setHeader(null);
-			f.setSequenceNumber(packet.getSeqNumber());
-			// here time is in milliseconds
-			f.setTimestamp(rtpClock.convertToAbsoluteTime(packet.getTimestamp()));
-			f.setOffset(0);
-			f.setLength(packet.getPayloadLength());
-			packet.getPayload(f.getData(), 0);
 
-			// set format
-			f.setFormat(this.format.getFormat());
 
-			// make checks only if have packet
-			if (f != null) {
+			Frame f = packet.toFrame(rtpClock, this.format);
 
-				droppedInRaw = 0;
 
-				// find correct position to insert a packet
-				// use timestamp since its always positive
-				int currIndex = queue.size() - 1;
-				while (currIndex >= 0 && queue.get(currIndex).getTimestamp() > f.getTimestamp()) {
-					currIndex--;
-				}
+			droppedInRaw = 0;
 
-				// check for duplicate packet
-				if (currIndex >= 0 && queue.get(currIndex).getSequenceNumber() == f.getSequenceNumber()) {
-					return;
-				}
+			// find correct position to insert a packet
+			// use timestamp since its always positive
+			int currIndex = queue.size() - 1;
+			while (currIndex >= 0 && queue.get(currIndex).getTimestamp() > f.getTimestamp()) {
+				currIndex--;
+			}
 
-				queue.add(currIndex + 1, f);
+			// check for duplicate packet
+			if (currIndex >= 0 && queue.get(currIndex).getSequenceNumber() == f.getSequenceNumber()) {
+				return;
+			}
 
-				// recalculate duration of each frame in queue and overall duration
-				// since we could insert the frame in the middle of the queue
-				duration = 0;
-				if (queue.size() > 1) {
-					duration = queue.get(queue.size() - 1).getTimestamp() - queue.get(0).getTimestamp();
-				}
+			queue.add(currIndex + 1, f);
 
-				for (int i = 0; i < queue.size() - 1; i++) {
-					// duration measured by wall clock
-					long d = queue.get(i + 1).getTimestamp() - queue.get(i).getTimestamp();
-					// in case of RFC2833 event timestamp remains same
-					queue.get(i).setDuration(d > 0 ? d : 0);
-				}
+			// recalculate duration of each frame in queue and overall duration
+			// since we could insert the frame in the middle of the queue
+			duration = 0;
+			if (queue.size() > 1) {
+				duration = queue.get(queue.size() - 1).getTimestamp() - queue.get(0).getTimestamp();
+			}
 
-				// if overall duration is negative we have some mess here,try to
-				// reset
-				if (duration < 0 && queue.size() > 1) {
-					logger.warn("Something messy happened. Reseting jitter buffer!");
-					reset();
-					return;
-				}
+			for (int i = 0; i < queue.size() - 1; i++) {
+				// duration measured by wall clock
+				long d = queue.get(i + 1).getTimestamp() - queue.get(i).getTimestamp();
+				// in case of RFC2833 event timestamp remains same
+				queue.get(i).setDuration(d > 0 ? d : 0);
+			}
 
-				// overflow?
-				// only now remove packet if overflow , possibly the same packet we just received
-				if (queue.size() > QUEUE_SIZE) {
-					logger.warn("Buffer overflow!");
-					dropCount++;
-					queue.remove(0).recycle();
-				}
+			// if overall duration is negative we have some mess here,try to
+			// reset
+			if (duration < 0 && queue.size() > 1) {
+				logger.warn("Something messy happened. Reseting jitter buffer!");
+				reset();
+				return;
+			}
 
-				// check if this buffer already full
-				if (!ready) {
-					ready = !useBuffer || (duration >= jitterBufferSize && queue.size() > 1);
-					if (ready && listener != null) {
-						listener.onFill();
-					}
+			// overflow?
+			// only now remove packet if overflow , possibly the same packet we just received
+			if (queue.size() > QUEUE_SIZE) {
+				logger.warn("Buffer overflow!");
+				dropCount++;
+				queue.remove(0).recycle();
+			}
+
+			// check if this buffer already full
+			if (!ready) {
+				ready = !useBuffer || (duration >= jitterBufferSize && queue.size() > 1);
+				if (ready && listener != null) {
+					listener.onFill();
 				}
 			}
+
 		} finally {
 			LOCK.unlock();
 		}
