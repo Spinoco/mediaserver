@@ -452,13 +452,13 @@ public class RtpPacket implements Serializable {
     }
     
     /**
-     * Function that wil encode with dtls payload of this packet and returns beytebuffer of this packet that can be used
+     * Function that wil encode with dtls this packet and returns bytebuffer of this packet that can be used
      * to send packet to the network.
      * @param dtlsHandler
      * @return null, if decoding of rtp data failed
      */
     public ByteBuffer dtlsEncodeToSend(DtlsHandler dtlsHandler) {
-        byte[] rtpData = payloadToArray();
+        byte[] rtpData = toArray();
         byte[] srtpData = dtlsHandler.encodeRTP(rtpData, 0, rtpData.length);
         if(srtpData == null || srtpData.length == 0) {
             logger.warn("Could not secure RTP packet! Packet dropped: " + this.toString());
