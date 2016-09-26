@@ -193,7 +193,7 @@ public abstract class BaseConnection implements Connection {
 		synchronized (stateMonitor) {
 			// check current state
 			if (this.state != ConnectionState.NULL) {
-				throw new IllegalStateException("Connection already bound");
+				throw new IllegalStateException("Connection already bound: " + this.toString());
 			}
 
 			// execute call back
@@ -210,11 +210,11 @@ public abstract class BaseConnection implements Connection {
 	public void join() throws Exception {
 		synchronized (stateMonitor) {
 			if (this.state == ConnectionState.NULL) {
-				throw new IllegalStateException("Connection not bound yet");
+				throw new IllegalStateException("Connection not bound yet: " + this.toString() );
 			}
 
 			if (this.state == ConnectionState.OPEN) {
-				throw new IllegalStateException("Connection opened already");
+				throw new IllegalStateException("Connection opened already: " + this.toString() );
 			}
 
 			// execute callback
@@ -383,4 +383,16 @@ public abstract class BaseConnection implements Connection {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return ( this.getClass().getSimpleName() +
+				"[ textId= " + this.getTextualId() +
+				", local=" + this.getIsLocal() +
+				", state=" + this.getState() +
+				", mode=" + this.getMode() +
+				", endpoint= " + this.getEndpoint() +
+				", endpointId=" + (this.getEndpoint() != null ? this.getEndpoint().getLocalName() : "N/A") +
+				"]"
+		);
+	}
 }

@@ -95,7 +95,6 @@ public class RtpTransmitter {
 	}
 	
 	public void enableSrtp(final DtlsHandler handler) {
-		System.out.println("XXXY ENABLING SRTP" + handler + " (" + this + ")");
 		this.secure = true;
 		this.dtlsHandler = handler;
 	}
