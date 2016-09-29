@@ -284,6 +284,14 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
     }
 
     public void handshake() {
+        try {
+            logger.info("Starting DTLS Handshake: " +
+                    " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
+                    " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
+                    " localFingerPrint: " + DtlsHandler.this.localFingerprint +
+                    " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
+            );
+        } catch (Throwable ex) {}
         if (!handshaking && !handshakeComplete) {
             this.handshaking = true;
             this.startTime = System.currentTimeMillis();
@@ -386,13 +394,26 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         // https://telestax.atlassian.net/browse/MEDIA-48
         if (this.hasTimeout()) {
             close();
-            throw new IllegalStateException("Handshake is taking too long! (>" + MAX_DELAY + "ms");
+            logger.error("DTLS Handshake took too long " +(System.currentTimeMillis() - this.startTime)+" (>" + MAX_DELAY + "ms): " +
+                    " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
+                    " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
+                    " localFingerPrint: " + DtlsHandler.this.localFingerprint +
+                    " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
+            );
+            throw new IllegalStateException("Handshake is taking too long!:"+(System.currentTimeMillis() - this.startTime)+" (>" + MAX_DELAY + "ms): ");
         }
 
         int attempts = 20;
         do {
             ByteBuffer data = this.rxQueue.poll();
             if (data != null) {
+                logger.info("DTLS Handshake packet received delta: " +(System.currentTimeMillis() - this.startTime)+"ms " +
+                        " attempt: " + attempts +
+                        " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
+                        " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
+                        " localFingerPrint: " + DtlsHandler.this.localFingerprint +
+                        " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
+                );
                 data.get(buf, off, data.limit());
                 return data.limit();
             }
@@ -419,7 +440,12 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                 logger.warn("Handler skipped send operation because channel is not open or connected.");
             }
         } else {
-            logger.warn("Handler has timed out so send operation will be skipped.");
+            logger.warn("Handler has timed out so send operation will be skipped: " +(System.currentTimeMillis() - this.startTime)+" (>" + MAX_DELAY + "ms): " +
+                    " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
+                    " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
+                    " localFingerPrint: " + DtlsHandler.this.localFingerprint +
+                    " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
+            );
         }
     }
 
@@ -437,6 +463,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
     private class HandshakeWorker implements Runnable {
 
         public void run() {
+            int sz = DtlsHandler.this.rxQueue.size();
             DtlsHandler.this.rxQueue.clear();
             SecureRandom secureRandom = new SecureRandom();
             DTLSServerProtocol serverProtocol = new DTLSServerProtocol(secureRandom);
@@ -444,6 +471,16 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
             try {
                 // Perform the handshake in a non-blocking fashion
                 serverProtocol.accept(server, DtlsHandler.this);
+
+                DtlsHandler.logger.info("Handshake completed in : " + (System.currentTimeMillis() - DtlsHandler.this.startTime) + " ms (" +
+                        " qSz: " + sz +
+                        " local: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getLocalAddress().toString() : "null") +
+                        " remote: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getRemoteAddress().toString() : "null") +
+                        " localFingerPrint: " + DtlsHandler.this.localFingerprint +
+                        " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint +
+                        ")"
+                );
+
 
                 // Prepare the shared key to be used in RTP streaming
                 server.prepareSrtpSharedSecret();
@@ -462,8 +499,15 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                 // Warn listeners handshake completed
                 fireHandshakeComplete();
             } catch (Exception e) {
-                logger.error("DTLS handshake failed. Reason:", e);
-
+                try {
+                    logger.error("DTLS handshake failed. Reason:" + e.getMessage() + ": " +
+                                    " qSz: " + sz +
+                                    " local: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getLocalAddress().toString() : "null") +
+                                    " remote: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getRemoteAddress().toString() : "null") +
+                                    " localFingerPrint: " + DtlsHandler.this.localFingerprint +
+                                    " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
+                            , e);
+                } catch (Exception ex) {}
                 // Declare handshake as failed
                 handshakeComplete = false;
                 handshakeFailed = true;

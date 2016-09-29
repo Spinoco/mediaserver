@@ -219,8 +219,16 @@ public class JitterBuffer implements Serializable {
 			}
 
 			if (this.format == null || this.format.getID() != format.getID()) {
+				logger.info("Format has been changed: " +
+						", from: " + (this.format != null ? this.format.toString() : "null")  +
+						", to: " + (format != null ? format.toString() : "null") +
+						", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
+						", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
+						", seq: " + packet.getSeqNumber() +
+						", timestamp: " + packet.getTimestamp()
+				);
 				this.format = format;
-				logger.info("Format has been changed: " + this.format.toString());
+
 			}
 
 			// if this is first packet then synchronize clock
@@ -239,7 +247,13 @@ public class JitterBuffer implements Serializable {
 			// packet is outstanding if its timestamp of arrived packet is less
 			// then consumer media time
 			if (packet.getTimestamp() < this.arrivalDeadLine) {
-				logger.warn("drop packet: dead line=" + arrivalDeadLine + ", packet time=" + packet.getTimestamp() + ", seq=" + packet.getSeqNumber() + ", payload length=" + packet.getPayloadLength() + ", format=" + this.format.toString());
+				logger.warn(
+					"drop packet: dead line=" + arrivalDeadLine +
+							", packet time=" + packet.getTimestamp() +
+							", seq=" + packet.getSeqNumber() +
+							", payload length=" + packet.getPayloadLength() +
+							", format=" + this.format.toString()
+				);
 				dropCount++;
 
 				// checking if not dropping too much
@@ -297,7 +311,13 @@ public class JitterBuffer implements Serializable {
 			// overflow?
 			// only now remove packet if overflow , possibly the same packet we just received
 			if (queue.size() > QUEUE_SIZE) {
-				logger.warn("Buffer overflow!");
+				logger.warn("Buffer overflow!" +
+						" queue: " + queue.size() +
+						", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
+						", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
+						", seq: " + packet.getSeqNumber() +
+						", timestamp: " + packet.getTimestamp()
+				);
 				dropCount++;
 				queue.remove(0).recycle();
 			}

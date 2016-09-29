@@ -211,7 +211,7 @@ public class IceHandler implements PacketHandler {
             if (!this.candidateSelected.get()) {
                 this.candidateSelected.set(true);
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Selected candidate " + remotePeer.toString());
+                    logger.debug("Selected candidate remote: " + remotePeer.toString() + ", local: " + localPeer.toString());
                 }
                 this.iceListener.onSelectedCandidates(new SelectedCandidatesEvent(remotePeer));
             }

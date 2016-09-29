@@ -258,7 +258,10 @@ public class RtpHandler implements PacketHandler {
 
 			// Restart jitter buffer for first received packet
 			if (this.statistics.getRtpPacketsReceived() == 0) {
-				logger.info("Restarting jitter buffer");
+				logger.info("Restarting jitter buffer" +
+					" local= " + localPeer +
+					", remote= " + remotePeer
+				);
 				this.jitterBuffer.restart();
 			}
 
