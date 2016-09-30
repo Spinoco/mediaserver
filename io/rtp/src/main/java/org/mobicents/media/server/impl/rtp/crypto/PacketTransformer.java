@@ -8,6 +8,8 @@
 package org.mobicents.media.server.impl.rtp.crypto;
 
 
+import java.net.SocketAddress;
+
 /**
  * Encapsulate the concept of packet transformation. Given a packet,
  * <tt>PacketTransformer</tt> can either transform it or reverse the
@@ -25,7 +27,7 @@ public interface PacketTransformer {
 	 *            the packet to be transformed
 	 * @return The transformed packet. Returns null if the packet cannot be transformed.
 	 */
-	public byte[] transform(byte[] pkt);
+	public byte[] transform(byte[] pkt, SocketAddress localPeer, SocketAddress remotePeer);
 
 	/**
 	 * Transforms a specific non-secure packet.
@@ -39,7 +41,7 @@ public interface PacketTransformer {
 	 * @return The transformed packet. Returns null if the packet cannot be
 	 *         transformed.
 	 */
-	public byte[] transform(byte[] pkt, int offset, int length);
+	public byte[] transform(byte[] pkt, int offset, int length, SocketAddress localPeer, SocketAddress remotePeer);
 
 	/**
 	 * Reverse-transforms a specific packet (i.e. transforms a transformed
@@ -49,7 +51,7 @@ public interface PacketTransformer {
 	 *            the transformed packet to be restored
 	 * @return Whether the packet was successfully restored
 	 */
-	public byte[] reverseTransform(byte[] pkt);
+	public byte[] reverseTransform(byte[] pkt, SocketAddress localPeer, SocketAddress remotePeer);
 
 	/**
 	 * Reverse-transforms a specific packet (i.e. transforms a transformed
@@ -63,7 +65,7 @@ public interface PacketTransformer {
 	 *            the length of data in the packet
 	 * @return The restored packet. Returns null if packet cannot be restored.
 	 */
-	public byte[] reverseTransform(byte[] pkt, int offset, int length);
+	public byte[] reverseTransform(byte[] pkt, int offset, int length, SocketAddress localPeer, SocketAddress remotePeer);
 
 	/**
 	 * Close the transformer and underlying transform engine.

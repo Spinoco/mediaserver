@@ -91,7 +91,7 @@ public class SRTPCipherF8
         maskedKey = null;
     }
 
-    public static void process(BlockCipher cipher, ByteBuffer data, int off, int len,
+    public static void process(BlockCipher cipher, byte[] data, int off, int len,
             byte[] iv, BlockCipher f8Cipher)
     {
         F8Context f8ctx = new SRTPCipherF8().new F8Context();
@@ -144,7 +144,7 @@ public class SRTPCipherF8
      *            length of the input data
      */
     private static void processBlock(BlockCipher cipher, F8Context f8ctx,
-            ByteBuffer in, int inOff, ByteBuffer out, int outOff, int len) 
+            byte[] in, int inOff, byte[] out, int outOff, int len)
     {
         /*
          * XOR the previous key stream with IV'
@@ -173,6 +173,6 @@ public class SRTPCipherF8
          * the cipher text.
          */
         for (int i = 0; i < len; i++)
-            out.put(outOff + i, (byte) (in.get(inOff + i) ^ f8ctx.S[i]));
+            out[outOff + i] = (byte) (in[inOff + i] ^ f8ctx.S[i]);
     }
 }

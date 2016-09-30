@@ -350,7 +350,7 @@ public class RtcpHandler implements PacketHandler {
         // Decode the RTCP compound packet
         RtcpPacket rtcpPacket = new RtcpPacket();
         if (this.secure) {
-            byte[] decoded = this.dtlsHandler.decodeRTCP(packet, offset, dataLength);
+            byte[] decoded = this.dtlsHandler.decodeRTCP(packet, offset, dataLength, localPeer, remotePeer);
             if (decoded == null || decoded.length == 0) {
                 logger.warn("Could not decode incoming SRTCP packet. Packet will be dropped.");
                 return null;
@@ -410,7 +410,7 @@ public class RtcpHandler implements PacketHandler {
 
             // If channel is secure, convert RTCP packet to SRTCP. WebRTC calls only.
             if (this.secure) {
-                data = this.dtlsHandler.encodeRTCP(data, 0, dataLength);
+                data = this.dtlsHandler.encodeRTCP(data, 0, dataLength, channel.getLocalAddress(), channel.getRemoteAddress());
                 dataLength = data.length;
             }
 

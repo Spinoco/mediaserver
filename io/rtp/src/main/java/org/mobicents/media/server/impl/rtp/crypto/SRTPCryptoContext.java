@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.net.SyslogAppender;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.Mac;
 import org.bouncycastle.crypto.digests.SHA1Digest;
@@ -19,6 +20,8 @@ import org.bouncycastle.crypto.engines.TwofishEngine;
 import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.mobicents.media.server.impl.rtp.RtpPacket;
+
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * SRTPCryptoContext class is the core class of SRTP implementation. There can
@@ -354,29 +357,31 @@ public class SRTPCryptoContext {
 	 * then we shall not use SRTP TransformConnector. We should use the original
 	 * method (RTPManager managed transportation) instead.
 	 * 
-	 * @param pkt
+	 * @param decrypted
 	 *            the RTP packet that is going to be sent out
 	 */
-	public void transformPacket(RawPacket pkt) {
+	public RawPacket transformPacket(RawPacket decrypted) {
+		RawPacket encrypted = null;
 		/* Encrypt the packet using Counter Mode encryption */
 		if (policy.getEncType() == SRTPPolicy.AESCM_ENCRYPTION || policy.getEncType() == SRTPPolicy.TWOFISH_ENCRYPTION) {
-			processPacketAESCM(pkt);
+			encrypted = processPacketAESCM(decrypted);
 		} else if (policy.getEncType() == SRTPPolicy.AESF8_ENCRYPTION || policy.getEncType() == SRTPPolicy.TWOFISHF8_ENCRYPTION) {
 			/* Encrypt the packet using F8 Mode encryption */
-			processPacketAESF8(pkt);
+			encrypted = processPacketAESF8(decrypted);
 		}
 
 		/* Authenticate the packet */
 		if (policy.getAuthType() != SRTPPolicy.NULL_AUTHENTICATION) {
-			authenticatePacketHMCSHA1(pkt, roc);
-			pkt.append(tagStore, policy.getAuthTagLength());
+			byte[] tag = authenticatePacketHMCSHA1(encrypted, roc);
+			encrypted = encrypted.append(tag, policy.getAuthTagLength());
 		}
 
 		/* Update the ROC if necessary */
-		int seqNo = pkt.getSequenceNumber();
+		int seqNo = decrypted.getSequenceNumber();
 		if (seqNo == 0xFFFF) {
 			roc++;
 		}
+		return encrypted;
 	}
 
 	/**
@@ -393,13 +398,12 @@ public class SRTPCryptoContext {
 	 * then we shall not use SRTP TransformConnector. We should use the original
 	 * method (RTPManager managed transportation) instead.
 	 * 
-	 * @param pkt
-	 *            the RTP packet that is just received
-	 * @return true if the packet can be accepted false if the packet failed
-	 *         authentication or failed replay check
+	 * @param in  the RTP packet that is just received
+	 * @return decrypted packet or null, if the decryption failed due to authentication or replay check
 	 */
-	public boolean reverseTransformPacket(RawPacket pkt) {
-		int seqNo = pkt.getSequenceNumber();
+	public RawPacket reverseTransformPacket(RawPacket in) {
+		RawPacket packet = in;
+		int seqNo = packet.getSequenceNumber();
 
 		if (!seqNumSet) {
 			seqNumSet = true;
@@ -412,7 +416,7 @@ public class SRTPCryptoContext {
 
 		// Replay control
 		if (!checkReplay(seqNo, guessedIndex)) {
-			return false;
+			return null;
 		}
 		
 		// Authenticate packet
@@ -420,49 +424,57 @@ public class SRTPCryptoContext {
 			int tagLength = policy.getAuthTagLength();
 
 			// get original authentication and store in tempStore
-			pkt.readRegionToBuff(pkt.getLength() - tagLength, tagLength, tempStore);
-			pkt.shrink(tagLength);
+			// later this will be compared with computed authentication
+			packet.get(packet.getLength() - tagLength, tempStore, 0, tagLength);
+			packet = packet.shrink(tagLength);
 
 			// save computed authentication in tagStore
-			authenticatePacketHMCSHA1(pkt, guessedROC);
+			byte[] computedTag = authenticatePacketHMCSHA1(packet, guessedROC);
 
 			for (int i = 0; i < tagLength; i++) {
-				if ((tempStore[i] & 0xff) != (tagStore[i] & 0xff)) {
-					return false;
+				if ((tempStore[i] & 0xff) != (computedTag[i] & 0xff)) {
+					logger.error("Failed to process SRTP packet, packet tags does not match: "+
+							"received=" + DatatypeConverter.printHexBinary(tempStore) +
+							", expected=" + DatatypeConverter.printHexBinary(computedTag) +
+							", packet=" + packet
+					);
+					return null;
 				}
 			}
 		}
 
+		RawPacket decrypted = null;
 		// Decrypt packet
 		switch (policy.getEncType()) {
 		case SRTPPolicy.AESCM_ENCRYPTION:
 		case SRTPPolicy.TWOFISH_ENCRYPTION:
 			// using Counter Mode encryption
-			processPacketAESCM(pkt);
+			decrypted = processPacketAESCM(packet);
 			break;
 
 		case SRTPPolicy.AESF8_ENCRYPTION:
 		case SRTPPolicy.TWOFISHF8_ENCRYPTION:
 			// using F8 Mode encryption
-			processPacketAESF8(pkt);
+			decrypted = processPacketAESF8(packet);
 			break;
 
 		default:
-			return false;
+			return null;
 		}
 		update(seqNo, guessedIndex);
-		return true;
+		return decrypted;
 	}
 
+	byte[] tempBuffer = new byte[RtpPacket.RTP_PACKET_MAX_SIZE];
+
 	/**
-	 * Perform Counter Mode AES encryption / decryption
+	 * Perform Counter Mode AES encryption
 	 * 
-	 * @param pkt
-	 *            the RTP packet to be encrypted / decrypted
+	 * @param packet the RTP packet to be encrypted / decrypted
 	 */
-	public void processPacketAESCM(RawPacket pkt) {
-		long ssrc = pkt.getSSRC();
-		int seqNo = pkt.getSequenceNumber();
+	public RawPacket processPacketAESCM(RawPacket packet) {
+		long ssrc = packet.getSSRC();
+		int seqNo = packet.getSequenceNumber();
 		long index = ((long) this.roc << 16) | seqNo;
 
 		ivStore[0] = saltKey[0];
@@ -481,24 +493,23 @@ public class SRTPCryptoContext {
 
 		ivStore[14] = ivStore[15] = 0;
 
-		final int payloadOffset = pkt.getHeaderLength();
-		final int payloadLength = pkt.getPayloadLength();
+		final int payloadOffset = packet.getHeaderLength();
+		final int payloadLength = packet.getPayloadLength();
+		byte[] data = packet.getData();
 
-		cipherCtr.process(cipher, pkt.getBuffer(), payloadOffset, payloadLength, ivStore);
+		cipherCtr.process(cipher, data, payloadOffset, payloadLength, ivStore);
+		return packet.withData(data);
 	}
 
 	/**
-	 * Perform F8 Mode AES encryption / decryption
+	 * Perform F8 Mode AES encryption
 	 * 
-	 * @param pkt
-	 *            the RTP packet to be encrypted / decrypted
+	 * @param packet  the RTP packet to be encrypted / decrypted
 	 */
-	public void processPacketAESF8(RawPacket pkt) {
+	public RawPacket processPacketAESF8(RawPacket packet) {
 		// 11 bytes of the RTP header are the 11 bytes of the iv
 		// the first byte of the RTP header is not used.
-		ByteBuffer buf = pkt.getBuffer();
-		buf.compact();
-		buf.get(ivStore, 0, 12);
+		packet.get(0,ivStore,0,12);
 		ivStore[0] = 0;
 
 		// set the ROC in network order into IV
@@ -507,39 +518,41 @@ public class SRTPCryptoContext {
 		ivStore[14] = (byte) (this.roc >> 8);
 		ivStore[15] = (byte) this.roc;
 
-		final int payloadOffset = pkt.getHeaderLength();
-		final int payloadLength = pkt.getPayloadLength();
+		final int payloadOffset = packet.getHeaderLength();
+		final int payloadLength = packet.getPayloadLength();
+		byte[] data = packet.getData();
 
-		SRTPCipherF8.process(cipher, pkt.getBuffer(), payloadOffset, payloadLength, ivStore, cipherF8);
+		SRTPCipherF8.process(cipher, data, payloadOffset, payloadLength, ivStore, cipherF8);
+		return packet.withData(data);
+
+
 	}
 
-	byte[] tempBuffer = new byte[RtpPacket.RTP_PACKET_MAX_SIZE];
+
 
 	/**
 	 * Authenticate a packet. Calculated authentication tag is returned.
 	 * 
-	 * @param pkt
+	 * @param encrypted
 	 *            the RTP packet to be authenticated
 	 * @param rocIn
 	 *            Roll-Over-Counter
 	 */
-	private void authenticatePacketHMCSHA1(RawPacket pkt, int rocIn) {
-		ByteBuffer buf = pkt.getBuffer();
-		buf.rewind();
-		int len = buf.remaining();
-		try {
-			buf.get(tempBuffer, 0, len);
-		} catch (Exception ex) {
-			logger.error("Failed to get into temp buffer (rethrow): " + len + "buf pos: " + buf.position() + ", buf cap: " + buf.capacity() + "buf limit" + buf.limit(), ex);
-			throw ex;
-		}
-		mac.update(tempBuffer, 0, len);
+	private byte[] authenticatePacketHMCSHA1(RawPacket encrypted, int rocIn) {
+		byte[] tag = new byte[mac.getMacSize()];
+		int len = encrypted.getLength();
+		encrypted.get(0,tempBuffer,0,len);
+		mac.update(tempBuffer,0,len);
+
 		rbStore[0] = (byte) (rocIn >> 24);
 		rbStore[1] = (byte) (rocIn >> 16);
 		rbStore[2] = (byte) (rocIn >> 8);
 		rbStore[3] = (byte) rocIn;
 		mac.update(rbStore, 0, rbStore.length);
-		mac.doFinal(tagStore, 0);
+		mac.doFinal(tag, 0);
+
+		return tag;
+
 	}
 
 	/**

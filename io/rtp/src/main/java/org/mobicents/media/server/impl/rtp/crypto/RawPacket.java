@@ -6,9 +6,10 @@
  */
 package org.mobicents.media.server.impl.rtp.crypto;
 
+import javax.xml.bind.DatatypeConverter;
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 
-import org.mobicents.media.server.impl.rtp.RtpPacket;
 
 /**
  * When using TransformConnector, a RTP/RTCP packet is represented using
@@ -30,7 +31,7 @@ import org.mobicents.media.server.impl.rtp.RtpPacket;
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  */
 public class RawPacket {
-    /**
+ /**
      * The size of the extension header as defined by RFC 3550.
      */
     public static final int EXT_HEADER_SIZE = 4;
@@ -41,79 +42,85 @@ public class RawPacket {
     public static final int FIXED_HEADER_SIZE = 12;
 
     /**
-     * Byte array storing the content of this Packet
+     * Byte array storing the content of this Packet. Note this is never mutated, position is always at 0
      */
-    private ByteBuffer buffer;
+     private ByteBuffer buffer;
 
-    /**
-     * Initializes a new empty <tt>RawPacket</tt> instance.
-     */
-    public RawPacket() {
-    	this.buffer = ByteBuffer.allocateDirect(RtpPacket.RTP_PACKET_MAX_SIZE);
+    private SocketAddress localPeer;
+    private SocketAddress remotePeer;
+
+
+    /** RawPacket(data,0,data.length) **/
+    public RawPacket(byte[] data, SocketAddress localPeer, SocketAddress remotePeer) {
+        this.buffer =  ByteBuffer.wrap(data);
+        this.localPeer = localPeer;
+        this.remotePeer = remotePeer;
     }
-
     /**
      * Initializes a new <tt>RawPacket</tt> instance with a specific
      * <tt>byte</tt> array buffer.
      *
-     * @param buffer the <tt>byte</tt> array to be the buffer of the new
+     * @param data the <tt>byte</tt> array to be the buffer of the new
      * instance 
      * @param offset the offset in <tt>buffer</tt> at which the actual data to
      * be represented by the new instance starts
      * @param length the number of <tt>byte</tt>s in <tt>buffer</tt> which
      * constitute the actual data to be represented by the new instance
      */
-    public RawPacket(byte[] data, int offset, int length) {
-    	this.buffer = ByteBuffer.allocateDirect(RtpPacket.RTP_PACKET_MAX_SIZE);
-        wrap(data, offset, length);
+    public RawPacket(byte[] data, int offset, int length, SocketAddress localPeer, SocketAddress remotePeer) {
+    	this.buffer = ByteBuffer.wrap(data,offset,length);
+        this.localPeer = localPeer;
+        this.remotePeer = remotePeer;
+    }
+
+    public RawPacket(ByteBuffer buff, SocketAddress localPeer, SocketAddress remotePeer) {
+        this.buffer =  buff.duplicate();
+        this.buffer.rewind();
+        this.localPeer = localPeer;
+        this.remotePeer = remotePeer;
     }
     
-    public void wrap(byte[] data, int offset, int length) {
-    	this.buffer.clear();
-    	this.buffer.rewind();
-    	this.buffer.put(data, offset, length);
-    	this.buffer.flip();
-    	this.buffer.rewind();
-    }
-    
+
+
+    /** gets the copy of this packet data **/
     public byte[] getData() {
-    	this.buffer.rewind();
-    	byte[] data = new byte[this.buffer.limit()];
-    	this.buffer.get(data, 0, data.length);
+    	ByteBuffer buff = this.buffer.duplicate();
+        buff.rewind();
+    	byte[] data = new byte[buff.limit()];
+    	buff.get(data, 0, data.length);
     	return data;
     }
-    
+
+    /** copies content of this buffer from `from` to dest, starting at `offset` of length `len` **/
+    public void get(int from, byte[] dest, int offset, int len) {
+        ByteBuffer buff = this.buffer.duplicate();
+        buff.rewind();
+        buff.position(from);
+        buff.get(dest,offset,len);
+    }
+
     /**
      * Append a byte array to the end of the packet. This may change the data
      * buffer of this packet.
      *
+     * Return copy of this packet with new, fresh array backing it.
+     *
      * @param data byte array to append
      * @param len the number of bytes to append
      */
-    public void append(byte[] data, int len) {
+    public RawPacket append(byte[] data, int len) {
         if (data == null || len <= 0 || len > data.length)  {
             throw new IllegalArgumentException("Invalid combination of parameters data and length to append()");
         }
 
-        int oldLimit = buffer.limit();
-        // grow buffer if necessary
-        grow(len);
-        // set positing to begin writing immediately after the last byte of the current buffer
-        buffer.position(oldLimit);
-        // set the buffer limit to exactly the old size plus the new appendix length
-        buffer.limit(oldLimit + len);
-        // append data
-        buffer.put(data, 0, len);
+        ByteBuffer buff = ByteBuffer.allocate(buffer.limit()+len);
+        buff.put(getData());
+        buff.put(data,0,len);
+        buff.rewind();
+
+        return new RawPacket(buff, localPeer, remotePeer);
     }
 
-    /**
-     * Get buffer containing the content of this packet
-     *
-     * @return buffer containing the content of this packet
-     */
-    public ByteBuffer getBuffer() {
-        return this.buffer;
-    }
 
     /**
      * Returns <tt>true</tt> if the extension bit of this packet has been set
@@ -123,8 +130,7 @@ public class RawPacket {
      * and <tt>false</tt> otherwise.
      */
     public boolean getExtensionBit() {
-    	buffer.rewind();
-        return (buffer.get() & 0x10) == 0x10;
+        return (buffer.get(0) & 0x10) == 0x10;
     }
 
     /**
@@ -150,8 +156,7 @@ public class RawPacket {
      * @return the CSRC count for this <tt>RawPacket</tt>.
      */
     public int getCsrcCount() {
-    	this.buffer.rewind();
-        return (this.buffer.get() & 0x0f);
+        return (this.buffer.get(0) & 0x0f);
     }
 
     /**
@@ -182,22 +187,13 @@ public class RawPacket {
      * @return RTP padding size from source RTP packet
      */
     public int getPaddingSize() {
-    	buffer.rewind();
-        if ((this.buffer.get() & 0x20) == 0) {
+        if ((this.buffer.get(0) & 0x20) == 0) {
             return 0;
         }
         return this.buffer.get(this.buffer.limit());
     }
 
-    /**
-     * Get the RTP payload (bytes) of this RTP packet.
-     *
-     * @return an array of <tt>byte</tt>s which represents the RTP payload of
-     * this RTP packet
-     */
-    public byte[] getPayload() {
-        return readRegion(getHeaderLength(), getPayloadLength());
-    }
+
 
     /**
      * Get RTP payload length from a RTP packet
@@ -214,7 +210,6 @@ public class RawPacket {
      * @return RTP payload type of source RTP packet
      */
     public byte getPayloadType() {
-    	buffer.rewind();
         return (byte) (this.buffer.get(1) & (byte)0x7F);
     }
 
@@ -266,35 +261,7 @@ public class RawPacket {
         return readInt(4);
     }
 
-    /**
-     * Grow the internal packet buffer.
-     *
-     * This will change the data buffer of this packet but not the
-     * length of the valid data. Use this to grow the internal buffer
-     * to avoid buffer re-allocations when appending data.
-     *
-     * @param delta number of bytes to grow
-     */
-	public void grow(int delta) {
-		if (delta == 0) {
-			return;
-		}
-		
-		int newLen = buffer.limit() + delta;
-		if (newLen <= buffer.capacity()) {
-			// there is more room in the underlying reserved buffer memory
-			buffer.limit(newLen);
-			return;
-		} else {
-			// create a new bigger buffer
-			ByteBuffer newBuffer = buffer.isDirect() ? ByteBuffer.allocateDirect(newLen) : ByteBuffer.allocate(newLen);
-			buffer.rewind();
-			newBuffer.put(buffer);
-			newBuffer.limit(newLen);
-			// switch to new buffer
-			buffer = newBuffer;
-		}
-	}
+
 
     /**
      * Read a integer from this packet at specified offset
@@ -303,52 +270,13 @@ public class RawPacket {
      * @return the integer to be read
      */
 	public int readInt(int off) {
-		this.buffer.rewind();
-		return ((buffer.get(off++) & 0xFF) << 24)
-				| ((buffer.get(off++) & 0xFF) << 16)
-				| ((buffer.get(off++) & 0xFF) << 8)
-				| (buffer.get(off++) & 0xFF);
+		return ((buffer.get(off) & 0xFF) << 24)
+				| ((buffer.get(off+1) & 0xFF) << 16)
+				| ((buffer.get(off+2) & 0xFF) << 8)
+				| (buffer.get(off+3) & 0xFF);
 	}
 
-    /**
-     * Read a byte region from specified offset with specified length
-     *
-     * @param off start offset of the region to be read
-     * @param len length of the region to be read
-     * @return byte array of [offset, offset + length)
-     */
-    public byte[] readRegion(int off, int len) {
-    	this.buffer.rewind();
-        if (off < 0 || len <= 0 || off + len > this.buffer.limit()) {
-            return null;
-        }
 
-        byte[] region = new byte[len];
-        this.buffer.get(region, off, len);
-        return region;
-    }
-
-	/**
-	 * Read a byte region from specified offset in the RTP packet and with
-	 * specified length into a given buffer
-	 * 
-	 * @param off
-	 *            start offset in the RTP packet of the region to be read
-	 * @param len
-	 *            length of the region to be read
-	 * @param outBuff
-	 *            output buffer
-	 */
-	public void readRegionToBuff(int off, int len, byte[] outBuff) {
-		assert off >= 0;
-		assert len > 0;
-		assert outBuff != null;
-		assert outBuff.length >= len;
-		assert buffer.limit() >= off + len;
-
-		buffer.position(off);
-		buffer.get(outBuff, 0, len);
-	}
 	
     /**
      * Read an unsigned short at specified offset as a int
@@ -381,18 +309,35 @@ public class RawPacket {
     /**
      * Shrink the buffer of this packet by specified length
      *
-     * @param len length to shrink
+     * Returns duplicate of this packet with defensive copy of underlying byte array.
+     *
+     * @param len length to shrink, must be >= 0 and
      */
-    public void shrink(int delta) {
-        if (delta <= 0) {
-            return;
+    public RawPacket shrink(int len) {
+        if (len <= 0) return new RawPacket(this.getData(),0,this.getLength(), localPeer, remotePeer);
+        else {
+            int newLimit = this.getLength() - len;
+            if (newLimit < 0) newLimit = 0;
+            return new RawPacket(this.getData(),0,newLimit, localPeer, remotePeer);
         }
+    }
 
-        int newLimit = buffer.limit() - delta;
-        if (newLimit <= 0) {
-            newLimit = 0;
-        }
-        this.buffer.limit(newLimit);
-    } 
-    
+    public RawPacket withData(byte[] data) {
+        return new RawPacket(data,localPeer,remotePeer);
+    }
+
+
+    @Override
+    public String toString() {
+        return "RawPacket[" +
+                "extensionBit=" + getExtensionBit() +
+                ", extensionLength=" + getExtensionLength() +
+                ", csrcCount=" + getCsrcCount() +
+                ", headerLength=" + getHeaderLength() +
+                ", length=" + getLength() +
+                ", localPeer=" + this.localPeer +
+                ", remotePeer=" + this.remotePeer +
+                ", data=" + DatatypeConverter.printHexBinary(getData()) +
+        ']';
+    }
 }

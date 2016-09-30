@@ -53,8 +53,8 @@ public class SRTPCipherCTR {
     public SRTPCipherCTR() {
     }
 
-    public void process(BlockCipher cipher, ByteBuffer data, int off, int len, byte[] iv) {
-		assert off + len <= data.limit();
+    public void process(BlockCipher cipher, byte[] data, int off, int len, byte[] iv) {
+
 
 		// if data fits in inner buffer - use it. Otherwise allocate bigger
 		// buffer store it to use it for later processing - up to a defined
@@ -72,10 +72,14 @@ public class SRTPCipherCTR {
 		getCipherStream(cipher, cipherStream, len, iv);
         try {
             for (int i = 0; i < len; i++) {
-                data.put(i + off, (byte) (data.get(i + off) ^ cipherStream[i]));
+                data[i + off] = (byte) (data[i + off] ^ cipherStream[i]);
             }
         } catch (Exception ex) {
-            logger.error("Failed to process SRTP Cipher (rethrow) len: " + len + ", off: " + off + ", data.limit= " + data.limit() + ", cipherStream.length=" + cipherStream.length , ex);
+            logger.error("Failed to process SRTP Cipher (rethrow) len: " + len +
+                    ", off: " + off +
+                    ", data.limit= " + data.length +
+                    ", cipherStream.length=" + cipherStream.length
+                    , ex);
             throw ex;
         }
     }

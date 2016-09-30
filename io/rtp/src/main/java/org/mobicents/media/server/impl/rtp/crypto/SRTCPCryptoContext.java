@@ -10,6 +10,7 @@ package org.mobicents.media.server.impl.rtp.crypto;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.apache.log4j.Logger;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.Mac;
 import org.bouncycastle.crypto.digests.SHA1Digest;
@@ -18,6 +19,8 @@ import org.bouncycastle.crypto.engines.TwofishEngine;
 import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.mobicents.media.server.impl.rtp.RtpPacket;
+
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * SRTPCryptoContext class is the core class of SRTP implementation.
@@ -46,6 +49,9 @@ import org.mobicents.media.server.impl.rtp.RtpPacket;
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  */
 public class SRTCPCryptoContext {
+
+    private static final Logger logger = Logger.getLogger(SRTCPCryptoContext.class);
+
     /** The replay check windows size */
     private static final long REPLAY_WINDOW_SIZE = 64;
     
@@ -97,7 +103,7 @@ public class SRTCPCryptoContext {
     // Here some fields that a allocated here or in constructor. The methods
     // use these fields to avoid too many new operations
     
-    private final byte[] tagStore;
+    private int tagSize = 0;
     private final byte[] ivStore = new byte[16];
     private final byte[] rbStore = new byte[4];
     
@@ -120,7 +126,6 @@ public class SRTCPCryptoContext {
         authKey = null;
         saltKey = null;
         policy = null;
-        tagStore = null;
     }
 
     /**
@@ -179,22 +184,20 @@ public class SRTCPCryptoContext {
         switch (policy.getAuthType()) {
         case SRTPPolicy.NULL_AUTHENTICATION:
             authKey = null;
-            tagStore = null;
             break;
 
         case SRTPPolicy.HMACSHA1_AUTHENTICATION:
             mac = new HMac(new SHA1Digest());
             authKey = new byte[policy.getAuthKeyLength()];
-            tagStore = new byte[mac.getMacSize()];
+            tagSize =  mac.getMacSize();
             break;
             
         case SRTPPolicy.SKEIN_AUTHENTICATION:
             authKey = new byte[policy.getAuthKeyLength()];
-            tagStore = new byte[policy.getAuthTagLength()];
+            tagSize =  policy.getAuthTagLength();
             break;
 
         default:
-            tagStore = null;
         }
     }
 
@@ -259,19 +262,20 @@ public class SRTCPCryptoContext {
      * then we shall not use SRTP TransformConnector. We should use the original
      * method (RTPManager managed transportation) instead.  
      * 
-     * @param pkt the RTP packet that is going to be sent out
+     * @param in the RTP packet that is going to be sent out
      */
-    public void transformPacket(RawPacket pkt) {
+    public RawPacket transformPacket(RawPacket in) {
         boolean encrypt = false;
+        RawPacket encrypted = in;
         // Encrypt the packet using Counter Mode encryption
         if (policy.getEncType() == SRTPPolicy.AESCM_ENCRYPTION || policy.getEncType() == SRTPPolicy.TWOFISH_ENCRYPTION) {
-            processPacketAESCM(pkt, sentIndex);
+            encrypted = processPacketAESCM(in, sentIndex);
             encrypt = true;
         }
 
         // Encrypt the packet using F8 Mode encryption
         else if (policy.getEncType() == SRTPPolicy.AESF8_ENCRYPTION || policy.getEncType() == SRTPPolicy.TWOFISHF8_ENCRYPTION) {
-            processPacketAESF8(pkt, sentIndex);
+            encrypted = processPacketAESF8(in, sentIndex);
             encrypt = true;
         }
         
@@ -279,20 +283,18 @@ public class SRTCPCryptoContext {
         if (encrypt) {
             index = sentIndex | 0x80000000;
         }
-        
-        // Grow packet storage in one step
-        pkt.grow(4 + policy.getAuthTagLength());
 
         // Authenticate the packet
         // The authenticate method gets the index via parameter and stores
-        // it in network order in rbStore variable. 
+        // it in network order in rbStore variable.
+
         if (policy.getAuthType() != SRTPPolicy.NULL_AUTHENTICATION) {
-            authenticatePacket(pkt, index);
-            pkt.append(rbStore, 4);
-            pkt.append(tagStore, policy.getAuthTagLength());
+            byte[] tag = authenticatePacket(encrypted, index);
+            encrypted = encrypted.append(rbStore, 4).append(tag, policy.getAuthTagLength());
         }
         sentIndex++;
         sentIndex &= ~0x80000000;       // clear possible overflow
+        return encrypted;
     }
 
     /**
@@ -309,14 +311,14 @@ public class SRTCPCryptoContext {
      * then we shall not use SRTP TransformConnector. We should use the original
      * method (RTPManager managed transportation) instead.  
      * 
-     * @param pkt the received RTCP packet 
-     * @return true if the packet can be accepted
-     *         false if authentication or replay check failed 
+     * @param in the received RTCP packet
+     * @return null, if authentication or replay failed, decrpted packet otherwise
      */
-    public boolean reverseTransformPacket(RawPacket pkt) {
+    public RawPacket reverseTransformPacket(RawPacket in) {
+        RawPacket packet = in;
         boolean decrypt = false;
         int tagLength = policy.getAuthTagLength();
-        int indexEflag = pkt.getSRTCPIndex(tagLength);
+        int indexEflag = packet.getSRTCPIndex(tagLength);
 
         if ((indexEflag & 0x80000000) == 0x80000000) {
             decrypt = true;
@@ -326,50 +328,58 @@ public class SRTCPCryptoContext {
         
         /* Replay control */
         if (!checkReplay(index)) {
-            return false;
+            return null;
         }
 
         /* Authenticate the packet */
         if (policy.getAuthType() != SRTPPolicy.NULL_AUTHENTICATION) {
             // get original authentication data and store in tempStore
-            pkt.readRegionToBuff(pkt.getLength() - tagLength, tagLength, tempStore);
+            packet.get(packet.getLength() - tagLength, tempStore, 0, tagLength);
+
 
             // Shrink packet to remove the authentication tag and index
             // because this is part of authenicated data
-            pkt.shrink(tagLength + 4);
+            packet = packet.shrink(tagLength + 4);
 
             // compute, then save authentication in tagStore
-            authenticatePacket(pkt, indexEflag);
+            byte[] computedTag = authenticatePacket(packet, indexEflag);
 
             for (int i = 0; i < tagLength; i++) {
-                if ((tempStore[i] & 0xff) == (tagStore[i] & 0xff)) {
-                    continue;
-                } else {
-                	return false;
+                if ((tempStore[i] & 0xff) != (computedTag[i] & 0xff)) {
+                    logger.error("Failed to process SRTCP packet, packet tags does not match: "+
+                            "received=" +  DatatypeConverter.printHexBinary(tempStore) +
+                            ", expected=" + DatatypeConverter.printHexBinary(computedTag) +
+                            ", tagSize=" + tagLength +
+                            ", packet=" + packet
+                    );
+                	return null;
                 }
             }
         }
 
+        RawPacket decrypted = null;
+
         if (decrypt) {
             /* Decrypt the packet using Counter Mode encryption */
             if (policy.getEncType() == SRTPPolicy.AESCM_ENCRYPTION || policy.getEncType() == SRTPPolicy.TWOFISH_ENCRYPTION) {
-                processPacketAESCM(pkt, index);
+                decrypted = processPacketAESCM(packet, index);
             }
 
             /* Decrypt the packet using F8 Mode encryption */
             else if (policy.getEncType() == SRTPPolicy.AESF8_ENCRYPTION || policy.getEncType() == SRTPPolicy.TWOFISHF8_ENCRYPTION) {
-                processPacketAESF8(pkt, index);
+                decrypted = processPacketAESF8(packet, index);
             }
         }
         update(index);
-        return true;
+        return decrypted;
     }
+
 
     /**
      * Perform Counter Mode AES encryption / decryption 
      * @param pkt the RTP packet to be encrypted / decrypted
      */
-    public void processPacketAESCM(RawPacket pkt, int index) {
+    public RawPacket processPacketAESCM(RawPacket pkt, int index) {
         long ssrc = pkt.getRTCPSSRC();
 
         /* Compute the CM IV (refer to chapter 4.1.1 in RFC 3711):
@@ -402,10 +412,13 @@ public class SRTCPCryptoContext {
 
         ivStore[14] = ivStore[15] = 0;
 
-        // Encrypted part excludes fixed header (8 bytes)  
+        // Encrypted part excludes fixed header (8 bytes)
         final int payloadOffset = 8;
         final int payloadLength = pkt.getLength() - payloadOffset;
-        cipherCtr.process(cipher, pkt.getBuffer(), payloadOffset, payloadLength, ivStore);
+        byte[] data = pkt.getData();
+        cipherCtr.process(cipher, data, payloadOffset, payloadLength, ivStore);
+
+        return pkt.withData(data);
     }
 
     /**
@@ -413,7 +426,7 @@ public class SRTCPCryptoContext {
      *
      * @param pkt the RTP packet to be encrypted / decrypted
      */
-    public void processPacketAESF8(RawPacket pkt, int index) {
+    public RawPacket processPacketAESF8(RawPacket pkt, int index) {
         // byte[] iv = new byte[16];
 
         // 4 bytes of the iv are zero
@@ -433,18 +446,20 @@ public class SRTCPCryptoContext {
         ivStore[7] = (byte) index;
         
         // The fixed header follows and fills the rest of the IV
-        ByteBuffer buf = pkt.getBuffer();
-        buf.rewind();
-        buf.get(ivStore, 8, 8);
-
+        pkt.get(0,ivStore,8,8);
+//
         // Encrypted part excludes fixed header (8 bytes), index (4 bytes), and
-        // authentication tag (variable according to policy)  
+        // authentication tag (variable according to policy)
         final int payloadOffset = 8;
         final int payloadLength = pkt.getLength() - (4 + policy.getAuthTagLength());
-        SRTPCipherF8.process(cipher, pkt.getBuffer(), payloadOffset, payloadLength, ivStore, cipherF8);
+        byte[] data = pkt.getData();
+
+        SRTPCipherF8.process(cipher, data, payloadOffset, payloadLength, ivStore, cipherF8);
+
+        return pkt.withData(data);
     }
 
-    byte[] tempBuffer = new byte[RtpPacket.RTP_PACKET_MAX_SIZE];
+
     
     /**
      * Authenticate a packet.
@@ -453,18 +468,18 @@ public class SRTCPCryptoContext {
      *
      * @param pkt the RTP packet to be authenticated
      */
-    private void authenticatePacket(RawPacket pkt, int index) {
-    	ByteBuffer buf = pkt.getBuffer();
-    	buf.rewind();
-    	int len = buf.remaining();
-    	buf.get(tempBuffer, 0, len);
-        mac.update(tempBuffer, 0, len);
+    private byte [] authenticatePacket(RawPacket pkt, int index) {
+        byte[] data = pkt.getData();
+        byte[] tag = new byte[tagSize];
+        mac.update(data, 0, data.length);
         rbStore[0] = (byte) (index >> 24);
         rbStore[1] = (byte) (index >> 16);
         rbStore[2] = (byte) (index >> 8);
         rbStore[3] = (byte) index;
         mac.update(rbStore, 0, rbStore.length);
-        mac.doFinal(tagStore, 0);
+
+        mac.doFinal(tag, 0);
+        return tag;
     }
 
     /**

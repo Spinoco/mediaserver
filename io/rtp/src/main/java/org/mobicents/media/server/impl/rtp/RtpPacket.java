@@ -82,7 +82,7 @@ public class RtpPacket implements Serializable {
 
     /** construct this rtp packet from data ecrypted by supplied DtlsHandler **/
     public static RtpPacket fromDtlsEncrypted(DtlsHandler handler, SocketAddress localPeer, SocketAddress remotePeer, byte[] packet, int offset, int dataLength) {
-        byte[] decoded = handler.decodeRTP(packet,offset,dataLength);
+        byte[] decoded = handler.decodeRTP(packet,offset,dataLength, localPeer, remotePeer);
         return fromRaw(localPeer,remotePeer,decoded,0,decoded.length);
     }
 
@@ -459,7 +459,7 @@ public class RtpPacket implements Serializable {
      */
     public ByteBuffer dtlsEncodeToSend(DtlsHandler dtlsHandler) {
         byte[] rtpData = toArray();
-        byte[] srtpData = dtlsHandler.encodeRTP(rtpData, 0, rtpData.length);
+        byte[] srtpData = dtlsHandler.encodeRTP(rtpData, 0, rtpData.length, localPeer, remotePeer);
         if(srtpData == null || srtpData.length == 0) {
             logger.warn("Could not secure RTP packet! Packet dropped: " + this.toString());
             return null;

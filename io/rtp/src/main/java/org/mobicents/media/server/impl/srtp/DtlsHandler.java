@@ -23,6 +23,7 @@ package org.mobicents.media.server.impl.srtp;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
@@ -249,8 +250,8 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
      * @param packet The encoded RTP packet
      * @return The decoded RTP packet. Returns null is packet is not valid.
      */
-    public byte[] decodeRTP(byte[] packet, int offset, int length) {
-        return this.srtpDecoder.reverseTransform(packet, offset, length);
+    public byte[] decodeRTP(byte[] packet, int offset, int length, SocketAddress localPeer, SocketAddress remotePeer) {
+        return this.srtpDecoder.reverseTransform(packet, offset, length, localPeer, remotePeer);
     }
 
     /**
@@ -259,8 +260,8 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
      * @param packet The decoded RTP packet
      * @return The encoded RTP packet
      */
-    public byte[] encodeRTP(byte[] packet, int offset, int length) {
-        return this.srtpEncoder.transform(packet, offset, length);
+    public byte[] encodeRTP(byte[] packet, int offset, int length, SocketAddress localPeer, SocketAddress remotePeer) {
+        return this.srtpEncoder.transform(packet, offset, length, localPeer, remotePeer);
     }
 
     /**
@@ -269,8 +270,8 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
      * @param packet The encoded RTP packet
      * @return The decoded RTP packet. Returns null is packet is not valid.
      */
-    public byte[] decodeRTCP(byte[] packet, int offset, int length) {
-        return this.srtcpDecoder.reverseTransform(packet, offset, length);
+    public byte[] decodeRTCP(byte[] packet, int offset, int length, SocketAddress localPeer, SocketAddress remotePeer) {
+        return this.srtcpDecoder.reverseTransform(packet, offset, length, localPeer, remotePeer);
     }
 
     /**
@@ -279,8 +280,8 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
      * @param packet The decoded RTP packet
      * @return The encoded RTP packet
      */
-    public byte[] encodeRTCP(byte[] packet, int offset, int length) {
-        return this.srtcpEncoder.transform(packet, offset, length);
+    public byte[] encodeRTCP(byte[] packet, int offset, int length, SocketAddress localPeer, SocketAddress remotePeer) {
+        return this.srtcpEncoder.transform(packet, offset, length, localPeer, remotePeer);
     }
 
     public void handshake() {

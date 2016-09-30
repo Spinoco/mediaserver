@@ -7,7 +7,10 @@
  */
 package org.mobicents.media.server.impl.rtp.crypto;
 
+import java.net.SocketAddress;
 import java.util.Hashtable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.log4j.Logger;
 
@@ -27,8 +30,7 @@ import org.apache.log4j.Logger;
 public class SRTPTransformer implements PacketTransformer {
 	
 	private static final Logger logger = Logger.getLogger(SRTPTransformer.class);
-	
-	private final RawPacket rawPacket;
+
 	
 	private SRTPTransformEngine forwardEngine;
 	private SRTPTransformEngine reverseEngine;
@@ -36,7 +38,7 @@ public class SRTPTransformer implements PacketTransformer {
 	/**
 	 * All the known SSRC's corresponding SRTPCryptoContexts
 	 */
-	private Hashtable<Long, SRTPCryptoContext> contexts;
+	private ConcurrentMap<Long, SRTPCryptoContext> contexts;
 
 	/**
 	 * Constructs a SRTPTransformer object.
@@ -62,31 +64,32 @@ public class SRTPTransformer implements PacketTransformer {
 	public SRTPTransformer(SRTPTransformEngine forwardEngine, SRTPTransformEngine reverseEngine) {
 		this.forwardEngine = forwardEngine;
 		this.reverseEngine = reverseEngine;
-		this.contexts = new Hashtable<Long, SRTPCryptoContext>();
-		this.rawPacket = new RawPacket();
+		this.contexts = new ConcurrentHashMap<>();
 	}
 
-	public byte[] transform(byte[] pkt) {
-		return transform(pkt, 0, pkt.length);
+	public byte[] transform(byte[] pkt, SocketAddress localPeer, SocketAddress remotePeer) {
+		return transform(pkt, 0, pkt.length, localPeer, remotePeer);
 	}
-	
-	public byte[] transform(byte[] pkt, int offset, int length) {
+
+
+	public byte[] transform(byte[] pkt, int offset, int length, SocketAddress localPeer, SocketAddress remotePeer) {
 		// Updates the contents of raw packet with new incoming packet 
-		this.rawPacket.wrap(pkt, offset, length);
-		
+		//this.rawPacket.wrap(pkt, offset, length);
+		RawPacket decrypted = new RawPacket(pkt, offset,length, localPeer, remotePeer);
+
 		// Associate packet to a crypto context
-		long ssrc = rawPacket.getSSRC();
+		long ssrc = decrypted.getSSRC();
 		SRTPCryptoContext context = contexts.get(ssrc);
 
 		if (context == null) {
 			context = forwardEngine.getDefaultContext().deriveContext(ssrc, 0, 0);
 			context.deriveSrtpKeys(0);
-			contexts.put(ssrc, context);
+			SRTPCryptoContext current = contexts.putIfAbsent(ssrc, context);
+			if (current != null) context = current;
 		}
 
 		// Transform RTP packet into SRTP
-		context.transformPacket(this.rawPacket);
-		return this.rawPacket.getData();
+		return context.transformPacket(decrypted).getData();
 	}
 
 	/**
@@ -97,28 +100,29 @@ public class SRTPTransformer implements PacketTransformer {
 	 *            the transformed packet to be restored
 	 * @return the restored packet
 	 */
-	public byte[] reverseTransform(byte[] pkt) {
-		return reverseTransform(pkt, 0, pkt.length);
+	public byte[] reverseTransform(byte[] pkt, SocketAddress localPeer, SocketAddress remotePeer) {
+		return reverseTransform(pkt, 0, pkt.length, localPeer, remotePeer);
 	}
 	
-	public byte[] reverseTransform(byte[] pkt, int offset, int length) {
+	public byte[] reverseTransform(byte[] pkt, int offset, int length, SocketAddress localPeer, SocketAddress remotePeer) {
 		// Wrap data into the raw packet for readable format
-		this.rawPacket.wrap(pkt, offset, length);
-		
+		//this.rawPacket.wrap(pkt, offset, length);
+		//todo replace immutable
+		RawPacket encrypted = new RawPacket(pkt,offset,length, localPeer, remotePeer);
+
 		// Associate packet to a crypto context
-		long ssrc = this.rawPacket.getSSRC();
+		long ssrc = encrypted.getSSRC();
 		SRTPCryptoContext context = this.contexts.get(ssrc);
 		if (context == null) {
 			context = this.reverseEngine.getDefaultContext().deriveContext(ssrc, 0, 0);
-			context.deriveSrtpKeys(this.rawPacket.getSequenceNumber());
-			contexts.put(ssrc, context);
+			context.deriveSrtpKeys(encrypted.getSequenceNumber());
+			SRTPCryptoContext current = contexts.putIfAbsent(ssrc, context);
+			if (current != null) context = current;
 		}
 
-		boolean reversed = context.reverseTransformPacket(this.rawPacket);
-		if(reversed) {
-			return this.rawPacket.getData();
-		}
-		return null;
+		RawPacket decrypted = context.reverseTransformPacket(encrypted);
+		if(decrypted != null) return decrypted.getData();
+		else return null;
 	}
 
 	/**
