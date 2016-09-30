@@ -48,7 +48,7 @@ public class AudioPlayerPoolProvider implements Provider<AudioPlayerPool> {
 
     @Override
     public AudioPlayerPool get() {
-        return new AudioPlayerPool(this.config.getResourcesConfiguration().getPlayerCount(), this.factory);
+        return new AudioPlayerPool(this.factory);
     }
 
     public static final class AudioPlayerPoolType extends TypeLiteral<ResourcePool<AudioPlayerImpl>> {

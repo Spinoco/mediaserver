@@ -22,6 +22,7 @@
 package org.mobicents.media.server.impl.resource.dtmf;
 
 import org.mobicents.media.server.spi.pooling.AbstractConcurrentResourcePool;
+import org.mobicents.media.server.spi.pooling.NonRecyclableAbstractResourcePool;
 import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
 
 /**
@@ -30,19 +31,19 @@ import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
  */
-public class DtmfGeneratorPool extends AbstractConcurrentResourcePool<GeneratorImpl> {
+public class DtmfGeneratorPool extends NonRecyclableAbstractResourcePool<GeneratorImpl> {
 
     private final PooledObjectFactory<GeneratorImpl> factory;
 
-    public DtmfGeneratorPool(int initialCapacity, PooledObjectFactory<GeneratorImpl> factory) {
-        super(initialCapacity);
+    public DtmfGeneratorPool(PooledObjectFactory<GeneratorImpl> factory) {
         this.factory = factory;
-        populate();
     }
 
     @Override
     protected GeneratorImpl createResource() {
         return this.factory.produce();
     }
+
+
 
 }

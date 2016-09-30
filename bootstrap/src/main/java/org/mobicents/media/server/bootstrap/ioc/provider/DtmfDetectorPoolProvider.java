@@ -48,7 +48,7 @@ public class DtmfDetectorPoolProvider implements Provider<DtmfDetectorPool> {
     
     @Override
     public DtmfDetectorPool get() {
-        return new DtmfDetectorPool(config.getResourcesConfiguration().getDtmfDetectorCount(), factory);
+        return new DtmfDetectorPool(factory);
     }
     
     public static final class DtmfDetectorPoolType extends TypeLiteral<ResourcePool<DetectorImpl>> {

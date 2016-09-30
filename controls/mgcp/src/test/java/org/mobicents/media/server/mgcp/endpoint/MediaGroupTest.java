@@ -137,21 +137,21 @@ public class MediaGroupTest {
 
         // Resource
         this.rtpConnectionFactory = new RtpConnectionFactory(channelsManager, dspFactory);
-        this.rtpConnectionPool = new RtpConnectionPool(0, rtpConnectionFactory);
+        this.rtpConnectionPool = new RtpConnectionPool(rtpConnectionFactory);
         this.localConnectionFactory = new LocalConnectionFactory(channelsManager);
-        this.localConnectionPool = new LocalConnectionPool(0, localConnectionFactory);
+        this.localConnectionPool = new LocalConnectionPool(localConnectionFactory);
         this.playerFactory = new AudioPlayerFactory(mediaScheduler, dspFactory);
-        this.playerPool = new AudioPlayerPool(0, playerFactory);
+        this.playerPool = new AudioPlayerPool(playerFactory);
         this.recorderFactory = new AudioRecorderFactory(mediaScheduler);
-        this.recorderPool = new AudioRecorderPool(0, recorderFactory);
+        this.recorderPool = new AudioRecorderPool(recorderFactory);
         this.dtmfDetectorFactory = new DtmfDetectorFactory(mediaScheduler);
-        this.dtmfDetectorPool = new DtmfDetectorPool(0, dtmfDetectorFactory);
+        this.dtmfDetectorPool = new DtmfDetectorPool(dtmfDetectorFactory);
         this.dtmfGeneratorFactory = new DtmfGeneratorFactory(mediaScheduler);
-        this.dtmfGeneratorPool = new DtmfGeneratorPool(0, dtmfGeneratorFactory);
+        this.dtmfGeneratorPool = new DtmfGeneratorPool(dtmfGeneratorFactory);
         this.signalDetectorFactory = new PhoneSignalDetectorFactory(mediaScheduler);
-        this.signalDetectorPool = new PhoneSignalDetectorPool(0, signalDetectorFactory);
+        this.signalDetectorPool = new PhoneSignalDetectorPool(signalDetectorFactory);
         this.signalGeneratorFactory = new PhoneSignalGeneratorFactory(mediaScheduler);
-        this.signalGeneratorPool = new PhoneSignalGeneratorPool(0, signalGeneratorFactory);
+        this.signalGeneratorPool = new PhoneSignalGeneratorPool(signalGeneratorFactory);
         resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool);
 
         // assign scheduler to the endpoint

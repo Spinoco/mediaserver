@@ -66,7 +66,7 @@ public class RtpConnectionPoolTest {
     public void testConnectionRecycle() {
         // given
         RtpConnectionFactory factory = new RtpConnectionFactory(connectionFactory, dspFactory);
-        RtpConnectionPool pool = new RtpConnectionPool(1, factory);
+        RtpConnectionPool pool = new RtpConnectionPool(factory);
         
         // when
         RtpConnectionImpl connection = pool.poll();

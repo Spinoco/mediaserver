@@ -22,6 +22,7 @@
 package org.mobicents.media.server.impl.resource.phone;
 
 import org.mobicents.media.server.spi.pooling.AbstractConcurrentResourcePool;
+import org.mobicents.media.server.spi.pooling.NonRecyclableAbstractResourcePool;
 import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
 
 /**
@@ -30,14 +31,12 @@ import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
  */
-public class PhoneSignalGeneratorPool extends AbstractConcurrentResourcePool<PhoneSignalGenerator> {
+public class PhoneSignalGeneratorPool extends NonRecyclableAbstractResourcePool<PhoneSignalGenerator> {
 
     private final PooledObjectFactory<PhoneSignalGenerator> factory;
     
-    public PhoneSignalGeneratorPool(int initialCapacity, PooledObjectFactory<PhoneSignalGenerator> factory) {
-        super(initialCapacity);
+    public PhoneSignalGeneratorPool(PooledObjectFactory<PhoneSignalGenerator> factory) {
         this.factory = factory;
-        populate();
     }
 
     @Override

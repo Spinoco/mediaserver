@@ -48,7 +48,7 @@ public class LocalConnectionPoolProvider implements Provider<LocalConnectionPool
 
     @Override
     public LocalConnectionPool get() {
-        return new LocalConnectionPool(this.config.getResourcesConfiguration().getLocalConnectionCount(), this.factory);
+        return new LocalConnectionPool(this.factory);
     }
 
     public static final class LocalConnectionPoolType extends TypeLiteral<ResourcePool<LocalConnectionImpl>> {

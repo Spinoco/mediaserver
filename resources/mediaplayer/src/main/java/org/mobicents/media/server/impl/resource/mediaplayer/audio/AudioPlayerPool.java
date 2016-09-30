@@ -22,6 +22,7 @@
 package org.mobicents.media.server.impl.resource.mediaplayer.audio;
 
 import org.mobicents.media.server.spi.pooling.AbstractConcurrentResourcePool;
+import org.mobicents.media.server.spi.pooling.NonRecyclableAbstractResourcePool;
 import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
 
 /**
@@ -30,14 +31,12 @@ import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
  */
-public class AudioPlayerPool extends AbstractConcurrentResourcePool<AudioPlayerImpl> {
+public class AudioPlayerPool extends NonRecyclableAbstractResourcePool<AudioPlayerImpl> {
 
     private final PooledObjectFactory<AudioPlayerImpl> factory;
 
-    public AudioPlayerPool(int initialCapacity, PooledObjectFactory<AudioPlayerImpl> factory) {
-        super(initialCapacity);
+    public AudioPlayerPool(PooledObjectFactory<AudioPlayerImpl> factory) {
         this.factory = factory;
-        populate();
     }
 
     @Override

@@ -22,6 +22,7 @@
 package org.mobicents.media.server.mgcp.connection;
 
 import org.mobicents.media.server.spi.pooling.AbstractConcurrentResourcePool;
+import org.mobicents.media.server.spi.pooling.NonRecyclableAbstractResourcePool;
 import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
 
 /**
@@ -30,26 +31,20 @@ import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
  */
-public class RtpConnectionPool extends AbstractConcurrentResourcePool<RtpConnectionImpl> {
+public class RtpConnectionPool extends NonRecyclableAbstractResourcePool<RtpConnectionImpl> {
 
     private final PooledObjectFactory<RtpConnectionImpl> factory;
     
-    /**
-     * Create a new pool.
-     * 
-     * @param initialCapacity The initial capacity of the pool
-     * @param connectionFactory Factory that produces new connections
-     * @param dspFactory Factory that produces new DSP
-     */
-    public RtpConnectionPool(int initialCapacity, PooledObjectFactory<RtpConnectionImpl> factory) {
-        super(initialCapacity);
+
+    public RtpConnectionPool(PooledObjectFactory<RtpConnectionImpl> factory) {
         this.factory = factory;
-        populate();
     }
 
     @Override
     protected RtpConnectionImpl createResource() {
         return this.factory.produce();
     }
+
+
 
 }

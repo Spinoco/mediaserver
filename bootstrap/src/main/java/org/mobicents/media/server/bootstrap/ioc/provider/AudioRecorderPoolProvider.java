@@ -48,7 +48,7 @@ public class AudioRecorderPoolProvider implements Provider<AudioRecorderPool> {
 
     @Override
     public AudioRecorderPool get() {
-        return new AudioRecorderPool(config.getResourcesConfiguration().getRecorderCount(), factory);
+        return new AudioRecorderPool( factory);
     }
 
     public static final class AudioRecorderPoolType extends TypeLiteral<ResourcePool<AudioRecorderImpl>> {

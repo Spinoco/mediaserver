@@ -48,7 +48,7 @@ public class PhoneSignalDetectorPoolProvider implements Provider<PhoneSignalDete
 
     @Override
     public PhoneSignalDetectorPool get() {
-        return new PhoneSignalDetectorPool(config.getResourcesConfiguration().getSignalDetectorCount(), factory);
+        return new PhoneSignalDetectorPool(factory);
     }
 
     public static final class PhoneSignalDetectorPoolType extends TypeLiteral<ResourcePool<PhoneSignalDetector>> {

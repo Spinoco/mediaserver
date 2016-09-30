@@ -48,7 +48,7 @@ public class RtpConnectionPoolProvider implements Provider<RtpConnectionPool> {
 
     @Override
     public RtpConnectionPool get() {
-        return new RtpConnectionPool(this.config.getResourcesConfiguration().getRemoteConnectionCount(), this.factory);
+        return new RtpConnectionPool(this.factory);
     }
 
     public static final class RtpConnectionPoolType extends TypeLiteral<ResourcePool<RtpConnectionImpl>> {

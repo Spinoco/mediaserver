@@ -48,7 +48,7 @@ public class DtmfGeneratorPoolProvider implements Provider<DtmfGeneratorPool> {
 
     @Override
     public DtmfGeneratorPool get() {
-        return new DtmfGeneratorPool(config.getResourcesConfiguration().getDtmfGeneratorCount(), factory);
+        return new DtmfGeneratorPool(factory);
     }
 
     public static final class DtmfGeneratorPoolType extends TypeLiteral<ResourcePool<GeneratorImpl>> {

@@ -48,7 +48,7 @@ public class PhoneSignalGeneratorPoolProvider implements Provider<PhoneSignalGen
 
     @Override
     public PhoneSignalGeneratorPool get() {
-        return new PhoneSignalGeneratorPool(config.getResourcesConfiguration().getSignalGeneratorCount(), factory);
+        return new PhoneSignalGeneratorPool(factory);
     }
 
     public static final class PhoneSignalGeneratorPoolType extends TypeLiteral<ResourcePool<PhoneSignalGenerator>> {

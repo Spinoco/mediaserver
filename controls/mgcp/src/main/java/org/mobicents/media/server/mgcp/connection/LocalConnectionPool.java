@@ -22,6 +22,7 @@
 package org.mobicents.media.server.mgcp.connection;
 
 import org.mobicents.media.server.spi.pooling.AbstractConcurrentResourcePool;
+import org.mobicents.media.server.spi.pooling.NonRecyclableAbstractResourcePool;
 import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
 
 /**
@@ -30,14 +31,12 @@ import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
  */
-public class LocalConnectionPool extends AbstractConcurrentResourcePool<LocalConnectionImpl> {
+public class LocalConnectionPool extends NonRecyclableAbstractResourcePool<LocalConnectionImpl> {
 
     private final PooledObjectFactory<LocalConnectionImpl> connectionFactory;
 
-    public LocalConnectionPool(int initialCapacity, PooledObjectFactory<LocalConnectionImpl> connectionFactory) {
-        super(initialCapacity);
+    public LocalConnectionPool(PooledObjectFactory<LocalConnectionImpl> connectionFactory) {
         this.connectionFactory = connectionFactory;
-        populate();
     }
 
     @Override

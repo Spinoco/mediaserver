@@ -22,6 +22,7 @@
 package org.mobicents.media.server.impl.resource.dtmf;
 
 import org.mobicents.media.server.spi.pooling.AbstractConcurrentResourcePool;
+import org.mobicents.media.server.spi.pooling.NonRecyclableAbstractResourcePool;
 import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
 
 /**
@@ -30,14 +31,12 @@ import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  * 
  */
-public class DtmfDetectorPool extends AbstractConcurrentResourcePool<DetectorImpl> {
+public class DtmfDetectorPool extends NonRecyclableAbstractResourcePool<DetectorImpl> {
 
     private final PooledObjectFactory<DetectorImpl> factory;
 
-    public DtmfDetectorPool(int initialCapacity, PooledObjectFactory<DetectorImpl> factory) {
-        super(initialCapacity);
+    public DtmfDetectorPool(PooledObjectFactory<DetectorImpl> factory) {
         this.factory = factory;
-        populate();
     }
 
     @Override
