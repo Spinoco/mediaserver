@@ -84,7 +84,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
     private String remoteHashFunction;
     private String remoteFingerprint;
     private String localFingerprint;
-    private long startTime;
+    private AtomicLong startTime = new AtomicLong(0);
 
     private final List<DtlsListener> listeners;
 
@@ -113,7 +113,6 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         this.remoteHashFunction = "";
         this.remoteFingerprint = "";
         this.localFingerprint = "";
-        this.startTime = 0L;
 
         this.listeners = new ArrayList<DtlsListener>();
     }
@@ -295,7 +294,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         } catch (Throwable ex) {}
         if (!handshaking && !handshakeComplete) {
             this.handshaking = true;
-            this.startTime = System.currentTimeMillis();
+            this.startTime.set(System.currentTimeMillis());
             this.worker = new Thread(new HandshakeWorker(), "DTLS-Server-" + THREAD_COUNTER.incrementAndGet());
             this.worker.start();
         }
@@ -333,7 +332,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         this.handshakeComplete = false;
         this.handshakeFailed = false;
         this.handshaking = false;
-        this.startTime = 0L;
+        this.startTime.set(0);
         this.listeners.clear();
     }
 
@@ -395,20 +394,20 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         // https://telestax.atlassian.net/browse/MEDIA-48
         if (this.hasTimeout()) {
             close();
-            logger.error("DTLS Handshake took too long " +(System.currentTimeMillis() - this.startTime)+" (>" + MAX_DELAY + "ms): " +
+            logger.error("DTLS Handshake took too long " +(System.currentTimeMillis() - this.startTime.get())+" (>" + MAX_DELAY + "ms): " +
                     " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
                     " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
                     " localFingerPrint: " + DtlsHandler.this.localFingerprint +
                     " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
             );
-            throw new IllegalStateException("Handshake is taking too long!:"+(System.currentTimeMillis() - this.startTime)+" (>" + MAX_DELAY + "ms): ");
+            throw new IllegalStateException("Handshake is taking too long!:"+(System.currentTimeMillis() - this.startTime.get())+" (>" + MAX_DELAY + "ms): ");
         }
 
         int attempts = 20;
         do {
             ByteBuffer data = this.rxQueue.poll();
             if (data != null) {
-                logger.info("DTLS Handshake packet received delta: " +(System.currentTimeMillis() - this.startTime)+"ms " +
+                logger.info("DTLS Handshake packet received delta: " +(System.currentTimeMillis() - this.startTime.get())+"ms " +
                         " attempt: " + attempts +
                         " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
                         " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
@@ -441,7 +440,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                 logger.warn("Handler skipped send operation because channel is not open or connected.");
             }
         } else {
-            logger.warn("Handler has timed out so send operation will be skipped: " +(System.currentTimeMillis() - this.startTime)+" (>" + MAX_DELAY + "ms): " +
+            logger.warn("Handler has timed out so send operation will be skipped: " +(System.currentTimeMillis() - this.startTime.get())+" (>" + MAX_DELAY + "ms): " +
                     " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
                     " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
                     " localFingerPrint: " + DtlsHandler.this.localFingerprint +
@@ -453,12 +452,12 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
     @Override
     public void close() throws IOException {
         this.rxQueue.clear();
-        this.startTime = 0L;
+        this.startTime.set(0);
         this.channel = null;
     }
 
     private boolean hasTimeout() {
-        return (System.currentTimeMillis() - this.startTime) > MAX_DELAY;
+        return (System.currentTimeMillis() - this.startTime.get()) > MAX_DELAY;
     }
 
     private class HandshakeWorker implements Runnable {
@@ -473,7 +472,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                 // Perform the handshake in a non-blocking fashion
                 serverProtocol.accept(server, DtlsHandler.this);
 
-                DtlsHandler.logger.info("Handshake completed in : " + (System.currentTimeMillis() - DtlsHandler.this.startTime) + " ms (" +
+                DtlsHandler.logger.info("Handshake completed in : " + (System.currentTimeMillis() - DtlsHandler.this.startTime.get()) + " ms (" +
                         " qSz: " + sz +
                         " local: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getLocalAddress().toString() : "null") +
                         " remote: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getRemoteAddress().toString() : "null") +
