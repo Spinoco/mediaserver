@@ -113,7 +113,8 @@ public class MgcpProvider extends MultiplexedChannel {
         }
 
         msg.write(currBuffer);
-        this.dataChannel.send(currBuffer, event.getAddress());
+        System.out.println("XXXXR >>> " + this.dataChannel.getRemoteAddress().toString() + " - " + event.getAddress());
+        this.dataChannel.send(currBuffer, this.dataChannel.getRemoteAddress());
 
         currBuffer.clear();
         txBuffer.offer(currBuffer);

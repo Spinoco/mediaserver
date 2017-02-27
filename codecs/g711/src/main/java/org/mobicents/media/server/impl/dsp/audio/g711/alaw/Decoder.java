@@ -138,6 +138,16 @@ public class Decoder implements Codec {
      * @see org.mobicents.media.server.dsp.Codec#process(Frame).
      */
     public Frame process(Frame frame) {
+		System.out.println("XXXG aLaw RECEIVED: "
+				+ " L: " + frame.getLength()
+				+ " S: " + frame.getSequenceNumber()
+				+ " O: "  + frame.getOffset()
+				+ " D: " + frame.getDuration()
+				+ " T: " + frame.getTimestamp()
+				+ " F: " + frame.getFormat()
+				+ " H: " + frame.getHeader()
+		);
+
     	sourceLen=frame.getLength();
     	destinationLen=sourceLen * 2;
         Frame res = Memory.allocate(destinationLen);
@@ -160,6 +170,17 @@ public class Decoder implements Codec {
         res.setEOM(frame.isEOM());
         res.setFormat(linear);
         res.setHeader(frame.getHeader());
+
+		System.out.println("XXXG aLaw OUT: "
+				+ " L: " + res.getLength()
+				+ " S: " + res.getSequenceNumber()
+				+ " O: "  + res.getOffset()
+				+ " D: " + res.getDuration()
+				+ " T: " + res.getTimestamp()
+				+ " F: " + res.getFormat()
+				+ " H: " + res.getHeader()
+		);
+
         return res;
     }
 }

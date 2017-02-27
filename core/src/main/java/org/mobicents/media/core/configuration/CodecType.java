@@ -33,7 +33,8 @@ public enum CodecType {
     PCMU("pcmu", "org.mobicents.media.server.impl.dsp.audio.g711.ulaw.Encoder", "org.mobicents.media.server.impl.dsp.audio.g711.ulaw.Decoder"), 
     PCMA("pcma", "org.mobicents.media.server.impl.dsp.audio.g711.alaw.Encoder", "org.mobicents.media.server.impl.dsp.audio.g711.alaw.Decoder"), 
     GSM("gsm", "org.mobicents.media.server.impl.dsp.audio.gsm.Encoder", "org.mobicents.media.server.impl.dsp.audio.gsm.Decoder"), 
-    G729("g729", "org.mobicents.media.server.impl.dsp.audio.g729.Encoder", "org.mobicents.media.server.impl.dsp.audio.g729.Decoder");
+    G729("g729", "org.mobicents.media.server.impl.dsp.audio.g729.Encoder", "org.mobicents.media.server.impl.dsp.audio.g729.Decoder"),
+    OPUS("opus", "org.mobicents.media.server.impl.dsp.audio.opus.Encoder", "org.mobicents.media.server.impl.dsp.audio.opus.Decoder");
 
     private final String name;
     private final String encoder;

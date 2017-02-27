@@ -135,6 +135,15 @@ public class Decoder implements Codec {
      * @see org.mobicents.media.server.impl.jmf.dsp.Codec#process(Buffer).
      */
     public Frame process(Frame frame) {
+		System.out.println("XXXG uLaw RECEIVED: "
+				+ " L: " + frame.getLength()
+				+ " S: " + frame.getSequenceNumber()
+				+ " O: "  + frame.getOffset()
+				+ " D: " + frame.getDuration()
+				+ " T: " + frame.getTimestamp()
+				+ " F: " + frame.getFormat()
+				+ " H: " + frame.getHeader()
+		);
     	sourceLen=frame.getLength();
     	destinationLen=sourceLen * 2;
         Frame res = Memory.allocate(destinationLen);
@@ -156,6 +165,16 @@ public class Decoder implements Codec {
         res.setSequenceNumber(frame.getSequenceNumber());
         res.setEOM(frame.isEOM());
         res.setFormat(linear);
+
+		System.out.println("XXXG uLaw OUT: "
+				+ " L: " + res.getLength()
+				+ " S: " + res.getSequenceNumber()
+				+ " O: "  + res.getOffset()
+				+ " D: " + res.getDuration()
+				+ " T: " + res.getTimestamp()
+				+ " F: " + res.getFormat()
+				+ " H: " + res.getHeader()
+		);
 
         return res;
     }    

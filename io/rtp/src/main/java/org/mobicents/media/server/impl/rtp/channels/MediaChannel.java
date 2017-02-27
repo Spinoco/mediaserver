@@ -406,6 +406,7 @@ public abstract class MediaChannel {
 	 *            The supported codecs resulting from SDP negotiation
 	 */
 	protected void setFormats(RTPFormats formats) {
+		System.out.println("SETTING RTP FORMATS: " + formats);
 		try {
 			this.rtpChannel.setFormatMap(formats);
 			this.rtpChannel.setOutputFormats(formats.getFormats());
