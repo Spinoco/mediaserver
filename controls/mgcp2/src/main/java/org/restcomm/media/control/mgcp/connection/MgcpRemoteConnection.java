@@ -22,6 +22,7 @@
 package org.restcomm.media.control.mgcp.connection;
 
 import java.io.IOException;
+import java.math.BigInteger;
 
 import org.apache.log4j.Logger;
 import org.restcomm.media.component.audio.AudioComponent;
@@ -71,7 +72,7 @@ public class MgcpRemoteConnection extends AbstractMgcpConnection implements RtpL
     // Media Channels
     private final AudioChannel audioChannel;
 
-    public MgcpRemoteConnection(int identifier, int callId, int halfOpenTimeout, int openTimeout, MgcpEventProvider eventProvider, MediaChannelProvider channelProvider, ListeningScheduledExecutorService executor) {
+    public MgcpRemoteConnection(int identifier, BigInteger callId, int halfOpenTimeout, int openTimeout, MgcpEventProvider eventProvider, MediaChannelProvider channelProvider, ListeningScheduledExecutorService executor) {
         super(identifier, callId, halfOpenTimeout, openTimeout, eventProvider, executor);
         
         // Connection Properties
@@ -88,11 +89,11 @@ public class MgcpRemoteConnection extends AbstractMgcpConnection implements RtpL
         this.audioChannel.setCname(this.cname);
     }
 
-    public MgcpRemoteConnection(int identifier, int callId, int timeout, MgcpEventProvider eventProvider, MediaChannelProvider channelProvider, ListeningScheduledExecutorService executor) {
+    public MgcpRemoteConnection(int identifier, BigInteger callId, int timeout, MgcpEventProvider eventProvider, MediaChannelProvider channelProvider, ListeningScheduledExecutorService executor) {
         this(identifier, callId, HALF_OPEN_TIMER, timeout, eventProvider, channelProvider, executor);
     }
 
-    public MgcpRemoteConnection(int identifier, int callId, MgcpEventProvider eventProvider, MediaChannelProvider channelProvider, ListeningScheduledExecutorService executor) {
+    public MgcpRemoteConnection(int identifier, BigInteger callId, MgcpEventProvider eventProvider, MediaChannelProvider channelProvider, ListeningScheduledExecutorService executor) {
         this(identifier, callId, 0, eventProvider, channelProvider, executor);
     }
 

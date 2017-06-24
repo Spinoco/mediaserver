@@ -22,6 +22,7 @@
 package org.restcomm.media.control.mgcp.connection;
 
 import java.io.IOException;
+import java.math.BigInteger;
 
 import org.apache.log4j.Logger;
 import org.restcomm.media.component.audio.AudioComponent;
@@ -51,16 +52,16 @@ public class MgcpLocalConnection extends AbstractMgcpConnection {
 
     private final LocalDataChannel audioChannel;
 
-    public MgcpLocalConnection(int identifier, int callId, int halfOpenTimeout, int openTimeout, MgcpEventProvider eventProvider, ChannelsManager channelProvider, ListeningScheduledExecutorService executor) {
+    public MgcpLocalConnection(int identifier, BigInteger callId, int halfOpenTimeout, int openTimeout, MgcpEventProvider eventProvider, ChannelsManager channelProvider, ListeningScheduledExecutorService executor) {
         super(identifier, callId, halfOpenTimeout, openTimeout, eventProvider, executor);
         this.audioChannel = channelProvider.getLocalChannel();
     }
     
-    public MgcpLocalConnection(int identifier, int callId, int timeout, MgcpEventProvider eventProvider, ChannelsManager channelProvider, ListeningScheduledExecutorService executor) {
+    public MgcpLocalConnection(int identifier, BigInteger callId, int timeout, MgcpEventProvider eventProvider, ChannelsManager channelProvider, ListeningScheduledExecutorService executor) {
         this(identifier, callId, HALF_OPEN_TIMER, timeout, eventProvider, channelProvider, executor);
     }
 
-    public MgcpLocalConnection(int identifier, int callId, MgcpEventProvider eventProvider, ChannelsManager channelProvider, ListeningScheduledExecutorService executor) {
+    public MgcpLocalConnection(int identifier, BigInteger callId, MgcpEventProvider eventProvider, ChannelsManager channelProvider, ListeningScheduledExecutorService executor) {
         this(identifier, callId, HALF_OPEN_TIMER, 0, eventProvider, channelProvider, executor);
     }
 

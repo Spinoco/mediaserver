@@ -25,6 +25,8 @@ import org.restcomm.media.control.mgcp.message.LocalConnectionOptions;
 import org.restcomm.media.control.mgcp.message.MgcpResponseCode;
 import org.restcomm.media.spi.ConnectionMode;
 
+import java.math.BigInteger;
+
 /**
  * Contains contextual data for an MGCP CRCX operation.
  * 
@@ -33,7 +35,7 @@ import org.restcomm.media.spi.ConnectionMode;
  */
 public class CrcxContext {
 
-    private int callId;
+    private BigInteger callId;
     private String endpointId;
     private String secondEndpointId;
     private int connectionId;
@@ -48,7 +50,7 @@ public class CrcxContext {
 
     public CrcxContext() {
         super();
-        this.callId = 0;
+        this.callId = BigInteger.valueOf(0L);
         this.endpointId = "";
         this.secondEndpointId = "";
         this.connectionId = 0;
@@ -62,11 +64,11 @@ public class CrcxContext {
         this.message = MgcpResponseCode.ABORTED.message();
     }
 
-    public int getCallId() {
+    public BigInteger getCallId() {
         return callId;
     }
 
-    public void setCallId(int callId) {
+    public void setCallId(BigInteger callId) {
         this.callId = callId;
     }
 

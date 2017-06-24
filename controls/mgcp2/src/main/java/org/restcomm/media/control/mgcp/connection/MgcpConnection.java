@@ -30,6 +30,8 @@ import org.restcomm.media.control.mgcp.pkg.MgcpEventSubject;
 import org.restcomm.media.control.mgcp.pkg.MgcpRequestedEvent;
 import org.restcomm.media.spi.ConnectionMode;
 
+import java.math.BigInteger;
+
 /**
  * Connections are created on each endpoint that will be involved in the call.
  * <p>
@@ -62,7 +64,7 @@ public interface MgcpConnection extends MgcpEventSubject {
      * 
      * @return The call identifier, in base 10
      */
-    int getCallIdentifier();
+    BigInteger getCallIdentifier();
 
     /**
      * Gets the call identifier.

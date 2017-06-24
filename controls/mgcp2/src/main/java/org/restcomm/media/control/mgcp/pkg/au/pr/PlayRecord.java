@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.pkg.au.pr;
 
+import java.math.BigInteger;
 import java.util.Map;
 
 import org.restcomm.media.control.mgcp.command.param.NotifiedEntity;
@@ -62,7 +63,7 @@ public class PlayRecord extends AbstractMgcpSignal {
     // Execution Context
     private final PlayRecordContext context;
 
-    public PlayRecord(Player player, DtmfDetector detector, Recorder recorder, int requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters) {
+    public PlayRecord(Player player, DtmfDetector detector, Recorder recorder, BigInteger requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters) {
         super(AudioPackage.PACKAGE_NAME, SYMBOL, SignalType.TIME_OUT, requestId, notifiedEntity, parameters);
 
         // Media Components
@@ -83,7 +84,7 @@ public class PlayRecord extends AbstractMgcpSignal {
                 playerListener, context);
     }
     
-    public PlayRecord(Player player, DtmfDetector detector, Recorder recorder, int requestId, Map<String, String> parameters) {
+    public PlayRecord(Player player, DtmfDetector detector, Recorder recorder, BigInteger requestId, Map<String, String> parameters) {
         this(player, detector, recorder, requestId, null, parameters);
     }
 

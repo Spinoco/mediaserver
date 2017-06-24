@@ -21,6 +21,8 @@
 
 package org.restcomm.media.control.mgcp.util.collections;
 
+import java.math.BigInteger;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -77,6 +79,10 @@ public class Parameters<K> implements Cloneable {
 
     public Optional<Integer> getIntegerBase16(K key) {
         return get(key, ValueTransformers.STRING_TO_INTEGER_BASE16);
+    }
+
+    public Optional<BigInteger> getBigIntBase16(K key) {
+        return get(key, ValueTransformers.STRING_TO_BIG_INTEGER_BASE16);
     }
 
     public Optional<Long> getLong(K key) {

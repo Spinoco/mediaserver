@@ -23,6 +23,8 @@ package org.restcomm.media.control.mgcp.pkg;
 
 import org.restcomm.media.control.mgcp.command.param.NotifiedEntity;
 
+import java.math.BigInteger;
+
 /**
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
@@ -41,7 +43,7 @@ public interface MgcpSignal extends MgcpEventSubject {
      * 
      * @return The request identifier.
      */
-    int getRequestId();
+    BigInteger getRequestId();
 
     /**
      * Gets the entity which requested the notification of events resulting from the completion of the signal.

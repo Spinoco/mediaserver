@@ -44,6 +44,8 @@ import org.restcomm.media.control.mgcp.exception.MgcpConnectionNotFoundException
 import org.restcomm.media.control.mgcp.exception.MgcpException;
 import org.restcomm.media.spi.ConnectionMode;
 
+import java.math.BigInteger;
+
 /**
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
@@ -53,7 +55,7 @@ public class MgcpSplitterEndpointTest {
     @Test
     public void testOpenCloseRemoteConnection() throws MgcpConnectionException, MgcpCallNotFoundException, MgcpConnectionNotFoundException {
         // given
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final MgcpRemoteConnection connection = mock(MgcpRemoteConnection.class);
         final AudioSplitter inbandMixer = mock(AudioSplitter.class);
         final OOBSplitter outbandMixer = mock(OOBSplitter.class);
@@ -75,7 +77,7 @@ public class MgcpSplitterEndpointTest {
         verify(outbandMixer, times(1)).addOutsideComponent(any(OOBComponent.class));
 
         // when - close connection
-        endpoint.deleteConnection(1, connection.getIdentifier());
+        endpoint.deleteConnection(BigInteger.valueOf(1), connection.getIdentifier());
 
         // then
         verify(inbandMixer, times(1)).releaseOutsideComponent(any(AudioComponent.class));
@@ -85,7 +87,7 @@ public class MgcpSplitterEndpointTest {
     @Test
     public void testOpenCloseLocalConnection() throws MgcpException {
         // given
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final MgcpLocalConnection connection = mock(MgcpLocalConnection.class);
         final AudioSplitter inbandSplitter = mock(AudioSplitter.class);
         final OOBSplitter outbandSplitter = mock(OOBSplitter.class);

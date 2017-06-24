@@ -88,6 +88,7 @@ public class MgcpPacketHandler implements PacketHandler, MgcpMessageSubject {
     public byte[] handle(byte[] packet, int dataLength, int offset, InetSocketAddress localPeer, InetSocketAddress remotePeer)
             throws PacketHandlerException {
         // Get message type based on first byte
+        System.out.println("XXXY HANDLING " + localPeer + " >> " + remotePeer);
         byte b = packet[0];
 
         // Produce message according to type

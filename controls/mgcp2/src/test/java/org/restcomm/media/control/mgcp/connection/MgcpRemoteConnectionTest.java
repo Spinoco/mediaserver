@@ -30,6 +30,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigInteger;
 import java.util.concurrent.Executors;
 
 import org.junit.Before;
@@ -70,7 +71,7 @@ public class MgcpRemoteConnectionTest {
     @Test
     public void testMaxDurationTimerWhenHalfOpen() throws MgcpConnectionException, InterruptedException {
         // given
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final int identifier = 1;
         final int halfOpenTimeout = 2;
         final int openTimeout = 3;
@@ -100,7 +101,7 @@ public class MgcpRemoteConnectionTest {
     @Test
     public void testMaxDurationTimerWhenOpen() throws MgcpConnectionException, InterruptedException {
         // given
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final int openTimeout = 4;
         final int halfOpenTimeout = openTimeout / 2;
         final MgcpEventObserver observer = mock(MgcpEventObserver.class);
@@ -142,6 +143,7 @@ public class MgcpRemoteConnectionTest {
     public void testHalfOpenTimerCancelationWhenMovingToOpen() throws MgcpConnectionException, InterruptedException {
         // given
         final int openTimeout = 4;
+        final BigInteger callId = BigInteger.valueOf(1);
         final int halfOpenTimeout = openTimeout / 2;
         final MgcpEventObserver observer = mock(MgcpEventObserver.class);
         final ArgumentCaptor<RtpTimeoutEvent> timeoutCaptor = ArgumentCaptor.forClass(RtpTimeoutEvent.class);
@@ -155,11 +157,11 @@ public class MgcpRemoteConnectionTest {
         when(audioChannel.getMediaType()).thenReturn(AudioChannel.MEDIA_TYPE);
         when(audioChannel.containsNegotiatedFormats()).thenReturn(true);
 
-        final MgcpRemoteConnection connection1 = new MgcpRemoteConnection(1, halfOpenTimeout, openTimeout, eventProvider, channelProvider, this.executor);
+        final MgcpRemoteConnection connection1 = new MgcpRemoteConnection(1, callId, openTimeout, eventProvider, channelProvider, this.executor);
         connection1.observe(observer);
         final String sdp1 = connection1.halfOpen(new LocalConnectionOptions());
 
-        final MgcpRemoteConnection connection2 = new MgcpRemoteConnection(2, halfOpenTimeout, openTimeout, eventProvider, channelProvider, this.executor);
+        final MgcpRemoteConnection connection2 = new MgcpRemoteConnection(2, callId, openTimeout, eventProvider, channelProvider, this.executor);
         connection2.observe(observer);
         final String sdp2 = connection2.open(sdp1);
 
@@ -188,6 +190,7 @@ public class MgcpRemoteConnectionTest {
         final int identifier = 1;
         final int halfOpenTimeout = 0;
         final int openTimeout = 4;
+        final BigInteger callId = BigInteger.valueOf(1);
         final MgcpEventObserver observer = mock(MgcpEventObserver.class);
         final ArgumentCaptor<RtpTimeoutEvent> timeoutCaptor = ArgumentCaptor.forClass(RtpTimeoutEvent.class);
         final AudioChannel audioChannel = mock(AudioChannel.class);
@@ -199,7 +202,7 @@ public class MgcpRemoteConnectionTest {
         when(audioChannel.getFormats()).thenReturn(AVProfile.audio);
         when(audioChannel.getMediaType()).thenReturn(AudioChannel.MEDIA_TYPE);
 
-        final MgcpRemoteConnection connection = new MgcpRemoteConnection(identifier, halfOpenTimeout, openTimeout, eventProvider, channelProvider, this.executor);
+        final MgcpRemoteConnection connection = new MgcpRemoteConnection(identifier, callId, openTimeout, eventProvider, channelProvider, this.executor);
         connection.observe(observer);
         connection.halfOpen(new LocalConnectionOptions());
 
@@ -213,7 +216,7 @@ public class MgcpRemoteConnectionTest {
     @Test
     public void testInactiveOpenTimer() throws MgcpConnectionException, InterruptedException {
         // given
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final int connectionId1 = 1;
         final int connectionId2 = 2;
         final int openTimeout = 0;

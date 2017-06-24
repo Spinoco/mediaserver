@@ -27,6 +27,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,13 +72,13 @@ public class DeleteConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(bridgeEndpoint);
-        when(bridgeEndpoint.deleteConnection(1, 1)).thenReturn(connection);
+        when(bridgeEndpoint.deleteConnection(BigInteger.valueOf(1), 1)).thenReturn(connection);
         when(connection.getIdentifier()).thenReturn(1);
 
         MgcpCommandResult result = dlcx.call();
 
         // then
-        verify(bridgeEndpoint, times(1)).deleteConnection(1, 1);
+        verify(bridgeEndpoint, times(1)).deleteConnection(BigInteger.valueOf(1), 1);
 
         assertNotNull(result);
         assertEquals(MgcpResponseCode.TRANSACTION_WAS_EXECUTED.code(), result.getCode());
@@ -107,14 +108,14 @@ public class DeleteConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(bridgeEndpoint);
-        when(bridgeEndpoint.deleteConnections(1)).thenReturn(connections);
+        when(bridgeEndpoint.deleteConnections(BigInteger.valueOf(1))).thenReturn(connections);
         connections.add(connection1);
         connections.add(connection2);
 
         MgcpCommandResult result = dlcx.call();
 
         // then
-        verify(bridgeEndpoint, times(1)).deleteConnections(1);
+        verify(bridgeEndpoint, times(1)).deleteConnections(BigInteger.valueOf(1));
 
         assertNotNull(result);
         assertEquals(MgcpResponseCode.TRANSACTION_WAS_EXECUTED.code(), result.getCode());
@@ -171,12 +172,12 @@ public class DeleteConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(bridgeEndpoint);
-        when(bridgeEndpoint.deleteConnection(1, 1)).thenThrow(new MgcpConnectionNotFoundException(""));
+        when(bridgeEndpoint.deleteConnection(BigInteger.valueOf(1), 1)).thenThrow(new MgcpConnectionNotFoundException(""));
 
         MgcpCommandResult result = dlcx.call();
 
         // then
-        verify(bridgeEndpoint, times(1)).deleteConnection(1, 1);
+        verify(bridgeEndpoint, times(1)).deleteConnection(BigInteger.valueOf(1), 1);
 
         assertNotNull(result);
         assertEquals(MgcpResponseCode.INCORRECT_CONNECTION_ID.code(), result.getCode());
@@ -202,12 +203,12 @@ public class DeleteConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(bridgeEndpoint);
-        when(bridgeEndpoint.deleteConnection(1, 1)).thenThrow(new MgcpCallNotFoundException(""));
+        when(bridgeEndpoint.deleteConnection(BigInteger.valueOf(1), 1)).thenThrow(new MgcpCallNotFoundException(""));
 
         MgcpCommandResult result = dlcx.call();
 
         // then
-        verify(bridgeEndpoint, times(1)).deleteConnection(1, 1);
+        verify(bridgeEndpoint, times(1)).deleteConnection(BigInteger.valueOf(1), 1);
 
         assertNotNull(result);
         assertEquals(MgcpResponseCode.INCORRECT_CALL_ID.code(), result.getCode());
@@ -232,12 +233,12 @@ public class DeleteConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(bridgeEndpoint);
-        when(bridgeEndpoint.deleteConnections(1)).thenThrow(new MgcpCallNotFoundException(""));
+        when(bridgeEndpoint.deleteConnections(BigInteger.valueOf(1))).thenThrow(new MgcpCallNotFoundException(""));
 
         MgcpCommandResult result = dlcx.call();
 
         // then
-        verify(bridgeEndpoint, times(1)).deleteConnections(1);
+        verify(bridgeEndpoint, times(1)).deleteConnections(BigInteger.valueOf(1));
 
         assertNotNull(result);
         assertEquals(MgcpResponseCode.TRANSACTION_WAS_EXECUTED.code(), result.getCode());

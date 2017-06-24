@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.endpoint;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import org.restcomm.media.control.mgcp.command.NotificationRequest;
@@ -61,7 +62,7 @@ public interface MgcpEndpoint extends MgcpEndpointSubject, MgcpMessageSubject, M
      * @param connectionId The connection identifier.
      * @return The connection matching the criteria. Returns null if no such connection exists.
      */
-    MgcpConnection getConnection(int callId, int connectionId);
+    MgcpConnection getConnection(BigInteger callId, int connectionId);
 
     /**
      * Registers a connection.
@@ -69,7 +70,7 @@ public interface MgcpEndpoint extends MgcpEndpointSubject, MgcpMessageSubject, M
      * @param callId The identifier of the call where the connection belongs to.
      * @param local Whether a local or remote connection is to be created.
      */
-    MgcpConnection createConnection(int callId, boolean local);
+    MgcpConnection createConnection(BigInteger callId, boolean local);
 
     /**
      * Deletes an active connection.
@@ -79,7 +80,7 @@ public interface MgcpEndpoint extends MgcpEndpointSubject, MgcpMessageSubject, M
      * @throws MgcpCallNotFoundException When call with such ID cannot be found.
      * @throws MgcpConnectionNotFoundException When call does not contain connection with such ID.
      */
-    MgcpConnection deleteConnection(int callId, int connectionId) throws MgcpCallNotFoundException, MgcpConnectionNotFoundException;
+    MgcpConnection deleteConnection(BigInteger callId, int connectionId) throws MgcpCallNotFoundException, MgcpConnectionNotFoundException;
 
     /**
      * Deletes all currently active connections.
@@ -92,7 +93,7 @@ public interface MgcpEndpoint extends MgcpEndpointSubject, MgcpMessageSubject, M
      * @param callId the call identifier
      * @throws MgcpCallNotFoundException When call with such ID cannot be found.
      */
-    List<MgcpConnection> deleteConnections(int callId) throws MgcpCallNotFoundException;
+    List<MgcpConnection> deleteConnections(BigInteger callId) throws MgcpCallNotFoundException;
 
     /**
      * Requests a notification to be fired when an event happens in the endpoint.

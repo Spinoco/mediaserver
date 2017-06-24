@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.pkg;
 
+import java.math.BigInteger;
 import java.util.Map;
 
 import org.restcomm.media.control.mgcp.command.param.NotifiedEntity;
@@ -65,7 +66,7 @@ public class MgcpSignalProvider {
      * @throws UnrecognizedMgcpPackageException When package name is unrecognized.
      * @throws UnsupportedMgcpSignalException When package does not support the specified signal.
      */
-    public MgcpSignal provide(String pkg, String signal, int requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters, MgcpEndpoint endpoint)
+    public MgcpSignal provide(String pkg, String signal, BigInteger requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters, MgcpEndpoint endpoint)
             throws UnrecognizedMgcpPackageException, UnsupportedMgcpSignalException {
         switch (pkg) {
             case AudioPackage.PACKAGE_NAME:
@@ -76,7 +77,7 @@ public class MgcpSignalProvider {
         }
     }
 
-    private MgcpSignal provideAudioSignal(String signal, int requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters, MgcpEndpoint endpoint, ListeningScheduledExecutorService executor) throws UnsupportedMgcpSignalException {
+    private MgcpSignal provideAudioSignal(String signal, BigInteger requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters, MgcpEndpoint endpoint, ListeningScheduledExecutorService executor) throws UnsupportedMgcpSignalException {
         // Validate signal type
         final AudioSignalType signalType = AudioSignalType.fromSymbol(signal);
 

@@ -33,6 +33,8 @@ import org.restcomm.media.control.mgcp.util.collections.Parameters;
 
 import com.google.common.base.Optional;
 
+import java.math.BigInteger;
+
 /**
  * This command is used to terminate a single connection or multiple connections at the same time.<br>
  * As a side effect, it collects statistics on the execution of the connection.
@@ -60,7 +62,7 @@ public class DeleteConnectionCommand extends AbstractMgcpCommand {
         }
 
         // Call ID (optional)
-        Optional<Integer> callId = parameters.getIntegerBase16(MgcpParameterType.CALL_ID);
+        Optional<BigInteger> callId = parameters.getBigIntBase16(MgcpParameterType.CALL_ID);
         if (callId.isPresent()) {
             context.callId = callId.get();
         }
@@ -87,12 +89,12 @@ public class DeleteConnectionCommand extends AbstractMgcpCommand {
         }
 
         // Decide whether delete single or multiple connections
-        int callId = context.callId;
+        BigInteger callId = context.callId;
         int connectionId = context.connectionId;
         
         if(connectionId == -1) {
             // Delete multiple endpoints...
-            if(callId == -1) {
+            if(callId == BigInteger.valueOf(-1L)) {
                 // ... all connections in the endpoint
                 endpoint.deleteConnections();
             } else {
@@ -169,7 +171,7 @@ public class DeleteConnectionCommand extends AbstractMgcpCommand {
 
     private class DlcxContext {
         
-        private int callId;
+        private BigInteger callId;
         private String endpointId;
         private int connectionId;
         private String connectionParams;
@@ -178,7 +180,7 @@ public class DeleteConnectionCommand extends AbstractMgcpCommand {
         private String message;
         
         public DlcxContext() {
-            this.callId = -1;
+            this.callId = BigInteger.valueOf(-1L);
             this.endpointId = "";
             this.connectionId = -1;
             this.connectionParams = "";

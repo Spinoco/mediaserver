@@ -34,6 +34,8 @@ import org.restcomm.media.spi.ConnectionMode;
 
 import com.google.common.base.Optional;
 
+import java.math.BigInteger;
+
 /**
  * This command is used to modify the characteristics of a gateway's "view" of a connection.<br>
  * This "view" of the call includes both the local connection descriptor as well as the remote connection descriptor.
@@ -51,7 +53,7 @@ public class ModifyConnectionCommand extends AbstractMgcpCommand {
 
     private void validateParameters(Parameters<MgcpParameterType> parameters, MdcxContext context) throws MgcpCommandException, RuntimeException {
         // Call ID
-        Optional<Integer> callId = parameters.getIntegerBase16(MgcpParameterType.CALL_ID);
+        Optional<BigInteger> callId = parameters.getBigIntBase16(MgcpParameterType.CALL_ID);
         if (!callId.isPresent()) {
             throw new MgcpCommandException(MgcpResponseCode.INCORRECT_CALL_ID);
         } else {
@@ -103,7 +105,7 @@ public class ModifyConnectionCommand extends AbstractMgcpCommand {
         }
 
         // Retrieve connection from endpoint
-        int callId = context.callId;
+        BigInteger callId = context.callId;
         int connectionId = context.connectionId;
 
         MgcpConnection connection = endpoint.getConnection(callId, connectionId);
@@ -174,7 +176,7 @@ public class ModifyConnectionCommand extends AbstractMgcpCommand {
 
     private class MdcxContext {
 
-        private int callId;
+        private BigInteger callId;
         private String endpointId;
         private int connectionId;
         private ConnectionMode mode;
@@ -185,7 +187,7 @@ public class ModifyConnectionCommand extends AbstractMgcpCommand {
         private String message;
 
         public MdcxContext() {
-            this.callId = -1;
+            this.callId = BigInteger.valueOf(-1L);
             this.endpointId = "";
             this.connectionId = -1;
             this.remoteDescription = "";

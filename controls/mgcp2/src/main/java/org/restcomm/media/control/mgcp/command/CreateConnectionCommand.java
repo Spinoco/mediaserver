@@ -41,6 +41,8 @@ import org.restcomm.media.spi.ConnectionMode;
 
 import com.google.common.base.Optional;
 
+import java.math.BigInteger;
+
 /**
  * This command is used to create a connection between two endpoints.
  * 
@@ -72,9 +74,9 @@ public class CreateConnectionCommand extends AbstractMgcpCommand {
         }
     }    
 
-    private int loadCallId(Parameters<MgcpParameterType> parameters) throws MgcpCommandException {
+    private BigInteger loadCallId(Parameters<MgcpParameterType> parameters) throws MgcpCommandException {
         // Call ID
-        Optional<Integer> callId = parameters.getIntegerBase16(MgcpParameterType.CALL_ID);
+        Optional<BigInteger> callId = parameters.getBigIntBase16(MgcpParameterType.CALL_ID);
         if (!callId.isPresent()) {
             throw new MgcpCommandException(MgcpResponseCode.INCORRECT_CALL_ID);
         }
@@ -163,7 +165,7 @@ public class CreateConnectionCommand extends AbstractMgcpCommand {
      * @return The new connection
      * @throws MgcpConnectionException If connection could not be half opened.
      */
-    private MgcpConnection createRemoteConnection(int callId, ConnectionMode mode, MgcpEndpoint endpoint, CrcxContext context) throws MgcpConnectionException {
+    private MgcpConnection createRemoteConnection(BigInteger callId, ConnectionMode mode, MgcpEndpoint endpoint, CrcxContext context) throws MgcpConnectionException {
         // Create connection
         MgcpConnection connection = endpoint.createConnection(callId, false);
         // TODO set call agent
@@ -189,7 +191,7 @@ public class CreateConnectionCommand extends AbstractMgcpCommand {
      * @return The new connection
      * @throws MgcpConnectionException If connection could not be opened
      */
-    private MgcpConnection createRemoteConnection(int callId, ConnectionMode mode, String remoteDescription, MgcpEndpoint endpoint, CrcxContext context) throws MgcpConnectionException {
+    private MgcpConnection createRemoteConnection(BigInteger callId, ConnectionMode mode, String remoteDescription, MgcpEndpoint endpoint, CrcxContext context) throws MgcpConnectionException {
         MgcpConnection connection = endpoint.createConnection(callId, false);
         // TODO set call agent
         String localDescription = connection.open(remoteDescription);
@@ -212,7 +214,7 @@ public class CreateConnectionCommand extends AbstractMgcpCommand {
      * @return The new connection
      * @throws MgcpException If connection could not be opened.
      */
-    private MgcpConnection createLocalConnection(int callId, MgcpEndpoint endpoint) throws MgcpConnectionException {
+    private MgcpConnection createLocalConnection(BigInteger callId, MgcpEndpoint endpoint) throws MgcpConnectionException {
         MgcpConnection connection = endpoint.createConnection(callId, true);
         connection.open(null);
         return connection;
@@ -272,7 +274,7 @@ public class CreateConnectionCommand extends AbstractMgcpCommand {
     }
     
     private void rollback(CrcxContext context) {
-        final int callId = context.getCallId();
+        final BigInteger callId = context.getCallId();
         final String endpointId = context.getEndpointId();
         final String secondEndpointId = context.getSecondEndpointId();
         final int connectionId = context.getConnectionId();

@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.connection;
 
+import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -56,7 +57,7 @@ public abstract class AbstractMgcpConnection implements MgcpConnection {
 
     // Connection State
     private final int identifier;
-    private final int callIdentifier;
+    private final BigInteger callIdentifier;
     private ConnectionMode mode;
     protected volatile MgcpConnectionState state;
     protected final Object stateLock;
@@ -73,7 +74,7 @@ public abstract class AbstractMgcpConnection implements MgcpConnection {
     protected final int timeout;
     protected final int halfOpenTimeout;
 
-    public AbstractMgcpConnection(int identifier, int callId,  int halfOpenTimeout, int openTimeout, MgcpEventProvider eventProvider, ListeningScheduledExecutorService executor) {
+    public AbstractMgcpConnection(int identifier, BigInteger callId, int halfOpenTimeout, int openTimeout, MgcpEventProvider eventProvider, ListeningScheduledExecutorService executor) {
         // Connection State
         this.identifier = identifier;
         this.callIdentifier = callId;
@@ -103,13 +104,13 @@ public abstract class AbstractMgcpConnection implements MgcpConnection {
     }
 
     @Override
-    public int getCallIdentifier() {
+    public BigInteger getCallIdentifier() {
         return this.callIdentifier;
     }
     
     @Override
     public String getCallIdentifierHex() {
-        return Integer.toHexString(this.callIdentifier).toUpperCase();
+        return this.callIdentifier.toString(16).toUpperCase();
     }
 
     @Override

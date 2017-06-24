@@ -23,6 +23,8 @@ package org.restcomm.media.control.mgcp.util.collections;
 
 import com.google.common.base.Function;
 
+import java.math.BigInteger;
+
 /**
  * Static collection of Functions that help convert between two types of data.
  * 
@@ -35,6 +37,7 @@ public class ValueTransformers {
     public static final Function<String, Integer> STRING_TO_INTEGER_BASE16 = new IntegerBase16Transformer();
     public static final Function<String, Long> STRING_TO_LONG = new LongTransformer();
     public static final Function<String, Boolean> STRING_TO_BOOLEAN = new BooleanTransformer();
+    public static final Function<String, BigInteger> STRING_TO_BIG_INTEGER_BASE16 = new BigIntTransformer();
 
     private ValueTransformers() {
         super();
@@ -96,6 +99,19 @@ public class ValueTransformers {
                 return null;
             }
             return Boolean.parseBoolean(input);
+        }
+
+    }
+
+
+    private static final class BigIntTransformer implements Function<String, BigInteger> {
+
+        @Override
+        public BigInteger apply(String input) {
+            if (input == null || input.isEmpty()) {
+                return null;
+            }
+            return new BigInteger(input, 16);
         }
 
     }

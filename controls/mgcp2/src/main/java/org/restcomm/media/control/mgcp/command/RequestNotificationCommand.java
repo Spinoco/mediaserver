@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.command;
 
+import java.math.BigInteger;
 import java.text.ParseException;
 
 import org.apache.log4j.Logger;
@@ -80,11 +81,11 @@ public class RequestNotificationCommand extends AbstractMgcpCommand {
         }
 
         // Request Identifier
-        Optional<String> requestId = this.requestParameters.getString(MgcpParameterType.REQUEST_ID);
+        Optional<BigInteger> requestId = this.requestParameters.getBigIntBase16(MgcpParameterType.REQUEST_ID);
         if (!requestId.isPresent()) {
             throw new MgcpCommandException(MgcpResponseCode.PROTOCOL_ERROR);
         } else {
-            context.requestIdHex = requestId.get();
+            context.requestId = requestId.get();
         }
 
         // Signal Requests (optional)
@@ -103,7 +104,7 @@ public class RequestNotificationCommand extends AbstractMgcpCommand {
         Optional<String> events = this.requestParameters.getString(MgcpParameterType.REQUESTED_EVENTS);
         if (events.isPresent()) {
             try {
-                MgcpRequestedEvent[] requestedEvents = MgcpRequestedEventsParser.parse(Integer.parseInt(context.requestIdHex, 16), events.get(), this.packageManager);
+                MgcpRequestedEvent[] requestedEvents = MgcpRequestedEventsParser.parse(context.requestId, events.get(), this.packageManager);
                 context.requestedEvents = requestedEvents;
             } catch (UnrecognizedMgcpPackageException e) {
                 throw new MgcpCommandException(MgcpResponseCode.UNKNOWN_PACKAGE);
@@ -144,7 +145,7 @@ public class RequestNotificationCommand extends AbstractMgcpCommand {
                 signals = new MgcpSignal[signalRequests.length];
                 for (int i = 0; i < signalRequests.length; i++) {
                     SignalRequest signalRequest = signalRequests[i];
-                    signals[i] = this.signalProvider.provide(signalRequest.getPackageName(), signalRequest.getSignalType(), Integer.parseInt(context.requestIdHex, 16), context.notifiedEntity, signalRequest.getParameters(), endpoint);
+                    signals[i] = this.signalProvider.provide(signalRequest.getPackageName(), signalRequest.getSignalType(), context.requestId , context.notifiedEntity, signalRequest.getParameters(), endpoint);
                 }
             } catch (UnrecognizedMgcpPackageException e) {
                 throw new MgcpCommandException(MgcpResponseCode.UNKNOWN_PACKAGE);
@@ -154,7 +155,7 @@ public class RequestNotificationCommand extends AbstractMgcpCommand {
         }
 
         // Submit notification request to endpoint
-        NotificationRequest rqnt = new NotificationRequest(transactionId, context.requestIdHex, context.notifiedEntity, context.requestedEvents, signals);
+        NotificationRequest rqnt = new NotificationRequest(transactionId, context.requestId, context.notifiedEntity, context.requestedEvents, signals);
 
         // Request notification to endpoint
         endpoint.requestNotification(rqnt);
@@ -192,7 +193,7 @@ public class RequestNotificationCommand extends AbstractMgcpCommand {
     private class RqntContext {
 
         private String endpointId;
-        private String requestIdHex;
+        private BigInteger requestId;
         private SignalRequest[] signalRequests;
         private MgcpRequestedEvent[] requestedEvents;
         private NotifiedEntity notifiedEntity;
@@ -202,7 +203,7 @@ public class RequestNotificationCommand extends AbstractMgcpCommand {
 
         public RqntContext() {
             this.endpointId = "";
-            this.requestIdHex = "";
+            this.requestId = BigInteger.valueOf(-1l);
             this.signalRequests = new SignalRequest[0];
             this.requestedEvents = new MgcpRequestedEvent[0];
             this.notifiedEntity = null;

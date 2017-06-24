@@ -26,6 +26,8 @@ import org.restcomm.media.control.mgcp.pkg.exception.UnrecognizedMgcpActionExcep
 import org.restcomm.media.control.mgcp.pkg.exception.UnrecognizedMgcpEventException;
 import org.restcomm.media.control.mgcp.pkg.exception.UnrecognizedMgcpPackageException;
 
+import java.math.BigInteger;
+
 /**
  * Parses RequestedEvent parameter for an MGCP RQNT command.
  * 
@@ -41,7 +43,7 @@ public class MgcpRequestedEventsParser {
     private static final String PARAMETER_START_SEPARATOR = ACTION_START_SEPARATOR;
     private static final String PARAMETER_END_SEPARATOR = ACTION_END_SEPARATOR;
 
-    public static MgcpRequestedEvent[] parse(int requestId, String requestedEvents, MgcpPackageManager packageManager)
+    public static MgcpRequestedEvent[] parse(BigInteger requestId, String requestedEvents, MgcpPackageManager packageManager)
             throws UnrecognizedMgcpPackageException, UnrecognizedMgcpEventException, UnrecognizedMgcpActionException, MgcpParseException {
         // Split requested events
         String[] tokens = requestedEvents.split("(?<=\\)),");
@@ -60,7 +62,7 @@ public class MgcpRequestedEventsParser {
      * 
      *<package>/<event>[@<connectionId>](<action>)[(<params>)],
      */
-    private static MgcpRequestedEvent parseSingle(int requestId, String requestedEvent, MgcpPackageManager packageManager)
+    private static MgcpRequestedEvent parseSingle(BigInteger requestId, String requestedEvent, MgcpPackageManager packageManager)
             throws UnrecognizedMgcpPackageException, UnrecognizedMgcpEventException, UnrecognizedMgcpActionException, MgcpParseException {
         // Get indexes of separators
         int indexOfEvent = requestedEvent.indexOf(EVENT_SEPARATOR);

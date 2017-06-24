@@ -45,6 +45,8 @@ import org.restcomm.media.control.mgcp.message.MgcpResponseCode;
 import org.restcomm.media.control.mgcp.util.collections.Parameters;
 import org.restcomm.media.spi.ConnectionMode;
 
+import java.math.BigInteger;
+
 /**
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
@@ -69,7 +71,7 @@ public class ModifyConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(bridgeEndpoint);
-        when(bridgeEndpoint.getConnection(1, 1)).thenReturn(connection);
+        when(bridgeEndpoint.getConnection(BigInteger.valueOf(1), 1)).thenReturn(connection);
 
         MgcpCommandResult result = mdcx.call();
 
@@ -112,7 +114,7 @@ public class ModifyConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(bridgeEndpoint);
-        when(bridgeEndpoint.getConnection(1, 1)).thenReturn(connection);
+        when(bridgeEndpoint.getConnection(BigInteger.valueOf(1), 1)).thenReturn(connection);
         when(connection.open(any(String.class))).thenReturn("answer");
 
         MgcpCommandResult result = mdcx.call();
@@ -275,7 +277,7 @@ public class ModifyConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(null);
-        when(bridgeEndpoint.getConnection(1, 1)).thenReturn(connection);
+        when(bridgeEndpoint.getConnection(BigInteger.valueOf(1), 1)).thenReturn(connection);
 
         MgcpCommandResult result = mdcx.call();
 
@@ -304,7 +306,7 @@ public class ModifyConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(bridgeEndpoint);
-        when(bridgeEndpoint.getConnection(1, 1)).thenReturn(null);
+        when(bridgeEndpoint.getConnection(BigInteger.valueOf(1), 1)).thenReturn(null);
 
         MgcpCommandResult result = mdcx.call();
 
@@ -345,7 +347,7 @@ public class ModifyConnectionCommandTest {
 
         // when
         when(endpointManager.getEndpoint("mobicents/bridge/1@127.0.0.1:2427")).thenReturn(bridgeEndpoint);
-        when(bridgeEndpoint.getConnection(1, 1)).thenReturn(connection);
+        when(bridgeEndpoint.getConnection(BigInteger.valueOf(1), 1)).thenReturn(connection);
         when(connection.open(builderSdp.toString())).thenThrow(MgcpConnectionException.class);
 
         MgcpCommandResult result = mdcx.call();

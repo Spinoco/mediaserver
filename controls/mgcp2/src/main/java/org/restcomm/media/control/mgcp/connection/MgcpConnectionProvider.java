@@ -21,6 +21,7 @@
         
 package org.restcomm.media.control.mgcp.connection;
 
+import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.restcomm.media.control.mgcp.pkg.MgcpEventProvider;
@@ -51,11 +52,11 @@ public class MgcpConnectionProvider {
         this.executor = executor;
     }
     
-    public MgcpRemoteConnection provideRemote(int callId) {
+    public MgcpRemoteConnection provideRemote(BigInteger callId) {
         return new MgcpRemoteConnection(this.idGenerator.incrementAndGet(), callId, this.timeout, eventProvider, channelProvider, executor);
     }
     
-    public MgcpLocalConnection provideLocal(int callId) {
+    public MgcpLocalConnection provideLocal(BigInteger callId) {
         return new MgcpLocalConnection(this.idGenerator.incrementAndGet(), callId, this.timeout, eventProvider, channelsManager, executor);
     }
 

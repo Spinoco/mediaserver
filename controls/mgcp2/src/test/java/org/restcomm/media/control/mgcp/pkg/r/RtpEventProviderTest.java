@@ -37,6 +37,8 @@ import org.restcomm.media.control.mgcp.pkg.r.RtpPackage;
 import org.restcomm.media.control.mgcp.pkg.r.rto.RtpTimeoutEvent;
 import org.restcomm.media.control.mgcp.pkg.r.rto.RtpTimeoutStartTime;
 
+import java.math.BigInteger;
+
 /**
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
@@ -46,7 +48,7 @@ public class RtpEventProviderTest {
     @Test
     public void testProvideRtpTimeoutEvent() throws MgcpException {
         // given
-        final int requestId = 16;
+        final BigInteger requestId = BigInteger.valueOf(16);
         final String packageName = RtpPackage.PACKAGE_NAME;
         final String eventType = RtpTimeoutEvent.SYMBOL;
         final int connectionId = 1;
@@ -70,7 +72,7 @@ public class RtpEventProviderTest {
     @Test(expected = MgcpPackageNotFoundException.class)
     public void testInvalidPackageName() throws MgcpException {
         // given
-        final int requestId = 16;
+        final BigInteger requestId = BigInteger.valueOf(16);
         final String packageName = AudioPackage.PACKAGE_NAME;
         final String eventType = RtpTimeoutEvent.SYMBOL;
         final int connectionId = 1;
@@ -86,7 +88,7 @@ public class RtpEventProviderTest {
     @Test(expected = MgcpEventNotFoundException.class)
     public void testInvalidEventType() throws MgcpException {
         // given
-        final int requestId = 16;
+        final BigInteger requestId = BigInteger.valueOf(16);
         final String packageName = RtpPackage.PACKAGE_NAME;
         final String eventType = "xxx";
         final int connectionId = 1;
@@ -102,7 +104,7 @@ public class RtpEventProviderTest {
     @Test(expected = MalformedMgcpEventRequestException.class)
     public void testInvalidEventParameters() throws MgcpException {
         // given
-        final int requestId = 16;
+        final BigInteger requestId = BigInteger.valueOf(16);
         final String packageName = RtpPackage.PACKAGE_NAME;
         final String eventType = RtpTimeoutEvent.SYMBOL;
         final int connectionId = 1;

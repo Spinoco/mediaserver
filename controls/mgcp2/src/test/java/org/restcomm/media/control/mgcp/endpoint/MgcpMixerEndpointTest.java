@@ -40,6 +40,8 @@ import org.restcomm.media.control.mgcp.exception.MgcpConnectionException;
 import org.restcomm.media.control.mgcp.exception.MgcpConnectionNotFoundException;
 import org.restcomm.media.spi.ConnectionMode;
 
+import java.math.BigInteger;
+
 /**
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
@@ -49,7 +51,7 @@ public class MgcpMixerEndpointTest {
     @Test
     public void testOpenCloseConnection() throws MgcpConnectionException, MgcpCallNotFoundException, MgcpConnectionNotFoundException {
         // given
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final MgcpRemoteConnection connection = mock(MgcpRemoteConnection.class);
         final AudioMixer inbandMixer = mock(AudioMixer.class);
         final OOBMixer outbandMixer = mock(OOBMixer.class);

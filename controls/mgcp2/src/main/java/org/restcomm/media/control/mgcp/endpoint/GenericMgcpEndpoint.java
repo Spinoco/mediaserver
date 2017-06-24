@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.endpoint;
 
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -132,7 +133,7 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
     }
 
     @Override
-    public MgcpConnection getConnection(int callId, int connectionId) {
+    public MgcpConnection getConnection(BigInteger callId, int connectionId) {
         MgcpConnection connection = this.connections.get(connectionId);
         if(connection != null && connection.getCallIdentifier() == callId) {
             return connection;
@@ -140,7 +141,7 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
         return null;
     }
 
-    private boolean registerConnection(int callId, MgcpConnection connection) {
+    private boolean registerConnection(BigInteger callId, MgcpConnection connection) {
         MgcpConnection old = this.connections.putIfAbsent(connection.getIdentifier(), connection);
         boolean registered = (old == null);
 
@@ -164,7 +165,7 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
     }
 
     @Override
-    public MgcpConnection createConnection(int callId, boolean local) {
+    public MgcpConnection createConnection(BigInteger callId, boolean local) {
         MgcpConnection connection = local ? this.connectionProvider.provideLocal(callId) : this.connectionProvider.provideRemote(callId);
         registerConnection(callId, connection);
         if (!connection.isLocal()) {
@@ -174,13 +175,13 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
     }
 
     @Override
-    public MgcpConnection deleteConnection(int callId, int connectionId) throws MgcpCallNotFoundException, MgcpConnectionNotFoundException {
+    public MgcpConnection deleteConnection(BigInteger callId, int connectionId) throws MgcpCallNotFoundException, MgcpConnectionNotFoundException {
         MgcpConnection connection = this.connections.get(connectionId);
         
         if(connection == null) {
-            throw new MgcpConnectionNotFoundException(this.endpointId + " could not find connection " + Integer.toHexString(connectionId).toUpperCase() + " in call " + Integer.toHexString(callId).toUpperCase());
+            throw new MgcpConnectionNotFoundException(this.endpointId + " could not find connection " + Integer.toHexString(connectionId).toUpperCase() + " in call " + callId.toString(16).toUpperCase());
         } else if (connection.getCallIdentifier() != callId) {
-            throw new MgcpCallNotFoundException(this.endpointId + " could not find connection " + Integer.toHexString(connectionId).toUpperCase() + " in call " + Integer.toHexString(callId).toUpperCase());
+            throw new MgcpCallNotFoundException(this.endpointId + " could not find connection " + Integer.toHexString(connectionId).toUpperCase() + " in call " + callId.toString(16).toUpperCase());
         }
         
         connection = this.connections.remove(connectionId);
@@ -211,7 +212,7 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
     }
 
     @Override
-    public List<MgcpConnection> deleteConnections(int callId) throws MgcpCallNotFoundException {
+    public List<MgcpConnection> deleteConnections(BigInteger callId) throws MgcpCallNotFoundException {
         // Fetch all current connections
         Collection<MgcpConnection> current = this.connections.values();
         List<MgcpConnection> deleted = new ArrayList<>(current.size());
@@ -228,7 +229,7 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
         
         // No connections were found for specific call
         if(deleted.size() == 0) {
-            throw new MgcpCallNotFoundException(this.endpointId + " could not find call " + Integer.toHexString(callId).toUpperCase());
+            throw new MgcpCallNotFoundException(this.endpointId + " could not find call " + callId.toString(16).toUpperCase());
         }
         
         // Log deleted calls
@@ -566,7 +567,7 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
                 notify.addParameter(MgcpParameterType.NOTIFIED_ENTITY, this.notifiedEntity.toString());
             }
             notify.addParameter(MgcpParameterType.OBSERVED_EVENT, event.toString());
-            notify.addParameter(MgcpParameterType.REQUEST_ID, Integer.toString(signal.getRequestId(), 16));
+            notify.addParameter(MgcpParameterType.REQUEST_ID, signal.getRequestId().toString(16));
             return notify;
         }
         return null;

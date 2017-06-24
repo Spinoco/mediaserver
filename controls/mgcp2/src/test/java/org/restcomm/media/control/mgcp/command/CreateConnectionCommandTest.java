@@ -49,6 +49,8 @@ import org.restcomm.media.control.mgcp.message.MgcpRequest;
 import org.restcomm.media.control.mgcp.message.MgcpResponseCode;
 import org.restcomm.media.control.mgcp.util.collections.Parameters;
 
+import java.math.BigInteger;
+
 /**
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
@@ -65,7 +67,7 @@ public class CreateConnectionCommandTest {
         builder.append("N:restcomm@127.0.0.1:2727").append(System.lineSeparator());
         builder.append("Z2:mobicents/ivr/$@127.0.0.1:2427");
 
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final int transactionId = 147483655;
         final MgcpRequest request = new MgcpMessageParser().parseRequest(builder.toString());
         final MgcpEndpointManager endpointManager = mock(MgcpEndpointManager.class);
@@ -121,7 +123,7 @@ public class CreateConnectionCommandTest {
         builder.append("N:restcomm@127.0.0.1:2727").append(System.lineSeparator());
         builder.append("L:webrtc:false").append(System.lineSeparator());
 
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final int transactionId = 147483655;
         final MgcpRequest request = new MgcpMessageParser().parseRequest(builder.toString());
         final MgcpEndpointManager endpointManager = mock(MgcpEndpointManager.class);
@@ -176,7 +178,7 @@ public class CreateConnectionCommandTest {
         builderSdp.append("a=rtpmap:101 telephone-event/8000");
         builder.append(builderSdp.toString());
 
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final int transactionId = 147483655;
         final MgcpRequest request = new MgcpMessageParser().parseRequest(builder.toString());
         final MgcpEndpointManager endpointManager = mock(MgcpEndpointManager.class);
@@ -408,7 +410,7 @@ public class CreateConnectionCommandTest {
         builder.append("N:restcomm@127.0.0.1:2727").append(System.lineSeparator());
         builder.append("Z2:mobicents/ivr/$@127.0.0.1:2427");
 
-        final int callId = 1;
+        final BigInteger callId = BigInteger.valueOf(1);
         final int transactionId = 147483655;
         final MgcpRequest request = new MgcpMessageParser().parseRequest(builder.toString());
         final MgcpEndpointManager endpointManager = mock(MgcpEndpointManager.class);

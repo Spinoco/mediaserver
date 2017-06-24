@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.pkg.au;
 
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.util.Map;
 
@@ -80,7 +81,7 @@ public class PlayAnnouncement extends AbstractMgcpSignal implements PlayerListen
     private final long duration;
     private final long interval;
 
-    public PlayAnnouncement(Player player, int requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters) {
+    public PlayAnnouncement(Player player, BigInteger requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters) {
         super(AudioPackage.PACKAGE_NAME, SIGNAL, SignalType.TIME_OUT, requestId, notifiedEntity, parameters);
 
         // Setup Play Parameters
@@ -99,7 +100,7 @@ public class PlayAnnouncement extends AbstractMgcpSignal implements PlayerListen
         }
     }
 
-    public PlayAnnouncement(Player player, int requestId, Map<String, String> parameters) {
+    public PlayAnnouncement(Player player, BigInteger requestId, Map<String, String> parameters) {
         this(player, requestId, null, parameters);
     }
 

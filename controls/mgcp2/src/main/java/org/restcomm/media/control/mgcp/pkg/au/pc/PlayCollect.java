@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.pkg.au.pc;
 
+import java.math.BigInteger;
 import java.util.Map;
 
 import org.restcomm.media.control.mgcp.command.param.NotifiedEntity;
@@ -71,7 +72,7 @@ public class PlayCollect extends AbstractMgcpSignal {
     // Execution Context
     private final PlayCollectContext context;
 
-    public PlayCollect(Player player, DtmfDetector detector, int requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters, ListeningScheduledExecutorService executor) {
+    public PlayCollect(Player player, DtmfDetector detector, BigInteger requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters, ListeningScheduledExecutorService executor) {
         super(AudioPackage.PACKAGE_NAME, SYMBOL, SignalType.TIME_OUT, requestId, notifiedEntity, parameters);
 
         // Media Components
@@ -88,7 +89,7 @@ public class PlayCollect extends AbstractMgcpSignal {
         this.fsm = PlayCollectFsmBuilder.INSTANCE.build(detector, detectorListener, player, playerListener, this, executor, context);
     }
     
-    public PlayCollect(Player player, DtmfDetector detector, int requestId, Map<String, String> parameters, ListeningScheduledExecutorService executor) {
+    public PlayCollect(Player player, DtmfDetector detector, BigInteger requestId, Map<String, String> parameters, ListeningScheduledExecutorService executor) {
         this(player, detector, requestId, null, parameters, executor);
     }
 

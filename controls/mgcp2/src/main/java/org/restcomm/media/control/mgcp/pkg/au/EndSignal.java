@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.pkg.au;
 
+import java.math.BigInteger;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -49,12 +50,12 @@ public class EndSignal extends AbstractMgcpSignal {
 
     private final MgcpEndpoint endpoint;
 
-    public EndSignal(MgcpEndpoint endpoint, int requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters) {
+    public EndSignal(MgcpEndpoint endpoint, BigInteger requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters) {
         super(AudioPackage.PACKAGE_NAME, "es", SignalType.BRIEF, requestId, notifiedEntity, parameters);
         this.endpoint = endpoint;
     }
 
-    public EndSignal(MgcpEndpoint endpoint, int requestId, Map<String, String> parameters) {
+    public EndSignal(MgcpEndpoint endpoint, BigInteger requestId, Map<String, String> parameters) {
         this(endpoint, requestId, null, parameters);
     }
 

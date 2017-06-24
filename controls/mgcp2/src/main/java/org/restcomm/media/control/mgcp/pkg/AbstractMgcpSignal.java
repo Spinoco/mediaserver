@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.pkg;
 
+import java.math.BigInteger;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -38,7 +39,7 @@ import org.restcomm.media.control.mgcp.command.param.NotifiedEntity;
  */
 public abstract class AbstractMgcpSignal implements MgcpSignal {
 
-    private final int requestId;
+    private final BigInteger requestId;
     private final String packageName;
     private final String symbol;
     private final SignalType type;
@@ -47,7 +48,7 @@ public abstract class AbstractMgcpSignal implements MgcpSignal {
     private final List<MgcpEventObserver> observers;
     protected final AtomicBoolean executing;
 
-    public AbstractMgcpSignal(String packageName, String symbol, SignalType type, int requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters) {
+    public AbstractMgcpSignal(String packageName, String symbol, SignalType type, BigInteger requestId, NotifiedEntity notifiedEntity, Map<String, String> parameters) {
         super();
         this.packageName = packageName;
         this.symbol = symbol;
@@ -59,15 +60,15 @@ public abstract class AbstractMgcpSignal implements MgcpSignal {
         this.notifiedEntity = notifiedEntity;
     }
 
-    public AbstractMgcpSignal(String packageName, String symbol, SignalType type, int requestId, Map<String, String> parameters) {
+    public AbstractMgcpSignal(String packageName, String symbol, SignalType type, BigInteger requestId, Map<String, String> parameters) {
         this(packageName, symbol, type, requestId, null, parameters);
     }
 
-    public AbstractMgcpSignal(String packageName, String symbol, SignalType type, int requestId, NotifiedEntity notifiedEntity) {
+    public AbstractMgcpSignal(String packageName, String symbol, SignalType type, BigInteger requestId, NotifiedEntity notifiedEntity) {
         this(packageName, symbol, type, requestId, notifiedEntity, Collections.<String, String> emptyMap());
     }
 
-    public AbstractMgcpSignal(String packageName, String symbol, SignalType type, int requestId) {
+    public AbstractMgcpSignal(String packageName, String symbol, SignalType type, BigInteger requestId) {
         this(packageName, symbol, type, requestId, null, Collections.<String, String> emptyMap());
     }
 
@@ -86,7 +87,7 @@ public abstract class AbstractMgcpSignal implements MgcpSignal {
     }
 
     @Override
-    public int getRequestId() {
+    public BigInteger getRequestId() {
         return this.requestId;
     }
     

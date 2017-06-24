@@ -21,6 +21,7 @@
 
 package org.restcomm.media.control.mgcp.command;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -35,13 +36,13 @@ import org.restcomm.media.control.mgcp.pkg.MgcpSignal;
 public class NotificationRequest {
 
     private final int transactionId;
-    private final String requestIdentifier;
+    private final BigInteger requestIdentifier;
     private final NotifiedEntity notifiedEntity;
     private final MgcpRequestedEvent[] requestedEvents;
     private final Queue<MgcpSignal> requestedSignals;
 
-    public NotificationRequest(int transactionId, String requestIdentifier, NotifiedEntity notifiedEntity,
-            MgcpRequestedEvent[] requestedEvents, MgcpSignal... requestedSignals) {
+    public NotificationRequest(int transactionId, BigInteger requestIdentifier, NotifiedEntity notifiedEntity,
+                               MgcpRequestedEvent[] requestedEvents, MgcpSignal... requestedSignals) {
         super();
         this.transactionId = transactionId;
         this.requestIdentifier = requestIdentifier;
@@ -57,7 +58,7 @@ public class NotificationRequest {
         return transactionId;
     }
 
-    public String getRequestIdentifier() {
+    public BigInteger getRequestIdentifier() {
         return requestIdentifier;
     }
 
