@@ -171,6 +171,8 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
     private void renegotiateSession() throws IOException {
         MediaDescriptionField remoteAudio = this.remoteSdp.getMediaDescription("audio");
 
+		boolean isWebRtc = this.remoteSdp.containsIce();
+
         // Negotiate audio codecs
         this.audioChannel.negotiateFormats(remoteAudio);
         if (!this.audioChannel.containsNegotiatedFormats()) {
@@ -179,8 +181,7 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
 
         // Generate SDP answer
         String bindAddress = this.local ? this.channelsManager.getLocalBindAddress() : this.channelsManager.getBindAddress();
-        String externalAddress = this.channelsManager.getUdpManager().getExternalAddress();
-        this.localSdp = SdpFactory.buildSdp(false, bindAddress, externalAddress, this.audioChannel);
+		String externalAddress = isWebRtc ? this.channelsManager.getUdpManager().getWebRTCAddress() : this.channelsManager.getUdpManager().getExternalAddress();        this.localSdp = SdpFactory.buildSdp(false, bindAddress, externalAddress, this.audioChannel);
 
         // Reject any channels other than audio
         MediaDescriptionField remoteVideo = this.remoteSdp.getMediaDescription("video");
@@ -455,9 +456,8 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
             }
 
             // generate SDP offer based on audio channel
-            String bindAddress = this.local ? this.channelsManager.getLocalBindAddress() : this.channelsManager
-                    .getBindAddress();
-            String externalAddress = this.channelsManager.getUdpManager().getExternalAddress();
+			String bindAddress = this.local ? this.channelsManager.getLocalBindAddress() : this.channelsManager.getBindAddress();
+			String externalAddress = webrtc ? this.channelsManager.getUdpManager().getWebRTCAddress() : this.channelsManager.getUdpManager().getExternalAddress();
             this.localSdp = SdpFactory.buildSdp(true, bindAddress, externalAddress, this.audioChannel);
             this.remoteSdp = null;
         }

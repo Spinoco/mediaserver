@@ -37,6 +37,7 @@ public class NetworkConfiguration {
 
     private String bindAddress;
     private String externalAddress;
+    private String webRTCAddress;
     private String network;
     private String subnet;
     private boolean sbc;
@@ -96,6 +97,14 @@ public class NetworkConfiguration {
 
     public void setSbc(boolean sbc) {
         this.sbc = sbc;
+    }
+
+    public String getWebRTCAddress() {
+        return webRTCAddress;
+    }
+
+    public void setWebRTCAddress(String webRTCAddress) {
+        this.webRTCAddress = webRTCAddress;
     }
 
 }

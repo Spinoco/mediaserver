@@ -86,7 +86,8 @@ public class XmlConfigurationLoader implements ConfigurationLoader {
 
     private static void configureNetwork(HierarchicalConfiguration<ImmutableNode> src, NetworkConfiguration dst) {
         dst.setBindAddress(src.getString("bindAddress", NetworkConfiguration.BIND_ADDRESS));
-        dst.setExternalAddress(src.getString("externalAddress", NetworkConfiguration.EXTERNAL_ADDRESS));
+        dst.setExternalAddress(src.getString("externalAddress", dst.getBindAddress()));
+        dst.setExternalAddress(src.getString("webRtcAddress", dst.getExternalAddress()));
         dst.setNetwork(src.getString("network", NetworkConfiguration.NETWORK));
         dst.setSubnet(src.getString("subnet", NetworkConfiguration.SUBNET));
         dst.setSbc(src.getBoolean("sbc", NetworkConfiguration.SBC));

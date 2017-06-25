@@ -215,6 +215,11 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         this.transmitter.setFormatMap(rtpFormats);
     }
 
+    public String getWebRTCAddress() {
+        return this.udpManager.getWebRTCAddress();
+    }
+
+
     public RTPFormats getFormatMap() {
         return this.rtpHandler.getFormatMap();
     }

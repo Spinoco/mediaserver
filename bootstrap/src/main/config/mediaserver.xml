@@ -13,6 +13,8 @@
 	<network>
 		<bindAddress>127.0.0.1</bindAddress>
 		<externalAddress>127.0.0.1</externalAddress>
+		<!-- webRtcAddress is used to specify which IP would be used in WebRTC SDPs for dual homed environments.-->
+		<webRtcAddress>127.0.0.1</webRtcAddress>
 		<network>127.0.0.1</network>
 		<subnet>255.255.255.255</subnet>
 		<sbc>false</sbc>
