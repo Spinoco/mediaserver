@@ -94,7 +94,7 @@ public class DeleteConnectionCommand extends AbstractMgcpCommand {
         
         if(connectionId == -1) {
             // Delete multiple endpoints...
-            if(callId == BigInteger.valueOf(-1L)) {
+            if(callId.longValue() == -1L) {
                 // ... all connections in the endpoint
                 endpoint.deleteConnections();
             } else {
@@ -149,19 +149,19 @@ public class DeleteConnectionCommand extends AbstractMgcpCommand {
             context.code = MgcpResponseCode.TRANSACTION_WAS_EXECUTED.code();
             context.message = MgcpResponseCode.TRANSACTION_WAS_EXECUTED.message();
         } catch (RuntimeException e) {
-            log.error("Unexpected error occurred during tx=" + this.transactionId + " execution. Rolling back.");
+            log.error("DLCX: Unexpected error occurred during tx=" + this.transactionId + " execution. Rolling back.");
             context.code = MgcpResponseCode.PROTOCOL_ERROR.code();
             context.message = MgcpResponseCode.PROTOCOL_ERROR.message();
         } catch (MgcpCallNotFoundException e) {
-            log.error("Protocol error occurred during tx=" + this.transactionId + " execution: " + e.getMessage());
+            log.error("DLCX: Protocol error occurred during tx=" + this.transactionId + " execution: " + e.getMessage());
             context.code = MgcpResponseCode.INCORRECT_CALL_ID.code();
             context.message = MgcpResponseCode.INCORRECT_CALL_ID.message();
         } catch (MgcpConnectionNotFoundException e) {
-            log.error("Protocol error occurred during tx=" + this.transactionId + " execution: " + e.getMessage());
+            log.error("DLCX: Protocol error occurred during tx=" + this.transactionId + " execution: " + e.getMessage());
             context.code = MgcpResponseCode.INCORRECT_CONNECTION_ID.code();
             context.message = MgcpResponseCode.INCORRECT_CONNECTION_ID.message();
         }  catch (MgcpCommandException e) {
-            log.error("Protocol error occurred during tx=" + this.transactionId + " execution: " + e.getMessage());
+            log.error("DLCX: Protocol error occurred during tx=" + this.transactionId + " execution: " + e.getMessage());
             context.code = e.getCode();
             context.message = e.getMessage();
         }

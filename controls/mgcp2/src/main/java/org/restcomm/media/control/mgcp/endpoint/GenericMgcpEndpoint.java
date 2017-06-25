@@ -135,10 +135,9 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
     @Override
     public MgcpConnection getConnection(BigInteger callId, int connectionId) {
         MgcpConnection connection = this.connections.get(connectionId);
-        if(connection != null && connection.getCallIdentifier() == callId) {
-            return connection;
-        }
-        return null;
+
+        if(connection == null || !connection.getCallIdentifier().equals(callId)) return null;
+        return connection;
     }
 
     private boolean registerConnection(BigInteger callId, MgcpConnection connection) {
@@ -176,12 +175,10 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
 
     @Override
     public MgcpConnection deleteConnection(BigInteger callId, int connectionId) throws MgcpCallNotFoundException, MgcpConnectionNotFoundException {
-        MgcpConnection connection = this.connections.get(connectionId);
+        MgcpConnection connection = getConnection(callId, connectionId);
         
         if(connection == null) {
             throw new MgcpConnectionNotFoundException(this.endpointId + " could not find connection " + Integer.toHexString(connectionId).toUpperCase() + " in call " + callId.toString(16).toUpperCase());
-        } else if (connection.getCallIdentifier() != callId) {
-            throw new MgcpCallNotFoundException(this.endpointId + " could not find connection " + Integer.toHexString(connectionId).toUpperCase() + " in call " + callId.toString(16).toUpperCase());
         }
         
         connection = this.connections.remove(connectionId);
@@ -219,7 +216,7 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
         
         for (MgcpConnection connection : current) {
             // Delete connection if owned by specific call-id
-            if(connection.getCallIdentifier() == callId) {
+            if(connection.getCallIdentifier().equals(callId)) {
                 MgcpConnection removed = this.connections.remove(connection.getIdentifier());
                 if(removed != null) {
                     deleted.add(removed);
@@ -487,8 +484,7 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
     /**
      * Event that is called when endpoint becomes active. <br>
      * <b>To be overriden by subclasses.</b>
-     * 
-     * @param connection
+     *
      */
     protected void onActivated() {
     }
@@ -496,8 +492,7 @@ public class GenericMgcpEndpoint implements MgcpEndpoint {
     /**
      * Event that is called when endpoint becomes inactive. <br>
      * <b>To be overriden by subclasses.</b>
-     * 
-     * @param connection
+     *
      */
     protected void onDeactivated() {
     }

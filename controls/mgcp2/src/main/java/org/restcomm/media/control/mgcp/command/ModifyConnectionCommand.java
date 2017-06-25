@@ -163,11 +163,11 @@ public class ModifyConnectionCommand extends AbstractMgcpCommand {
             context.code = MgcpResponseCode.TRANSACTION_WAS_EXECUTED.code();
             context.message = MgcpResponseCode.TRANSACTION_WAS_EXECUTED.message();
         } catch (RuntimeException e) {
-            log.error("Unexpected error occurred during tx=" + this.transactionId + " execution. Rolling back.");
+            log.error("MDCX: Unexpected error occurred during tx=" + this.transactionId + " execution. Rolling back.");
             context.code = MgcpResponseCode.PROTOCOL_ERROR.code();
             context.message = MgcpResponseCode.PROTOCOL_ERROR.message();
         } catch (MgcpCommandException e) {
-            log.error("Protocol error occurred during tx=" + this.transactionId + " execution: " + e.getMessage());
+            log.error("MDCX: Protocol error occurred during tx=" + this.transactionId + " execution: " + e.getMessage());
             context.code = e.getCode();
             context.message = e.getMessage();
         }
