@@ -159,13 +159,6 @@ public class RtpTransmitter {
 				LOGGER.warn("Could not secure RTP packet! Packet dropped :  " + packet);
 			}
 
-			ByteBuffer securedContent = packet.dtlsEncodeToSend(this.dtlsHandler);
-
-			if(securedContent != null) {
-				channel.send(securedContent, channel.socket().getRemoteSocketAddress());
-				// send RTP packet to the network and update statistics for RTCP
-				statistics.onRtpSent(packet);
-			}
 		} else {
 			packet.sendTo(channel);
 			statistics.onRtpSent(packet);

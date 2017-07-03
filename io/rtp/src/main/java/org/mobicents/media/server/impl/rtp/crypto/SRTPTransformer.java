@@ -84,7 +84,7 @@ public class SRTPTransformer implements PacketTransformer {
 		if (context == null) {
 			context = forwardEngine.getDefaultContext().deriveContext(ssrc, 0, 0);
 			context.deriveSrtpKeys(0);
-			SRTPCryptoContext current = contexts.putIfAbsent(ssrc, context);
+			SRTPCryptoContext current = contexts.put(ssrc, context);
 			if (current != null) context = current;
 		}
 

@@ -403,7 +403,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
             throw new IllegalStateException("Handshake is taking too long!:"+(System.currentTimeMillis() - this.startTime.get())+" (>" + MAX_DELAY + "ms): ");
         }
 
-        int attempts = 20;
+        int attempts = waitMillis;
         do {
             ByteBuffer data = this.rxQueue.poll();
             if (data != null) {
