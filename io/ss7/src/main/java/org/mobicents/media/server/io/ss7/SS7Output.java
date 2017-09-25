@@ -22,40 +22,23 @@
 
 package org.mobicents.media.server.io.ss7;
 
-import java.io.IOException;
-import java.net.SocketAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketException;
-import java.nio.channels.DatagramChannel;
-import java.nio.channels.SelectionKey;
-import java.text.Format;
-import java.util.ArrayList;
+import org.mobicents.media.hardware.dahdi.Channel;
 import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.oob.OOBOutput;
-import org.mobicents.media.MediaSink;
-import org.mobicents.media.MediaSource;
-import org.mobicents.media.hardware.dahdi.Channel;
 import org.mobicents.media.server.impl.AbstractSink;
-import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
-import org.mobicents.media.server.spi.dtmf.DtmfTonesData;
 import org.mobicents.media.server.spi.FormatNotSupportedException;
-import org.mobicents.media.server.spi.ConnectionMode;
+import org.mobicents.media.server.spi.dsp.Processor;
+import org.mobicents.media.server.spi.dtmf.DtmfTonesData;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.format.Formats;
-import org.mobicents.media.server.spi.memory.Memory;
 import org.mobicents.media.server.spi.memory.Frame;
-import org.mobicents.media.server.spi.dsp.Codec;
-import org.mobicents.media.server.spi.dsp.Processor;
-import org.apache.log4j.Logger;
+import org.mobicents.media.server.spi.memory.Memory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.io.IOException;
+import java.util.ArrayList;
 /**
  *
  * @author Oifa Yulian
@@ -224,7 +207,7 @@ public class SS7Output extends AbstractSink {
         
         public void submit()
         {
-        	this.activate(false);
+        	this.activateTask();
         	scheduler.submit(this,scheduler.SENDER_QUEUE);
         }
         

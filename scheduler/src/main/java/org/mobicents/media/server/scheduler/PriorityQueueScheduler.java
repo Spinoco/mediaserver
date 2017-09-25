@@ -146,7 +146,7 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submit(Task task,Integer index) {
-        task.activate(false);
+        task.activateTask();
         taskQueues[index].accept(task);
     }
     
@@ -156,7 +156,7 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submitHeatbeat(Task task) {
-        task.activate(true);
+        task.activateTask();
         heartBeatQueue[coreThread.runIndex].accept(task);
     }
     
@@ -290,10 +290,10 @@ public class PriorityQueueScheduler  {
     			executeQueue(heartBeatQueue[runIndex]);
         		while(activeTasksCount.get()!=0)
 					LockSupport.park();
-        		
+
         		executeQueue(taskQueues[MANAGEMENT_QUEUE]);
         		while(activeTasksCount.get()!=0)
-					LockSupport.park();	
+					LockSupport.park();
         		
         		//sleep till next cycle
         		cycleDuration=clock.getTime() - cycleStart;
@@ -313,7 +313,7 @@ public class PriorityQueueScheduler  {
         private void executeQueue(OrderedTaskQueue currQueue)
         {
         	Task t;        	
-        	currQueue.changePool();
+//        	currQueue.changePool();
             t = currQueue.poll();
             
             //submit all tasks in current queue
@@ -389,7 +389,7 @@ public class PriorityQueueScheduler  {
         private void executeQueue(OrderedTaskQueue currQueue)
         {
         	Task t;        	
-        	currQueue.changePool();
+//        	currQueue.changePool();
             t = currQueue.poll();
             
             //submit all tasks in current queue

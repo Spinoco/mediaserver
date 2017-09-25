@@ -23,7 +23,6 @@
 package org.mobicents.media.server.scheduler;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Logger;
 
 /**
@@ -32,54 +31,32 @@ import org.apache.log4j.Logger;
  * @author Oifa Yulian
  */
 public abstract class Task implements Runnable {
-	private static AtomicInteger id=new AtomicInteger(0);
-	
+
     private volatile boolean isActive = true;
-    private volatile boolean isHeartbeat = true;
     //error handler instance
     protected TaskListener listener;
     
     private final Object LOCK = new Object();    
         
-    private AtomicBoolean inQueue0=new AtomicBoolean(false);
-    private AtomicBoolean inQueue1=new AtomicBoolean(false);
-    
+    private AtomicBoolean inQueue=new AtomicBoolean(false);
+
     private Logger logger = Logger.getLogger(Task.class);
     
-    protected int taskId;
-    
-    public Task() {
-    	taskId=id.incrementAndGet();
+    public Task() { }
+
+    public void storedInQueue()
+    {
+    	inQueue.set(true);
     }
 
-    public void storedInQueue0()
+    public void removeFromQueue()
     {
-    	inQueue0.set(true);
+    	inQueue.set(false);
     }
-    
-    public void storedInQueue1()
+
+    public Boolean isInQueue()
     {
-    	inQueue1.set(true);
-    }
-    
-    public void removeFromQueue0()
-    {
-    	inQueue0.set(false);
-    }
-    
-    public void removeFromQueue1()
-    {
-    	inQueue1.set(false);
-    }
-   
-    public Boolean isInQueue0()
-    {
-    	return inQueue0.get();
-    }
-    
-    public Boolean isInQueue1()
-    {
-    	return inQueue1.get();
+    	return inQueue.get();
     }
     
     /**
@@ -127,7 +104,7 @@ public abstract class Task implements Runnable {
     				}
     				
     			} catch (Exception e) {
-    			    logger.error("Could not execute task " + this.taskId + ": "+ e.getMessage(), e);
+    			    logger.error("Could not execute task: "+ e.getMessage(), e);
     				if (this.listener != null) {
     					listener.handlerError(e);
     				} 
@@ -135,10 +112,9 @@ public abstract class Task implements Runnable {
     		}      		    		    	
     }
 
-    protected void activate(Boolean isHeartbeat) {
+    protected void activateTask() {
     	synchronized(LOCK) {
     		this.isActive = true;
-    		this.isHeartbeat=isHeartbeat;
     	}
     }    
 }
