@@ -225,7 +225,8 @@ public class JitterBuffer implements Serializable {
 						", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
 						", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
 						", seq: " + packet.getSeqNumber() +
-						", timestamp: " + packet.getTimestamp()
+						", timestamp: " + packet.getTimestamp() +
+						", csrc: " + packet.getContributingSource()
 				);
 				this.format = format;
 
@@ -252,7 +253,8 @@ public class JitterBuffer implements Serializable {
 							", packet time=" + packet.getTimestamp() +
 							", seq=" + packet.getSeqNumber() +
 							", payload length=" + packet.getPayloadLength() +
-							", format=" + this.format.toString()
+							", format=" + this.format.toString() +
+							", csrc: " + packet.getContributingSource()
 				);
 				dropCount++;
 
@@ -281,6 +283,13 @@ public class JitterBuffer implements Serializable {
 
 			// check for duplicate packet
 			if (currIndex >= 0 && queue.get(currIndex).getSequenceNumber() == f.getSequenceNumber()) {
+				logger.warn(
+						"dup packet found (dropping) packet time=" + packet.getTimestamp() +
+								", seq=" + packet.getSeqNumber() +
+								", payload length=" + packet.getPayloadLength() +
+								", format=" + this.format.toString() +
+								", csrc: " + packet.getContributingSource()
+				);
 				return;
 			}
 
@@ -316,7 +325,8 @@ public class JitterBuffer implements Serializable {
 						", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
 						", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
 						", seq: " + packet.getSeqNumber() +
-						", timestamp: " + packet.getTimestamp()
+						", timestamp: " + packet.getTimestamp() +
+						", csrc: " + packet.getContributingSource()
 				);
 				dropCount++;
 				queue.remove(0).recycle();

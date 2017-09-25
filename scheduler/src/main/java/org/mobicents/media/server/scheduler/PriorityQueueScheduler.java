@@ -23,6 +23,7 @@
 package org.mobicents.media.server.scheduler;
 
 import java.lang.InterruptedException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
@@ -71,19 +72,83 @@ public class PriorityQueueScheduler  {
     protected OrderedTaskQueue[] heartBeatQueue = new OrderedTaskQueue[5];
     
     //CPU bound threads
-    private CoreThread coreThread;
-    private CriticalThread criticalThread;
-    
+//    private CoreThread coreThread;
+//    private CriticalThread criticalThread;
+//
     //flag indicating state of the scheduler
     private boolean isActive;
 
     private Logger logger = Logger.getLogger(PriorityQueueScheduler.class) ;
     
-    private ConcurrentCyclicFIFO<Task> waitingTasks=new ConcurrentCyclicFIFO<Task>();
-    private ConcurrentCyclicFIFO<Task> criticalTasks=new ConcurrentCyclicFIFO<Task>();
+//    private ConcurrentCyclicFIFO<Task> waitingTasks=new ConcurrentCyclicFIFO<Task>();
+//    private ConcurrentCyclicFIFO<Task> criticalTasks=new ConcurrentCyclicFIFO<Task>();
     
-    private WorkerThread[] workerThreads;
-    private CriticalWorkerThread[] criticalWorkerThreads;
+//    private WorkerThread[] workerThreads;
+//    private CriticalWorkerThread[] criticalWorkerThreads;
+
+
+    private class NamedThreadFactory implements ThreadFactory {
+
+        private String name;
+
+        private AtomicInteger idx = new AtomicInteger(0);
+
+        public NamedThreadFactory(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r, name + "-" + idx.incrementAndGet());
+            return t;
+        }
+    }
+
+    private ScheduledExecutorService schedulerV2 = Executors.newScheduledThreadPool(10, new NamedThreadFactory("ms-v2-scheduler"));
+
+    private ExecutorService workerExecutorV2 =  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4, new NamedThreadFactory("ms-v2-worker"));
+
+    private AtomicInteger heartbeatQueueIdx = new AtomicInteger(0);
+
+    private class DrainQueue implements Runnable {
+        private int queueIdx;
+        private OrderedTaskQueue queue;
+        private boolean heartbeat;
+
+        public DrainQueue(int queueIdx, OrderedTaskQueue queue, Boolean heartbeat) {
+            this.queueIdx = queueIdx;
+            this.queue = queue;
+            this.heartbeat = heartbeat;
+        }
+
+        @Override
+        public void run() {
+            int remains = queue.size();
+            while (remains > 0) {
+                final Task task = queue.poll();
+                if (task != null) {
+                    workerExecutorV2.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                task.run();
+                            } catch (Exception ex) {
+                                logger.error("Failed to execute task: " + task + " " + DrainQueue.this.queueIdx + " hb: " + DrainQueue.this.heartbeat, ex);
+                            }
+                        }
+                    });
+                } else {
+                    logger.warn("Failed to execute task, task is null. " + this.queueIdx + " hb: " + this.heartbeat);
+                }
+                remains --;
+            }
+
+            // make shure for heartbeat that we shift the index
+            heartbeatQueueIdx.set(queueIdx);
+
+        }
+    }
+
 
     /**
      * Creates new instance of scheduler.
@@ -99,28 +164,28 @@ public class PriorityQueueScheduler  {
     		heartBeatQueue[i]=new OrderedTaskQueue();
     	}
     	
-    	coreThread = new CoreThread("scheduler-core");  
-    	criticalThread = new CriticalThread("scheduler-critical");
-    	
-        workerThreads=new WorkerThread[Runtime.getRuntime().availableProcessors()*2];
-        criticalWorkerThreads=new CriticalWorkerThread[Runtime.getRuntime().availableProcessors()*2];
-        for(int i=0;i<workerThreads.length;i++) {
-            workerThreads[i] = new WorkerThread("scheduler-worker-" + i);
-        }
-        
-        for(int i=0;i<criticalWorkerThreads.length;i++) {
-            criticalWorkerThreads[i] = new CriticalWorkerThread("scheduler-critical-worker-" + i);
-        }
+//    	coreThread = new CoreThread("scheduler-core");
+//    	criticalThread = new CriticalThread("scheduler-critical");
+//
+//        workerThreads=new WorkerThread[Runtime.getRuntime().availableProcessors()*2];
+//        criticalWorkerThreads=new CriticalWorkerThread[Runtime.getRuntime().availableProcessors()*2];
+//        for(int i=0;i<workerThreads.length;i++) {
+//            workerThreads[i] = new WorkerThread("scheduler-worker-" + i);
+//        }
+//
+//        for(int i=0;i<criticalWorkerThreads.length;i++) {
+//            criticalWorkerThreads[i] = new CriticalWorkerThread("scheduler-critical-worker-" + i);
+//        }
     }
     
     public PriorityQueueScheduler() {
         this(null);
     }
 
-    public int getPoolSize()
-    {
-    	return workerThreads.length;
-    }
+   // public int getPoolSize()
+//    {
+//    	return workerThreads.length;
+//    }
     
     /**
      * Sets clock.
@@ -157,7 +222,7 @@ public class PriorityQueueScheduler  {
      */
     public void submitHeatbeat(Task task) {
         task.activate(true);
-        heartBeatQueue[coreThread.runIndex].accept(task);
+        heartBeatQueue[heartbeatQueueIdx.get()].accept(task);
     }
     
     /**
@@ -182,15 +247,42 @@ public class PriorityQueueScheduler  {
 
         this.isActive = true;
         
-        logger.info("Starting ");
-        
-        coreThread.activate();
-        criticalThread.activate();
-        for(int i=0;i<workerThreads.length;i++)
-        	workerThreads[i].activate();
-        
-        for(int i=0;i<criticalWorkerThreads.length;i++)
-        	criticalWorkerThreads[i].activate();        
+        logger.info("Starting Scheduled Task Queues ");
+
+//        coreThread.activate();
+//        criticalThread.activate();
+//        for(int i=0;i<workerThreads.length;i++)
+//            workerThreads[i].activate();
+//
+//        for(int i=0;i<criticalWorkerThreads.length;i++)
+//            criticalWorkerThreads[i].activate();
+
+
+        // scheduler all queues, excluding the SS7 queues
+        for (int i = RECEIVER_QUEUE; i <= OUTPUT_QUEUE; i++) {
+            logger.info("Starting task queue: " + i);
+            schedulerV2.scheduleAtFixedRate(new DrainQueue(i, taskQueues[i], false), 20, 20, TimeUnit.MILLISECONDS);
+        }
+
+        // scheduler all heartbeats queue.
+        for (int i = 0; i < 5; i++) {
+            logger.info("Starting heartbeat queue: " + i);
+            schedulerV2.scheduleAtFixedRate(new DrainQueue(i, heartBeatQueue[i], true), i*20, 100, TimeUnit.MILLISECONDS);
+        }
+
+
+
+//        coreThread.activate();
+//        criticalThread.activate();
+//        for(int i=0;i<workerThreads.length;i++)
+//        	workerThreads[i].activate();
+//
+//        for(int i=0;i<criticalWorkerThreads.length;i++)
+//        	criticalWorkerThreads[i].activate();
+
+
+
+
         
         logger.info("Started ");
     }
@@ -203,27 +295,31 @@ public class PriorityQueueScheduler  {
             return;
         }
 
-        coreThread.shutdown();
-        criticalThread.shutdown();
-        for(int i=0;i<workerThreads.length;i++)
-        	workerThreads[i].shutdown();
+//        coreThread.shutdown();
+//        criticalThread.shutdown();
+//        for(int i=0;i<workerThreads.length;i++)
+//        	workerThreads[i].shutdown();
+//
+//        for(int i=0;i<criticalWorkerThreads.length;i++)
+//        	criticalWorkerThreads[i].shutdown();
         
-        for(int i=0;i<criticalWorkerThreads.length;i++)
-        	criticalWorkerThreads[i].shutdown();
-        
-        try
-        {
-        	Thread.sleep(40);
-        }
-        catch(InterruptedException e)
-		{                				
-		}
-        
-        for(int i=0;i<taskQueues.length;i++)
-        	taskQueues[i].clear();
-        
-        for(int i=0;i<heartBeatQueue.length;i++)
-        	heartBeatQueue[i].clear();
+//        try
+//        {
+//        	Thread.sleep(40);
+//        }
+//        catch(InterruptedException e)
+//		{
+//		}
+//
+//        for(int i=0;i<taskQueues.length;i++)
+//        	taskQueues[i].clear();
+//
+//        for(int i=0;i<heartBeatQueue.length;i++)
+//        	heartBeatQueue[i].clear();
+
+        schedulerV2.shutdown();
+        workerExecutorV2.shutdown();
+
     }
 
     /**
@@ -239,256 +335,262 @@ public class PriorityQueueScheduler  {
         return 0;
     }
 
-    /**
-     * Executor thread.
-     */
-    private class CoreThread extends Thread {        
-        private volatile boolean active;
-        private int currQueue=UDP_MANAGER_QUEUE;        
-        private AtomicInteger activeTasksCount=new AtomicInteger();
-        private long cycleStart=0;
-        private int runIndex=0;
-        private Object LOCK=new Object();
-        
-        public CoreThread(String name) {
-            super(name);            
-        }
-        
-        public void activate() {        	        	
-        	this.active = true;
-        	this.start();
-        }
-        
-        public void notifyCompletion() {
-        	if(activeTasksCount.decrementAndGet()==0)
-        		LockSupport.unpark(coreThread); 	        	
-        }
-        
-        @Override
-        public void run() {        	
-        	long cycleDuration;
-        	
-        	cycleStart = clock.getTime();
-        	while(active)
-        	{
-        		long taskStart=cycleStart;
-        		currQueue=MANAGEMENT_QUEUE;
-        		while(currQueue<=OUTPUT_QUEUE)
-    			{    		
-        			executeQueue(taskQueues[currQueue]);
-					while(activeTasksCount.get()!=0)
-						LockSupport.park();
-					
-					currQueue++;															
-    			}				        		
-        		
-        		executeQueue(taskQueues[MANAGEMENT_QUEUE]);
-        		while(activeTasksCount.get()!=0)
-					LockSupport.park();					
-        		
-        		runIndex=(runIndex+1)%5;        		
-    			executeQueue(heartBeatQueue[runIndex]);
-        		while(activeTasksCount.get()!=0)
-					LockSupport.park();
-        		
-        		executeQueue(taskQueues[MANAGEMENT_QUEUE]);
-        		while(activeTasksCount.get()!=0)
-					LockSupport.park();	
-        		
-        		//sleep till next cycle
-        		cycleDuration=clock.getTime() - cycleStart;
-        		if(cycleDuration<20000000L)
-        			try  {                                               
-        				sleep(20L-cycleDuration/1000000L,(int)((20000000L-cycleDuration)%1000000L));
-        			}
-                	catch(InterruptedException e)  {                                               
-                		//lets continue
-                	}
-        		
-        		//new cycle starts , updating cycle start time by 4ms
-                cycleStart = cycleStart + 20000000L;                                              
-        	}
-        }
-        
-        private void executeQueue(OrderedTaskQueue currQueue)
-        {
-        	Task t;        	
-        	currQueue.changePool();
-            t = currQueue.poll();
-            
-            //submit all tasks in current queue
-            while(t!=null)
-            {
-            	activeTasksCount.incrementAndGet();
-            	waitingTasks.offer(t);
-            	t = currQueue.poll();
-            }            
-        }
+//    /**
+//     * Executor thread.
+//     */
+//    private class CoreThread extends Thread {
+//        private volatile boolean active;
+//        private int currQueue=UDP_MANAGER_QUEUE;
+//        private AtomicInteger activeTasksCount=new AtomicInteger();
+//        private long cycleStart=0;
+//        private int runIndex=0;
+//        private Object LOCK=new Object();
+//
+//        public CoreThread(String name) {
+//            super(name);
+//        }
+//
+//        public void activate() {
+//        	this.active = true;
+//        	this.start();
+//        }
+//
+//        public void notifyCompletion() {
+//        	if(activeTasksCount.decrementAndGet()==0)
+//        		LockSupport.unpark(coreThread);
+//        }
+//
+//        @Override
+//        public void run() {
+//        	long cycleDuration;
+//
+//        	cycleStart = clock.getTime();
+//        	while(active)
+//        	{
+//        		long taskStart=cycleStart;
+//        		currQueue=MANAGEMENT_QUEUE;
+//        		while(currQueue<=OUTPUT_QUEUE)
+//    			{
+//        			executeQueue(taskQueues[currQueue]);
+//					while(activeTasksCount.get()!=0)
+//						LockSupport.park();
+//
+//					currQueue++;
+//    			}
+//
+//        		executeQueue(taskQueues[MANAGEMENT_QUEUE]);
+//        		while(activeTasksCount.get()!=0)
+//					LockSupport.park();
+//
+//        		runIndex=(runIndex+1)%5;
+//    			executeQueue(heartBeatQueue[runIndex]);
+//        		while(activeTasksCount.get()!=0)
+//					LockSupport.park();
+//
+//        		executeQueue(taskQueues[MANAGEMENT_QUEUE]);
+//        		while(activeTasksCount.get()!=0)
+//					LockSupport.park();
+//
+//        		//sleep till next cycle
+//        		cycleDuration=clock.getTime() - cycleStart;
+//        		if(cycleDuration<20000000L)
+//        			try  {
+//        				sleep(20L-cycleDuration/1000000L,(int)((20000000L-cycleDuration)%1000000L));
+//        			}
+//                	catch(InterruptedException e)  {
+//                		//lets continue
+//                	}
+//
+//        		//new cycle starts , updating cycle start time by 4ms
+//                cycleStart = cycleStart + 20000000L;
+//        	}
+//        }
+//
+//        private void executeQueue(OrderedTaskQueue currQueue)
+//        {
+//        	Task t;
+//        	currQueue.changePool();
+//            t = currQueue.poll();
+//
+//            //submit all tasks in current queue
+//            while(t!=null)
+//            {
+//            	activeTasksCount.incrementAndGet();
+//            	waitingTasks.offer(t);
+//            	t = currQueue.poll();
+//            }
+//        }
+//
+//        /**
+//         * Terminates thread.
+//         */
+//        private void shutdown() {
+//            this.active = false;
+//        }
+//    }
+//
+//    /**
+//     * Executor thread.
+//     */
+//    private class CriticalThread extends Thread {
+//        private volatile boolean active;
+//        private AtomicInteger activeTasksCount=new AtomicInteger();
+//        private long cycleStart=0;
+//        private Object LOCK=new Object();
+//
+//        public CriticalThread(String name) {
+//            super(name);
+//        }
+//
+//        public void activate() {
+//        	this.active = true;
+//        	cycleStart = clock.getTime();
+//        	this.start();
+//        }
+//
+//        public void notifyCompletion() {
+//        	if(activeTasksCount.decrementAndGet()==0)
+//        		LockSupport.unpark(criticalThread);
+//        }
+//
+//        @Override
+//        public void run() {
+//        	long cycleDuration;
+//
+//        	while(active)
+//        	{
+//        		executeQueue(taskQueues[RECEIVER_QUEUE]);
+//        		while(activeTasksCount.get()!=0)
+//					LockSupport.park();
+//
+//        		executeQueue(taskQueues[SENDER_QUEUE]);
+//        		while(activeTasksCount.get()!=0)
+//					LockSupport.park();
+//
+//        		//sleep till next cycle
+//        		cycleDuration=clock.getTime() - cycleStart;
+//        		if(cycleDuration<4000000L)
+//        			try  {
+//        				sleep(4L-cycleDuration/1000000L,(int)((4000000L-cycleDuration)%1000000L));
+//        			}
+//                	catch(InterruptedException e)  {
+//                		//lets continue
+//                	}
+//
+//        		//new cycle starts , updating cycle start time by 4ms
+//                cycleStart = cycleStart + 4000000L;
+//        	}
+//        }
+//
+//        private void executeQueue(OrderedTaskQueue currQueue)
+//        {
+//        	Task t;
+//        	currQueue.changePool();
+//            t = currQueue.poll();
+//
+//            //submit all tasks in current queue
+//            while(t!=null)
+//            {
+//            	activeTasksCount.incrementAndGet();
+//            	criticalTasks.offer(t);
+//            	t = currQueue.poll();
+//            }
+//        }
+//
+//        /**
+//         * Terminates thread.
+//         */
+//        private void shutdown() {
+//            this.active = false;
+//        }
+//    }
+//
+//    private class WorkerThread extends Thread {
+//    	private volatile boolean active;
+//    	private Task current;
+//
+//    	public WorkerThread(String name) {
+//    	    super(name);
+//        }
+//
+//    	public void run() {
+//    		while(active)
+//    		{
+//    			current=null;
+//    			while(current==null)
+//    			{
+//    				try
+//    				{
+//    					current=waitingTasks.take();
+//    				}
+//    				catch(Exception ex)
+//    				{
+//    					logger.warn("Could not poll waiting task in timely fashion. Will keep trying.");
+//    				}
+//    			}
+//    			current.run();
+//    			coreThread.notifyCompletion();
+//    		}
+//    	}
+//
+//    	public void activate() {
+//        	this.active = true;
+//        	this.start();
+//        }
+//
+//    	/**
+//         * Terminates thread.
+//         */
+//        private void shutdown() {
+//            this.active = false;
+//        }
+//    }
+//
+//    private class CriticalWorkerThread extends Thread {
+//
+//    	private volatile boolean active;
+//        private Task current;
+//
+//        public CriticalWorkerThread(String name) {
+//            super(name);
+//        }
+//
+//    	public void run() {
+//    		while(active)
+//    		{
+//    			current=null;
+//    			while(current==null)
+//    			{
+//    				try
+//    				{
+//    					current=criticalTasks.take();
+//    				}
+//    				catch(Exception ex)
+//    				{
+//
+//    				}
+//    			}
+//    			current.run();
+//    			criticalThread.notifyCompletion();
+//    		}
+//    	}
+//
+//    	public void activate() {
+//        	this.active = true;
+//        	this.start();
+//        }
+//
+//    	/**
+//         * Terminates thread.
+//         */
+//        private void shutdown() {
+//            this.active = false;
+//        }
+//    }
+//
+//
+//
 
-        /**
-         * Terminates thread.
-         */
-        private void shutdown() {
-            this.active = false;
-        }
-    }    
-    
-    /**
-     * Executor thread.
-     */
-    private class CriticalThread extends Thread {        
-        private volatile boolean active;
-        private AtomicInteger activeTasksCount=new AtomicInteger();
-        private long cycleStart=0;
-        private Object LOCK=new Object();
-        
-        public CriticalThread(String name) {
-            super(name);            
-        }
-        
-        public void activate() {        	        	
-        	this.active = true;
-        	cycleStart = clock.getTime();
-        	this.start();
-        }
-        
-        public void notifyCompletion() {
-        	if(activeTasksCount.decrementAndGet()==0)
-        		LockSupport.unpark(criticalThread);        	        	
-        }
-        
-        @Override
-        public void run() {        	
-        	long cycleDuration;
-        	
-        	while(active)
-        	{
-        		executeQueue(taskQueues[RECEIVER_QUEUE]);
-        		while(activeTasksCount.get()!=0)
-					LockSupport.park();	
-        		
-        		executeQueue(taskQueues[SENDER_QUEUE]);
-        		while(activeTasksCount.get()!=0)
-					LockSupport.park();
-        		
-        		//sleep till next cycle
-        		cycleDuration=clock.getTime() - cycleStart;
-        		if(cycleDuration<4000000L)
-        			try  {                                               
-        				sleep(4L-cycleDuration/1000000L,(int)((4000000L-cycleDuration)%1000000L));
-        			}
-                	catch(InterruptedException e)  {                                               
-                		//lets continue
-                	}
-        		
-        		//new cycle starts , updating cycle start time by 4ms
-                cycleStart = cycleStart + 4000000L;                                              
-        	}
-        }
-        
-        private void executeQueue(OrderedTaskQueue currQueue)
-        {
-        	Task t;        	
-        	currQueue.changePool();
-            t = currQueue.poll();
-            
-            //submit all tasks in current queue
-            while(t!=null)
-            {
-            	activeTasksCount.incrementAndGet();
-            	criticalTasks.offer(t);
-            	t = currQueue.poll();
-            }            
-        }
 
-        /**
-         * Terminates thread.
-         */
-        private void shutdown() {
-            this.active = false;
-        }
-    }
-    
-    private class WorkerThread extends Thread {
-    	private volatile boolean active;
-    	private Task current;
-    	
-    	public WorkerThread(String name) {
-    	    super(name);
-        }
-    	
-    	public void run() {
-    		while(active)
-    		{
-    			current=null;
-    			while(current==null)
-    			{
-    				try
-    				{
-    					current=waitingTasks.take();
-    				}
-    				catch(Exception ex)
-    				{
-    					logger.warn("Could not poll waiting task in timely fashion. Will keep trying.");
-    				}    				
-    			}
-    			current.run();
-    			coreThread.notifyCompletion();    			
-    		}
-    	}
-    	
-    	public void activate() {        	        	
-        	this.active = true;
-        	this.start();
-        }
-    	
-    	/**
-         * Terminates thread.
-         */
-        private void shutdown() {
-            this.active = false;
-        }
-    }
-    
-    private class CriticalWorkerThread extends Thread {
-        
-    	private volatile boolean active;
-        private Task current;
-        
-        public CriticalWorkerThread(String name) {
-            super(name);
-        }
-        
-    	public void run() {
-    		while(active)
-    		{
-    			current=null;
-    			while(current==null)
-    			{
-    				try
-    				{
-    					current=criticalTasks.take();
-    				}
-    				catch(Exception ex)
-    				{
-    					
-    				}    				
-    			}
-    			current.run();
-    			criticalThread.notifyCompletion();
-    		}
-    	}
-    	
-    	public void activate() {        	        	
-        	this.active = true;
-        	this.start();
-        }
-    	
-    	/**
-         * Terminates thread.
-         */
-        private void shutdown() {
-            this.active = false;
-        }
-    }
+
 }
