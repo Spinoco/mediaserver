@@ -143,8 +143,8 @@ public class PriorityQueueScheduler  {
                 remains --;
             }
 
-            // make shure for heartbeat that we shift the index
-            heartbeatQueueIdx.set(queueIdx);
+            // make sure for heartbeat that we shift the index
+            if (heartbeat)  heartbeatQueueIdx.set(queueIdx);
 
         }
     }
@@ -211,7 +211,7 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submit(Task task,Integer index) {
-        task.activate(false);
+        task.activateTask();
         taskQueues[index].accept(task);
     }
     
@@ -221,14 +221,13 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submitHeatbeat(Task task) {
-        task.activate(true);
+        task.activateTask();
         heartBeatQueue[heartbeatQueueIdx.get()].accept(task);
     }
     
     /**
      * Queues chain of the tasks for execution.
-     * 
-     * @param taskChanin the chain of the tasks
+     *
      */
     public void submit(TaskChain taskChain) {    	
         taskChain.start();
