@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.ComponentType;
@@ -118,6 +119,9 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
     // the content of the file won't get reordered
     private AtomicReference<ConcurrentLinkedQueue<ByteBuffer>> writeBuff = new AtomicReference<ConcurrentLinkedQueue<ByteBuffer>>(null);
 
+    // Guarantees we perform only one write operation at any time
+    private ReentrantLock lock = new ReentrantLock();
+
     public AudioRecorderImpl(PriorityQueueScheduler scheduler) {
         super("recorder");
         this.scheduler = scheduler;
@@ -184,7 +188,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             RecorderFileSink snk = sink.getAndSet(null);
             ConcurrentLinkedQueue<ByteBuffer> wb = writeBuff.getAndSet(null);
             if (snk != null && wb != null) {
-                scheduler.submit(new FlushRecording(snk, wb), EventQueueType.RECORDING);
+                scheduler.submit(new FlushRecording(snk, wb,  this.lock), EventQueueType.RECORDING);
             }
 
         } catch (Exception e) {
@@ -242,7 +246,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
                     , frame.getLength()
                 )
             );
-            scheduler.submit(new WriteSample(snk, wb), EventQueueType.RECORDING);
+            scheduler.submit(new WriteSample(snk, wb), EventQueueType.RECORDING, this.lock);
         }
 
         if (this.postSpeechTimer > 0 || this.preSpeechTimer > 0) {
@@ -480,7 +484,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             ConcurrentLinkedQueue<ByteBuffer> wb = writeBuff.get();
             if (snk != null && wb != null) {
                 wb.offer(ByteBuffer.wrap(DtmfTonesData.buffer[currTone]));
-                scheduler.submit(new WriteSample(snk, wb), EventQueueType.RECORDING);
+                scheduler.submit(new WriteSample(snk, wb,  AudioRecorderImpl.this.lock), EventQueueType.RECORDING);
             }
         }
 
@@ -516,12 +520,13 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
     private class WriteSample extends Task {
         private RecorderFileSink snk;
         private ConcurrentLinkedQueue<ByteBuffer> writeBuff;
+        private ReentrantLock lock;
 
-        public WriteSample(RecorderFileSink snk, ConcurrentLinkedQueue<ByteBuffer> writeBuff) {
+        public WriteSample(RecorderFileSink snk, ConcurrentLinkedQueue<ByteBuffer> writeBuff, ReentrantLock lock) {
             this.snk = snk;
             this.writeBuff = writeBuff;
+            this.lock = lock;
         }
-
 
         @Override
         public EventQueueType getQueueType() {
@@ -530,7 +535,13 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
         @Override
         public long perform() {
-            writeSamples(this.snk, this.writeBuff);
+            if (lock.tryLock()) {
+                try {
+                    writeSamples(this.snk, this.writeBuff);
+                } finally {
+                    lock.unlock();
+                }
+            }
             return 0;
         }
     }
@@ -539,10 +550,12 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
     private class FlushRecording extends Task {
         private RecorderFileSink snk;
         private ConcurrentLinkedQueue<ByteBuffer> writeBuff;
+        private ReentrantLock lock;
 
-        public FlushRecording(RecorderFileSink snk, ConcurrentLinkedQueue<ByteBuffer> writeBuff) {
+        public FlushRecording(RecorderFileSink snk, ConcurrentLinkedQueue<ByteBuffer> writeBuff, ReentrantLock lock) {
             this.snk = snk;
             this.writeBuff = writeBuff;
+            this.lock = lock;
         }
 
         @Override
@@ -552,11 +565,16 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
         @Override
         public long perform() {
-            writeSamples(this.snk, this.writeBuff);
+            lock.lock(); // unfortunately here we must block as we don't get mulitple guaranteed invocations of this
             try {
-                this.snk.commit();
-            } catch (IOException e) {
-                logger.error("Failed to commit Recording Sink: " + this.snk, e);
+                writeSamples(this.snk, this.writeBuff);
+                try {
+                    this.snk.commit();
+                } catch (IOException e) {
+                    logger.error("Failed to commit Recording Sink: " + this.snk, e);
+                }
+            } finally {
+                lock.unlock();
             }
             return 0;
         }
