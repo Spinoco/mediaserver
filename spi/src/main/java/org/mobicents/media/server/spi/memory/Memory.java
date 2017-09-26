@@ -29,7 +29,7 @@ import org.mobicents.media.server.concurrent.ConcurrentMap;
  * @author oifa yulian
  */
 public class Memory 
-{ 
+{
 
 	/**
 	 * Allocates frame from the pool of sized partitions. Always returns instance either from cached frames or new fresh allocated frame.

@@ -23,11 +23,12 @@
 package org.mobicents.media.server.io.ss7;
 
 import java.io.IOException;
+
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.protocols.stream.api.SelectorKey;
 import org.mobicents.media.hardware.dahdi.Channel;
 import org.mobicents.media.hardware.dahdi.SelectorKeyImpl;
 import org.mobicents.media.hardware.dahdi.Selector;
-import java.util.Iterator;
 import javolution.util.FastList;
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
@@ -150,8 +151,8 @@ public class SS7Manager {
             super();
         }
 
-        public int getQueueNumber() {
-            return scheduler.RECEIVER_QUEUE;
+        public EventQueueType getQueueType() {
+            return EventQueueType.SS7_RECEIVER;
         }       
 
         @Override
@@ -171,7 +172,7 @@ public class SS7Manager {
             } catch (IOException e) {              	
                 return 0;
             } finally {
-                scheduler.submit(this,scheduler.RECEIVER_QUEUE);
+                scheduler.submit(this, EventQueueType.SS7_RECEIVER);
             }
 
             return 0;
@@ -181,7 +182,7 @@ public class SS7Manager {
          * Immediately start current task
          */
         public void startNow() {
-            scheduler.submit(this,scheduler.RECEIVER_QUEUE);
+            scheduler.submit(this, EventQueueType.SS7_RECEIVER);
         }
     }
 }

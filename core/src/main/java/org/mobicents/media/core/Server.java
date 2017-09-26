@@ -28,6 +28,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.scheduler.Clock;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ControlProtocol;
@@ -163,13 +164,13 @@ public class Server implements MediaServer {
         }
 
         @Override
-        public int getQueueNumber() {
-            return PriorityQueueScheduler.HEARTBEAT_QUEUE;
+        public EventQueueType getQueueType() {
+            return EventQueueType.HEARTBEAT;
         }
 
         public void restart() {
             ttl = heartbeatTime * 600;
-            scheduler.submitHeatbeat(this);
+            scheduler.submitHeartbeat(this);
         }
 
         @Override
@@ -179,7 +180,7 @@ public class Server implements MediaServer {
                 log.info("Global hearbeat is still alive");
                 restart();
             } else {
-                scheduler.submitHeatbeat(this);
+                scheduler.submitHeartbeat(this);
             }
             return 0;
         }

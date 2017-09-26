@@ -32,6 +32,7 @@ import org.mobicents.media.server.impl.resource.phone.PhoneSignalGenerator;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
 import org.mobicents.media.server.mgcp.controller.signal.Signal;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.MediaType;
@@ -168,7 +169,7 @@ public class Continuity1 extends Signal implements ToneDetectorListener {
     	//set ttl to 2 seconds
     	heartbeat.setTtl((int)(40));
     	heartbeat.activate();
-		getEndpoint().getScheduler().submitHeatbeat(heartbeat);
+		getEndpoint().getScheduler().submitHeartbeat(heartbeat);
 		
     	try
     	{
@@ -231,9 +232,9 @@ public class Continuity1 extends Signal implements ToneDetectorListener {
         }
         
     	@Override
-        public int getQueueNumber()
+        public EventQueueType getQueueType()
         {
-        	return PriorityQueueScheduler.HEARTBEAT_QUEUE;
+        	return EventQueueType.HEARTBEAT;
         }     
         
         public void setTtl(int value)
@@ -263,7 +264,7 @@ public class Continuity1 extends Signal implements ToneDetectorListener {
         		if(ttlValue>0)
         			ttl.set(ttlValue-1);
         		
-        		scheduler.submitHeatbeat(this);
+        		scheduler.submitHeartbeat(this);
         		return 0;
         	}
         	

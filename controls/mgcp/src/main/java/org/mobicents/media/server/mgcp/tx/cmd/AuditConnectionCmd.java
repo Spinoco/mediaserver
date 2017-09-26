@@ -34,10 +34,7 @@ import org.mobicents.media.server.mgcp.message.MgcpResponse;
 import org.mobicents.media.server.mgcp.message.MgcpResponseCode;
 import org.mobicents.media.server.mgcp.message.Parameter;
 import org.mobicents.media.server.mgcp.tx.Action;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Scheduler;
-import org.mobicents.media.server.scheduler.Task;
-import org.mobicents.media.server.scheduler.TaskChain;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.utils.Text;
 
@@ -123,8 +120,8 @@ public class AuditConnectionCmd extends Action {
 	private class Audit extends Task {
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.MGCP_SIGNALLING;
 		}
 
 		@Override
@@ -225,8 +222,8 @@ public class AuditConnectionCmd extends Action {
 	private class Respond extends Task {
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.MGCP_SIGNALLING;
 		}
 
 		@Override
@@ -301,8 +298,8 @@ public class AuditConnectionCmd extends Action {
 	private class Rollback extends Task {
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.MGCP_SIGNALLING;
 		}
 
 		@Override

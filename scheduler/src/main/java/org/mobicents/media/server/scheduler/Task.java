@@ -73,7 +73,7 @@ public abstract class Task implements Runnable {
      * 
      * @return the value of queue
      */
-    public abstract int getQueueNumber();    
+    public abstract EventQueueType getQueueType();
     
     
     /**

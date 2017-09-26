@@ -32,6 +32,7 @@ import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
 import org.mobicents.media.server.mgcp.controller.signal.Signal;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.MediaType;
@@ -350,7 +351,7 @@ public class PlayCollect extends Signal {
                 }
 
                 heartbeat.activate();
-                getEndpoint().getScheduler().submitHeatbeat(heartbeat);
+                getEndpoint().getScheduler().submitHeartbeat(heartbeat);
             }
 
             buffer.activate();
@@ -831,7 +832,7 @@ public class PlayCollect extends Signal {
                 heartbeat.setTtl((int) (nextDigitTimer));
                 if (!heartbeat.isActive()) {
                     heartbeat.activate();
-                    getEndpoint().getScheduler().submitHeatbeat(heartbeat);
+                    getEndpoint().getScheduler().submitHeartbeat(heartbeat);
                 }
             } else if (maxDuration == 0) {
                 heartbeat.disable();
@@ -857,8 +858,8 @@ public class PlayCollect extends Signal {
         }
 
         @Override
-        public int getQueueNumber() {
-            return PriorityQueueScheduler.HEARTBEAT_QUEUE;
+        public EventQueueType getQueueType() {
+            return EventQueueType.HEARTBEAT;
         }
 
         public void setTtl(int value) {
@@ -898,7 +899,7 @@ public class PlayCollect extends Signal {
                     overallTtl.set(overallTtlValue - 1);
                 }
 
-                scheduler.submitHeatbeat(this);
+                scheduler.submitHeartbeat(this);
                 return 0;
             }
 

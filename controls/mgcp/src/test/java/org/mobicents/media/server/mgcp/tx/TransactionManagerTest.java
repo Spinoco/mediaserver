@@ -21,19 +21,12 @@
  */
 package org.mobicents.media.server.mgcp.tx;
 
-import org.mobicents.media.server.scheduler.TaskChain;
-import org.mobicents.media.server.scheduler.Task;
+import org.mobicents.media.server.scheduler.*;
+
 import java.util.Random;
 
-import org.mobicents.media.server.scheduler.Clock;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Scheduler;
-import org.mobicents.media.server.scheduler.ServiceScheduler;
-import org.mobicents.media.server.scheduler.WallClock;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -138,8 +131,8 @@ public class TransactionManagerTest {
 			super();
 		}
 
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.MGCP_SIGNALLING;
 		}
 
 		@Override

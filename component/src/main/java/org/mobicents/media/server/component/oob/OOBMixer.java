@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.memory.Frame;
@@ -76,7 +77,7 @@ public class OOBMixer {
         if (!this.started.get()) {
             started.set(true);
             mixCount.set(0);
-            scheduler.submit(mixer, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+            scheduler.submit(mixer,  EventQueueType.RTP_MIXER);
         }
     }
 
@@ -94,8 +95,8 @@ public class OOBMixer {
 		}
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MIXER_MIX_QUEUE;
+		public EventQueueType getQueueType() {
+			return  EventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -116,7 +117,7 @@ public class OOBMixer {
 			}
 
 			if (current == null) {
-				scheduler.submit(this, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+				scheduler.submit(this,  EventQueueType.RTP_MIXER);
 				mixCount.incrementAndGet();
 				return 0;
 			}
@@ -130,7 +131,7 @@ public class OOBMixer {
 				}
 			}
 
-			scheduler.submit(this, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+			scheduler.submit(this,  EventQueueType.RTP_MIXER);
 			mixCount.incrementAndGet();
 			return 0;
 		}

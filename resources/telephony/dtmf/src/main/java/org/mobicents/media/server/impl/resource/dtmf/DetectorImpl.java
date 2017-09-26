@@ -34,6 +34,7 @@ import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.audio.GoertzelFilter;
 import org.mobicents.media.server.component.oob.OOBOutput;
 import org.mobicents.media.server.impl.AbstractSink;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.dtmf.DtmfDetector;
@@ -323,20 +324,20 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
     protected void fireEvent(String tone) {
         eventSender.events.add(new DtmfEventImpl(this, tone, 0));
         // schedule event delivery
-        scheduler.submit(eventSender, PriorityQueueScheduler.INPUT_QUEUE);
+        scheduler.submit(eventSender, EventQueueType.PLAYBACK);
     }
 
     protected void fireEvent(DtmfEventImpl evt) {
         eventSender.events.add(evt);
         // schedule event delivery
-        scheduler.submit(eventSender, PriorityQueueScheduler.INPUT_QUEUE);
+        scheduler.submit(eventSender, EventQueueType.PLAYBACK);
     }
 
     protected void fireEvent(Collection<DtmfEventImpl> evts) {
         eventSender.events.addAll(evts);
 
         // schedule event delivery
-        scheduler.submit(eventSender, PriorityQueueScheduler.INPUT_QUEUE);
+        scheduler.submit(eventSender, EventQueueType.PLAYBACK);
     }
 
     @Override
@@ -377,8 +378,8 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
         }
 
         @Override
-        public int getQueueNumber() {
-            return PriorityQueueScheduler.INPUT_QUEUE;
+        public EventQueueType getQueueType() {
+            return EventQueueType.PLAYBACK;
         }
 
         @Override

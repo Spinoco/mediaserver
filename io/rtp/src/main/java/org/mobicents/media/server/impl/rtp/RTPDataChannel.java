@@ -37,6 +37,7 @@ import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ConnectionMode;
@@ -276,7 +277,7 @@ public class RTPDataChannel {
 				&& !connectImmediately) {
 			if (shouldReceive) {
 				lastPacketReceived = scheduler.getClock().getTime();
-				scheduler.submitHeatbeat(heartBeat);
+				scheduler.submitHeartbeat(heartBeat);
 			} else {
 				heartBeat.cancel();
 			}
@@ -375,7 +376,7 @@ public class RTPDataChannel {
 		if (udpManager.getRtpTimeout() > 0 && !connectImmediately) {
 			if (shouldReceive) {
 				lastPacketReceived = scheduler.getClock().getTime();
-				scheduler.submitHeatbeat(heartBeat);
+				scheduler.submitHeartbeat(heartBeat);
 			} else {
 				heartBeat.cancel();
 			}
@@ -825,8 +826,8 @@ public class RTPDataChannel {
 			super();
 		}
 
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.HEARTBEAT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.HEARTBEAT;
 		}
 
 		@Override
@@ -835,7 +836,7 @@ public class RTPDataChannel {
 				if (rtpChannelListener != null)
 					rtpChannelListener.onRtpFailure();
 			} else {
-				scheduler.submitHeatbeat(this);
+				scheduler.submitHeartbeat(this);
 			}
 			return 0;
 		}

@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Scheduler;
 import org.mobicents.media.server.scheduler.Task;
@@ -145,13 +146,13 @@ public class RestCommMediaServer implements MediaServer {
         }
 
         @Override
-        public int getQueueNumber() {
-            return PriorityQueueScheduler.HEARTBEAT_QUEUE;
+        public EventQueueType getQueueType() {
+            return EventQueueType.HEARTBEAT;
         }
 
         public void restart() {
             ttl = heartbeatTime * 600;
-            mediaScheduler.submitHeatbeat(this);
+            mediaScheduler.submitHeartbeat(this);
         }
 
         @Override
@@ -161,7 +162,7 @@ public class RestCommMediaServer implements MediaServer {
                 log.info("Global hearbeat is still alive");
                 restart();
             } else {
-                mediaScheduler.submitHeatbeat(this);
+                mediaScheduler.submitHeartbeat(this);
             }
             return 0;
         }

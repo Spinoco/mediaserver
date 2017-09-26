@@ -27,6 +27,7 @@ import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
 import org.mobicents.media.server.mgcp.controller.signal.Signal;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.spi.MediaType;
 import org.mobicents.media.server.spi.dtmf.DtmfGenerator;
 import org.mobicents.media.server.spi.dtmf.DtmfGeneratorEvent;
@@ -166,7 +167,7 @@ public class SignalRequest extends Signal implements DtmfGeneratorListener
         {         
         	generator.deactivate();
         	heartbeat.activate();
-            getEndpoint().getScheduler().submitHeatbeat(heartbeat);
+            getEndpoint().getScheduler().submitHeartbeat(heartbeat);
         }
         
         private class Heartbeat extends Task 
@@ -181,9 +182,9 @@ public class SignalRequest extends Signal implements DtmfGeneratorListener
                 this.signal=signal;
             }
             
-            public int getQueueNumber()
+            public EventQueueType getQueueType()
             {
-                    return PriorityQueueScheduler.HEARTBEAT_QUEUE;
+                    return EventQueueType.HEARTBEAT;
             }     
             
             public void disable()

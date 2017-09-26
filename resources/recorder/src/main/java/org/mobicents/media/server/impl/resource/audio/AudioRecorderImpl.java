@@ -33,6 +33,7 @@ import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.oob.OOBOutput;
 import org.mobicents.media.server.impl.AbstractSink;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.dtmf.DtmfTonesData;
@@ -149,7 +150,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
         output.start();
         oobOutput.start();
         if (this.postSpeechTimer > 0 || this.preSpeechTimer > 0 || this.maxRecordTime > 0) {
-            scheduler.submitHeatbeat(this.heartbeat);
+            scheduler.submitHeartbeat(this.heartbeat);
         }
 
         // send event
@@ -216,7 +217,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
      */
     private void fireEvent(RecorderEventImpl event) {
         eventSender.event = event;
-        scheduler.submit(eventSender, PriorityQueueScheduler.INPUT_QUEUE);
+        scheduler.submit(eventSender, EventQueueType.RECORDING);
     }
 
     @Override
@@ -336,8 +337,8 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             return 0;
         }
 
-        public int getQueueNumber() {
-            return PriorityQueueScheduler.INPUT_QUEUE;
+        public EventQueueType getQueueType() {
+            return EventQueueType.RECORDING;
         }
     }
 
@@ -358,8 +359,8 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             return 0;
         }
 
-        public int getQueueNumber() {
-            return PriorityQueueScheduler.INPUT_QUEUE;
+        public EventQueueType getQueueType() {
+            return EventQueueType.MGCP_SIGNALLING;
         }
     }
 
@@ -378,13 +379,13 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
             if (preSpeechTimer > 0 && !speechDetected && currTime - lastPacketData > preSpeechTimer) {
                 qualifier = RecorderEvent.NO_SPEECH;
-                scheduler.submit(killRecording, PriorityQueueScheduler.INPUT_QUEUE);
+                scheduler.submit(killRecording, EventQueueType.RECORDING);
                 return 0;
             }
 
             if (postSpeechTimer > 0 && speechDetected && currTime - lastPacketData > postSpeechTimer) {
                 qualifier = RecorderEvent.NO_SPEECH;
-                scheduler.submit(killRecording, PriorityQueueScheduler.INPUT_QUEUE);
+                scheduler.submit(killRecording, EventQueueType.RECORDING);
                 return 0;
             }
 
@@ -392,17 +393,17 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             if (maxRecordTime > 0 && currTime - startTime >= maxRecordTime) {
                 // set qualifier
                 qualifier = RecorderEvent.MAX_DURATION_EXCEEDED;
-                scheduler.submit(killRecording, PriorityQueueScheduler.INPUT_QUEUE);
+                scheduler.submit(killRecording, EventQueueType.RECORDING);
                 return 0;
             }
 
-            scheduler.submitHeatbeat(this);
+            scheduler.submitHeartbeat(this);
             return 0;
         }
 
         @Override
-        public int getQueueNumber() {
-            return PriorityQueueScheduler.HEARTBEAT_QUEUE;
+        public EventQueueType getQueueType() {
+            return EventQueueType.HEARTBEAT;
         }
 
     }

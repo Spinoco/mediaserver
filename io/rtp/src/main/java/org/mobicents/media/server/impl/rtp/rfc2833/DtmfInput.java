@@ -28,6 +28,7 @@ import org.mobicents.media.server.component.oob.OOBInput;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.impl.rtp.RtpClock;
 import org.mobicents.media.server.impl.rtp.RtpPacket;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
@@ -68,7 +69,7 @@ public class DtmfInput extends AbstractSource {
 	
     public DtmfInput(PriorityQueueScheduler scheduler,RtpClock clock)
     {
-    	super("dtmfconverter", scheduler, PriorityQueueScheduler.INPUT_QUEUE);
+    	super("dtmfconverter", scheduler, EventQueueType.RTP_INPUT);
     	
     	this.clock=clock;
     	this.clock.setClockRate(8000);

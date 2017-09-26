@@ -25,6 +25,7 @@ package org.mobicents.media.server.component.audio;
 import java.util.Iterator;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.format.AudioFormat;
@@ -92,7 +93,7 @@ public class AudioMixer {
 	public void start() {
 		mixCount = 0;
 		started = true;
-		scheduler.submit(mixer, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+		scheduler.submit(mixer, EventQueueType.RTP_MIXER);
 	}
 
 	public void stop() {
@@ -114,8 +115,8 @@ public class AudioMixer {
 		}
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MIXER_MIX_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -140,7 +141,7 @@ public class AudioMixer {
 			}
 
 			if (sourcesCount == 0) {
-				scheduler.submit(this, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+				scheduler.submit(this,  EventQueueType.RTP_MIXER);
 				mixCount++;
 				return 0;
 			}
@@ -187,7 +188,7 @@ public class AudioMixer {
 				}
 			}
 
-			scheduler.submit(this, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+			scheduler.submit(this,  EventQueueType.RTP_MIXER);
 			mixCount++;
 			return 0;
 		}

@@ -33,10 +33,7 @@ import org.mobicents.media.server.mgcp.message.MgcpResponse;
 import org.mobicents.media.server.mgcp.message.MgcpResponseCode;
 import org.mobicents.media.server.mgcp.message.Parameter;
 import org.mobicents.media.server.mgcp.tx.Action;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Scheduler;
-import org.mobicents.media.server.scheduler.Task;
-import org.mobicents.media.server.scheduler.TaskChain;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.utils.Text;
 import org.apache.log4j.Logger;
 
@@ -100,8 +97,8 @@ public class DeleteConnectionCmd extends Action {
 			super();
 		}
 
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.MGCP_SIGNALLING;
 		}
 
 		private void deleteForEndpoint(MgcpRequest request) {
@@ -221,8 +218,8 @@ public class DeleteConnectionCmd extends Action {
 		}
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.MGCP_SIGNALLING;
 		}
 
 		@Override
@@ -257,8 +254,8 @@ public class DeleteConnectionCmd extends Action {
 		}
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.MGCP_SIGNALLING;
 		}
 
 		@Override
@@ -294,8 +291,8 @@ public class DeleteConnectionCmd extends Action {
 		}
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.MGCP_SIGNALLING;
 		}
 
 		@Override

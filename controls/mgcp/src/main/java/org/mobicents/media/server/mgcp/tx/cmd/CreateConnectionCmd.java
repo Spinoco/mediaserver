@@ -35,10 +35,7 @@ import org.mobicents.media.server.mgcp.message.Parameter;
 import org.mobicents.media.server.mgcp.params.LocalConnectionOptions;
 import org.mobicents.media.server.mgcp.tx.Action;
 import org.mobicents.media.server.mgcp.tx.Transaction;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Scheduler;
-import org.mobicents.media.server.scheduler.Task;
-import org.mobicents.media.server.scheduler.TaskChain;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.ConnectionType;
 import org.mobicents.media.server.spi.ModeNotSupportedException;
@@ -149,9 +146,9 @@ public class CreateConnectionCmd extends Action {
             super();
         }
         
-        public int getQueueNumber()
+        public EventQueueType getQueueType()
         {
-        	return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+        	return EventQueueType.MGCP_SIGNALLING;
         }
 
         @Override
@@ -316,9 +313,9 @@ public class CreateConnectionCmd extends Action {
             super();
         }
         
-        public int getQueueNumber()
+        public EventQueueType getQueueType()
         {
-        	return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+        	return EventQueueType.MGCP_SIGNALLING;
         }
 
         @Override
@@ -365,9 +362,9 @@ public class CreateConnectionCmd extends Action {
             super();
         }
         
-        public int getQueueNumber()
+        public EventQueueType getQueueType()
         {
-        	return PriorityQueueScheduler.MANAGEMENT_QUEUE;
+        	return EventQueueType.MGCP_SIGNALLING;
         }
 
         @Override

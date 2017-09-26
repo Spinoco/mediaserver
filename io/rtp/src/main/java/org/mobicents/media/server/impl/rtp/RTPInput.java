@@ -25,6 +25,7 @@ package org.mobicents.media.server.impl.rtp;
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.component.audio.AudioInput;
 import org.mobicents.media.server.impl.AbstractSource;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.dsp.Processor;
 import org.mobicents.media.server.spi.format.AudioFormat;
@@ -63,7 +64,7 @@ public class RTPInput extends AbstractSource implements BufferListener {
      * Creates new receiver.
      */
     protected RTPInput(PriorityQueueScheduler scheduler,JitterBuffer rxBuffer) {
-        super("rtpinput", scheduler,PriorityQueueScheduler.INPUT_QUEUE);
+        super("rtpinput", scheduler, EventQueueType.RTP_INPUT);
         this.rxBuffer=rxBuffer;        
         input=new AudioInput(1,packetSize);
         this.connect(input);        

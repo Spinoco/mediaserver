@@ -31,6 +31,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mobicents.media.server.scheduler.Clock;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.WallClock;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.memory.Frame;
@@ -87,7 +88,7 @@ public class AbstractComponentTest {
 		private static final long serialVersionUID = 3317111509574993827L;
 
 		public TestSource(String name,PriorityQueueScheduler scheduler) {
-            super(name, scheduler, PriorityQueueScheduler.OUTPUT_QUEUE);
+            super(name, scheduler, EventQueueType.RTP_OUTPUT);
         }
 
         @Override

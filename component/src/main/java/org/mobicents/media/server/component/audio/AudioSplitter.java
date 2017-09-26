@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.format.AudioFormat;
@@ -114,8 +115,8 @@ public class AudioSplitter {
 	    if(!this.started.get()) {
 	        mixCount.set(0);
 	        started.set(true);
-	        scheduler.submit(insideMixer, PriorityQueueScheduler.MIXER_MIX_QUEUE);
-	        scheduler.submit(outsideMixer, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+	        scheduler.submit(insideMixer, EventQueueType.RTP_MIXER);
+	        scheduler.submit(outsideMixer, EventQueueType.RTP_MIXER);
 	    }
 	}
 
@@ -136,8 +137,8 @@ public class AudioSplitter {
 		}
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MIXER_MIX_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -163,7 +164,7 @@ public class AudioSplitter {
 			}
 
 			if (first) {
-				scheduler.submit(this, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+				scheduler.submit(this, EventQueueType.RTP_MIXER);
 				mixCount.incrementAndGet();
 				return 0;
 			}
@@ -202,7 +203,7 @@ public class AudioSplitter {
 				component.offer(total);
 			}
 
-			scheduler.submit(this, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+			scheduler.submit(this, EventQueueType.RTP_MIXER);
 			mixCount.incrementAndGet();
 			return 0;
 		}
@@ -217,8 +218,8 @@ public class AudioSplitter {
 		}
 
 		@Override
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.MIXER_MIX_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -244,7 +245,7 @@ public class AudioSplitter {
 			}
 
 			if (first) {
-				scheduler.submit(this, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+				scheduler.submit(this, EventQueueType.RTP_MIXER);
 				mixCount.incrementAndGet();
 				return 0;
 			}
@@ -280,7 +281,7 @@ public class AudioSplitter {
 				component.offer(total);
 			}
 
-			scheduler.submit(this, PriorityQueueScheduler.MIXER_MIX_QUEUE);
+			scheduler.submit(this, EventQueueType.RTP_MIXER);
 			mixCount.incrementAndGet();
 			return 0;
 		}

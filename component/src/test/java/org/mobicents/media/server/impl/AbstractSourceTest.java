@@ -16,6 +16,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mobicents.media.server.scheduler.Clock;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.WallClock;
 import org.mobicents.media.server.spi.format.AudioFormat;
@@ -155,7 +156,7 @@ public class AbstractSourceTest {
 		private long seq = 0;
         
         public MyTestSource(PriorityQueueScheduler scheduler) {
-            super("", scheduler, PriorityQueueScheduler.OUTPUT_QUEUE);
+            super("", scheduler, EventQueueType.RTP_OUTPUT);
         }
 
         @Override

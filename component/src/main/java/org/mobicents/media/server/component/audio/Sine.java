@@ -24,6 +24,7 @@ package org.mobicents.media.server.component.audio;
 
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.impl.AbstractSource;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
@@ -58,7 +59,7 @@ public class Sine extends AbstractSource {
     }
     
     public Sine(PriorityQueueScheduler scheduler) {
-        super("sine.generator", scheduler, PriorityQueueScheduler.INPUT_QUEUE);
+        super("sine.generator", scheduler,  EventQueueType.RTP_MIXER);
         //number of seconds covered by one sample
         dt = 1. / LINEAR_AUDIO.getSampleRate();
         

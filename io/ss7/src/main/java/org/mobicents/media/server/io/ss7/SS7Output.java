@@ -26,6 +26,7 @@ import org.mobicents.media.hardware.dahdi.Channel;
 import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.oob.OOBOutput;
 import org.mobicents.media.server.impl.AbstractSink;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.FormatNotSupportedException;
@@ -200,15 +201,15 @@ public class SS7Output extends AbstractSink {
             super();
         }        
 
-        public int getQueueNumber()
+        public EventQueueType getQueueType()
         {
-        	return scheduler.SENDER_QUEUE;
+        	return EventQueueType.SS7_SENDER;
         }   
         
         public void submit()
         {
         	this.activateTask();
-        	scheduler.submit(this,scheduler.SENDER_QUEUE);
+        	scheduler.submit(this,EventQueueType.SS7_SENDER);
         }
         
         @Override
@@ -257,7 +258,7 @@ public class SS7Output extends AbstractSink {
             {            	            
             }
             
-            scheduler.submit(this,scheduler.SENDER_QUEUE);
+            scheduler.submit(this, EventQueueType.SS7_SENDER);
             return 0;
         }                
     }

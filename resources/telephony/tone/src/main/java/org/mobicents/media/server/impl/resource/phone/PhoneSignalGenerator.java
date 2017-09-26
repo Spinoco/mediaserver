@@ -20,6 +20,7 @@ package org.mobicents.media.server.impl.resource.phone;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.component.audio.AudioInput;
 import org.mobicents.media.server.impl.AbstractSource;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
@@ -56,7 +57,7 @@ public class PhoneSignalGenerator extends AbstractSource implements PooledObject
     private AudioInput input;
     
     public PhoneSignalGenerator(String name,PriorityQueueScheduler scheduler) {
-        super(name,scheduler,scheduler.INPUT_QUEUE);
+        super(name,scheduler, EventQueueType.RTP_INPUT);
         init();
         
         this.input=new AudioInput(ComponentType.SIGNAL_GENERATOR.getType(),frameSize);

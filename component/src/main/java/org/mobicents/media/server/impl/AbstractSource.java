@@ -25,6 +25,7 @@ package org.mobicents.media.server.impl;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.MediaSource;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.memory.Frame;
@@ -82,7 +83,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
      * @param name
      *            the name of the source to be created.
      */
-    public AbstractSource(String name, PriorityQueueScheduler scheduler,int queueNumber) {
+    public AbstractSource(String name, PriorityQueueScheduler scheduler,EventQueueType queueNumber) {
         super(name);
         this.scheduler = scheduler;
         this.worker = new Worker(queueNumber);        
@@ -172,7 +173,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     			
     			//scheduler worker    
     			worker.reinit();
-    			scheduler.submit(worker,worker.getQueueNumber());
+    			scheduler.submit(worker,worker.getQueueType());
     			
     			//started!
     			started();
@@ -195,7 +196,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
             
             if (!this.isSynchronized) {
                 this.isSynchronized = true;
-                scheduler.submit(worker,worker.getQueueNumber());
+                scheduler.submit(worker,worker.getQueueType());
             }
         }
     }
@@ -350,7 +351,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
          *
          * @param scheduler the scheduler instance.
          */
-    	private int queueNumber;    	
+    	private EventQueueType queueNumber;
     	private long initialTime;
     	int readCount=0,length;
     	long overallDelay=0;
@@ -358,7 +359,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     	long frameDuration;
     	Boolean isEOM;
     	
-    	public Worker(int queueNumber) {
+    	public Worker(EventQueueType queueNumber) {
             super();
             this.queueNumber=queueNumber;
             initialTime=scheduler.getClock().getTime();            
@@ -369,7 +370,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         	initialTime=scheduler.getClock().getTime();        	
         }
         
-        public int getQueueNumber()
+        public EventQueueType getQueueType()
         {
         	return queueNumber;
         }

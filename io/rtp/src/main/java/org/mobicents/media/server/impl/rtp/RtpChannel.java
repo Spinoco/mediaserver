@@ -41,6 +41,7 @@ import org.mobicents.media.server.impl.srtp.DtlsListener;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.network.channel.MultiplexedChannel;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ConnectionMode;
@@ -279,7 +280,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         if (udpManager.getRtpTimeout() > 0 && this.remotePeer != null && !connectImmediately) {
             if (this.rtpHandler.isReceivable()) {
                 this.statistics.setLastHeartbeat(scheduler.getClock().getTime());
-                scheduler.submitHeatbeat(heartBeat);
+                scheduler.submitHeartbeat(heartBeat);
             } else {
                 heartBeat.cancel();
             }
@@ -396,7 +397,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         if (udpManager.getRtpTimeout() > 0 && !connectImmediately) {
             if (this.rtpHandler.isReceivable()) {
                 this.statistics.setLastHeartbeat(scheduler.getClock().getTime());
-                scheduler.submitHeatbeat(heartBeat);
+                scheduler.submitHeartbeat(heartBeat);
             } else {
                 heartBeat.cancel();
             }
@@ -559,8 +560,8 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
 
     private class HeartBeat extends Task {
 
-        public int getQueueNumber() {
-            return PriorityQueueScheduler.HEARTBEAT_QUEUE;
+        public EventQueueType getQueueType() {
+            return EventQueueType.HEARTBEAT;
         }
 
         @Override
@@ -571,7 +572,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
                     rtpListener.onRtpFailure("RTP timeout! Elapsed time since last heartbeat: " + elapsedTime);
                 }
             } else {
-                scheduler.submitHeatbeat(this);
+                scheduler.submitHeartbeat(this);
             }
             return 0;
         }

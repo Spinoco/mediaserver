@@ -27,6 +27,7 @@ import java.io.IOException;
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.component.audio.AudioComponent;
 import org.mobicents.media.server.component.oob.OOBComponent;
+import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.Connection;
@@ -130,7 +131,7 @@ public abstract class BaseConnection implements Connection {
 
 		switch (state) {
 		case HALF_OPEN:
-			scheduler.submitHeatbeat(heartBeat);
+			scheduler.submitHeartbeat(heartBeat);
 			break;
 		case NULL:
 			heartBeat.cancel();
@@ -365,8 +366,8 @@ public abstract class BaseConnection implements Connection {
 			super();
 		}
 
-		public int getQueueNumber() {
-			return PriorityQueueScheduler.HEARTBEAT_QUEUE;
+		public EventQueueType getQueueType() {
+			return EventQueueType.HEARTBEAT;
 		}
 
 		@Override
@@ -376,7 +377,7 @@ public abstract class BaseConnection implements Connection {
 				if (ttl == 0) {
 					fail();
 				} else {
-					scheduler.submitHeatbeat(this);
+					scheduler.submitHeartbeat(this);
 				}
 			}
 			return 0;
