@@ -22,8 +22,8 @@
 package org.mobicents.media.server.mgcp.pkg.sl;
 
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.mobicents.media.server.utils.Text;
 
 /**
@@ -32,7 +32,7 @@ import org.mobicents.media.server.utils.Text;
  */
 public final class Options {
 	
-	private static final ConcurrentCyclicFIFO<ArrayBlockingQueue<DtmfSignal>> cache = new ConcurrentCyclicFIFO<ArrayBlockingQueue<DtmfSignal>>();
+	private static final ConcurrentLinkedQueue<ArrayBlockingQueue<DtmfSignal>> cache = new ConcurrentLinkedQueue<ArrayBlockingQueue<DtmfSignal>>();
 
 	public static void recycle(ArrayBlockingQueue<DtmfSignal> queue) {
 		queue.clear();

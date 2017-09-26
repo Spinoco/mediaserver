@@ -54,6 +54,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Level;
@@ -65,7 +67,6 @@ import org.mobicents.protocols.mgcp.handlers.TransactionHandler;
 import org.mobicents.protocols.mgcp.utils.PacketRepresentation;
 import org.mobicents.protocols.mgcp.utils.PacketRepresentationFactory;
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.mobicents.media.server.concurrent.ConcurrentMap;
 /**
  * 
@@ -118,7 +119,8 @@ public class JainMgcpStackImpl extends Thread implements JainMgcpStack, OAM_IF {
 
 	private ConcurrentMap<TransactionHandler> completedTransactions = new ConcurrentMap<TransactionHandler>();
 
-	private ConcurrentCyclicFIFO<PacketRepresentation> inputQueue=new ConcurrentCyclicFIFO<PacketRepresentation>();	
+
+	private LinkedBlockingQueue<PacketRepresentation> inputQueue=new LinkedBlockingQueue<PacketRepresentation>();
 	
 	private DatagramSocket socket;
 

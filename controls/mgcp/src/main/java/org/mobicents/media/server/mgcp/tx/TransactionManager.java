@@ -23,12 +23,12 @@
 package org.mobicents.media.server.mgcp.tx;
 
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.mobicents.media.server.concurrent.ConcurrentMap;
 import org.mobicents.media.server.mgcp.MgcpProvider;
 import org.mobicents.media.server.mgcp.controller.CallManager;
@@ -57,11 +57,11 @@ public class TransactionManager {
     protected NamingTree namingService;
     
     // transactions
-	private final ConcurrentCyclicFIFO<Transaction> transactionPool;
+	private final ConcurrentLinkedQueue<Transaction> transactionPool;
 	private final ConcurrentMap<Transaction> activeTransactions;
     
     // cache size in 100ms units    
-	private ConcurrentCyclicFIFO<Transaction>[] cache = new ConcurrentCyclicFIFO[CACHE_SIZE];
+	private ConcurrentLinkedQueue<Transaction>[] cache = new ConcurrentLinkedQueue[CACHE_SIZE];
 	private final Heartbeat cacheHeartbeat;
 	private ScheduledFuture<?> cacheHeartbeatFuture;
 	
@@ -80,7 +80,7 @@ public class TransactionManager {
         this.scheduler = scheduler;
 
         // transactions
-        this.transactionPool = new ConcurrentCyclicFIFO<Transaction>();
+        this.transactionPool = new ConcurrentLinkedQueue<Transaction>();
         this.activeTransactions = new ConcurrentMap<Transaction>();
 
         for (int i = 0; i < size; i++) {
@@ -89,7 +89,7 @@ public class TransactionManager {
 
         // cache
         for (int i = 0; i < CACHE_SIZE; i++) {
-            this.cache[i] = new ConcurrentCyclicFIFO<Transaction>();
+            this.cache[i] = new ConcurrentLinkedQueue<Transaction>();
         }
         this.cacheHeartbeat = new Heartbeat();
     }

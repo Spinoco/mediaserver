@@ -24,9 +24,9 @@ package org.mobicents.media.server.mgcp.controller;
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.mobicents.media.server.concurrent.ConcurrentMap;
 import org.mobicents.media.server.mgcp.MgcpEvent;
 import org.mobicents.media.server.mgcp.MgcpListener;
@@ -65,7 +65,7 @@ public class MgcpEndpoint {
     Request request;
     
     //pool of connection activities, limited to 15
-    private ConcurrentCyclicFIFO<MgcpConnection> connections = new ConcurrentCyclicFIFO<MgcpConnection>();
+    private ConcurrentLinkedQueue<MgcpConnection> connections = new ConcurrentLinkedQueue<MgcpConnection>();
     
     //list of active connections
     private ConcurrentMap<MgcpConnection> activeConnections=new ConcurrentMap<MgcpConnection>();

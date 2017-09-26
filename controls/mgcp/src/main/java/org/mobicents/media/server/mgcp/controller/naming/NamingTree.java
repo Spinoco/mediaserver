@@ -25,7 +25,8 @@ import org.mobicents.media.server.mgcp.controller.MgcpEndpoint;
 import org.mobicents.media.server.spi.EndpointInstaller;
 import org.mobicents.media.server.utils.Text;
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 
 /**
  * Naming tree for MGCP endpoints.
@@ -35,7 +36,7 @@ import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 public class NamingTree {
     //the root of the tree
     private NamingNode<EndpointQueue> root = new NamingNode<EndpointQueue>(new Text("root"), null);
-    private ConcurrentCyclicFIFO<Text[]> patterns = new ConcurrentCyclicFIFO<Text[]>();
+    private ConcurrentLinkedQueue<Text[]> patterns = new ConcurrentLinkedQueue<Text[]>();
     
     public NamingTree() {
     	//preloading text arrays

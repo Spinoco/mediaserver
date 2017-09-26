@@ -50,6 +50,7 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.Set;
 import java.util.TooManyListenersException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -69,7 +70,6 @@ import org.mobicents.protocols.mgcp.parser.commands.NotificationRequestHandler;
 import org.mobicents.protocols.mgcp.parser.commands.RestartInProgressHandler;
 import org.mobicents.protocols.mgcp.parser.commands.RespUnknownHandler;
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 
 public class JainMgcpStackProviderImpl implements ExtendedJainMgcpProvider {
 
@@ -89,7 +89,7 @@ public class JainMgcpStackProviderImpl implements ExtendedJainMgcpProvider {
 
 	protected NotifiedEntity notifiedEntity = null;
 
-	private ConcurrentCyclicFIFO<EventWrapper> waitingQueue=new ConcurrentCyclicFIFO<EventWrapper>();
+	private LinkedBlockingQueue<EventWrapper> waitingQueue=new LinkedBlockingQueue<EventWrapper>();
 	
 	private DispatcherThread dispatcher;
 	

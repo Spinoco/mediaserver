@@ -23,9 +23,9 @@
 package org.mobicents.media.server.component.audio;
 
 import java.io.IOException;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.mobicents.media.server.impl.AbstractSink;
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.mobicents.media.server.spi.memory.Frame;
 import org.mobicents.media.server.spi.memory.Memory;
 
@@ -40,7 +40,7 @@ public class AudioInput extends AbstractSink {
 
 	private int inputId;
     private int limit=3;
-    private ConcurrentCyclicFIFO<Frame> buffer = new ConcurrentCyclicFIFO<Frame>();
+    private ConcurrentLinkedQueue<Frame> buffer = new ConcurrentLinkedQueue<Frame>();
     private Frame activeFrame=null;
     private byte[] activeData;
     private byte[] oldData;

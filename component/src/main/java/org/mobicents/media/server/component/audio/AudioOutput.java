@@ -22,12 +22,13 @@
 
 package org.mobicents.media.server.component.audio;
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.mobicents.media.server.impl.AbstractSink;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.memory.Frame;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Implements output for compound components.
@@ -39,7 +40,7 @@ public class AudioOutput extends AbstractSource {
 	private static final long serialVersionUID = -5988244809612104056L;
 
 	private int outputId;
-	private ConcurrentCyclicFIFO<Frame> buffer = new ConcurrentCyclicFIFO<Frame>();
+	private ConcurrentLinkedQueue<Frame> buffer = new ConcurrentLinkedQueue<Frame>();
 
 	/**
 	 * Creates new instance with default name.

@@ -23,8 +23,8 @@
 package org.mobicents.media.server.mgcp.pkg.au;
 
 import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.mobicents.media.server.utils.Text;
 /**
  * Represents parameters supplied with command.
@@ -33,7 +33,7 @@ import org.mobicents.media.server.utils.Text;
  */
 public class Options {
 
-	public static ConcurrentCyclicFIFO<Options> cache = new ConcurrentCyclicFIFO<Options>();
+	public static ConcurrentLinkedQueue<Options> cache = new ConcurrentLinkedQueue<Options>();
     
     private final static Text ann = new Text("an");
     private final static Text du = new Text("du");

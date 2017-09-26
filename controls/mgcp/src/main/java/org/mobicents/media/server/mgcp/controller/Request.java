@@ -25,8 +25,8 @@ package org.mobicents.media.server.mgcp.controller;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.mobicents.media.server.mgcp.MgcpEvent;
 import org.mobicents.media.server.mgcp.controller.signal.MgcpPackage;
 import org.mobicents.media.server.mgcp.controller.signal.Signal;
@@ -59,7 +59,7 @@ public class Request {
      * The list of signals/events requested.
      * This list is cleared each time before accept new request.
      */ 
-    private ConcurrentCyclicFIFO<Signal> executors = new ConcurrentCyclicFIFO<Signal>();
+    private ConcurrentLinkedQueue<Signal> executors = new ConcurrentLinkedQueue<Signal>();
     
     //notified entity address
     private InetSocketAddress address;

@@ -22,14 +22,15 @@
 
 package org.mobicents.protocols.mgcp.utils;
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.apache.log4j.Logger;
+
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class PacketRepresentationFactory {
 
 	private static final Logger logger = Logger.getLogger(PacketRepresentationFactory.class);
 
-	private ConcurrentCyclicFIFO<PacketRepresentation> list = new ConcurrentCyclicFIFO<PacketRepresentation>();
+	private LinkedBlockingQueue<PacketRepresentation> list = new LinkedBlockingQueue<PacketRepresentation>();
 	private int size = 0;
 	private int dataArrSize = 0;
 	private int count = 0;
