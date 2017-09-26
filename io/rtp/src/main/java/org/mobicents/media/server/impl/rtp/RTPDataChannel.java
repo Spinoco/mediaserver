@@ -710,13 +710,11 @@ public class RTPDataChannel {
 
 		public void performDtmf(Frame frame) {
 			if (!sendDtmf) {
-				frame.recycle();
 				return;
 			}
 
 			// ignore frames with duplicate timestamp
 			if (frame.getTimestamp() / 1000000L == dtmfTimestamp) {
-				frame.recycle();
 				return;
 			}
 
@@ -741,7 +739,6 @@ public class RTPDataChannel {
 							, frame.getLength()
 					);
 
-				frame.recycle();
 
 				if (rtpChannel.isConnected()) {
 					sendRtpPacket(oobPacket);
@@ -763,7 +760,6 @@ public class RTPDataChannel {
 		public void perform(Frame frame) {
 			// discard frame if format is unknown
 			if (frame.getFormat() == null) {
-				frame.recycle();
 				return;
 			}
 
@@ -772,7 +768,6 @@ public class RTPDataChannel {
 				fmt = rtpFormats.getRTPFormat(frame.getFormat());
 				// format still unknown? discard packet
 				if (fmt == null) {
-					frame.recycle();
 					return;
 				}
 				// update clock rate
@@ -781,7 +776,6 @@ public class RTPDataChannel {
 
 			// ignore frames with duplicate timestamp
 			if (frame.getTimestamp() / 1000000L == timestamp) {
-				frame.recycle();
 				return;
 			}
 
@@ -806,7 +800,6 @@ public class RTPDataChannel {
 								, frame.getOffset()
 								, frame.getLength()
 						);
-				frame.recycle();
 
 				if (rtpChannel.isConnected()) {
 					sendRtpPacket(rtpPacket);

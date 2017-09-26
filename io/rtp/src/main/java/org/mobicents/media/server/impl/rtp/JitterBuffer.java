@@ -329,7 +329,7 @@ public class JitterBuffer implements Serializable {
 						", csrc: " + packet.getContributingSource()
 				);
 				dropCount++;
-				queue.remove(0).recycle();
+				queue.remove(0);
 			}
 
 			// check if this buffer already full
@@ -391,7 +391,7 @@ public class JitterBuffer implements Serializable {
 		try {
 			LOCK.lock();
 			while (queue.size() > 0)
-				queue.remove(0).recycle();
+				queue.remove(0);
 		} finally {
 			LOCK.unlock();
 		}

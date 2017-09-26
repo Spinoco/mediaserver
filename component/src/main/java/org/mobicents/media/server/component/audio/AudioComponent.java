@@ -106,20 +106,18 @@ public class AudioComponent {
             final Frame inputFrame = input.poll();
 
             if (inputFrame != null) {
-                try {
-                    final byte[] dataArray = inputFrame.getData();
 
-                    int inputIndex = 0;
-                    for (int inputCount = 0; inputCount < dataArray.length; inputCount += 2) {
-                        this.data[inputIndex++] = (short) (((dataArray[inputCount + 1]) << 8) | (dataArray[inputCount] & 0xff));
-                    }
+				final byte[] dataArray = inputFrame.getData();
 
-                    if (first.get()) {
-                        this.first.set(false);
-                    }
-                } finally {
-                    inputFrame.recycle();
-                }
+				int inputIndex = 0;
+				for (int inputCount = 0; inputCount < dataArray.length; inputCount += 2) {
+					this.data[inputIndex++] = (short) (((dataArray[inputCount + 1]) << 8) | (dataArray[inputCount] & 0xff));
+				}
+
+				if (first.get()) {
+					this.first.set(false);
+				}
+
             }
         }
     }

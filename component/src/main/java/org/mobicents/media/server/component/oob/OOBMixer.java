@@ -130,7 +130,6 @@ public class OOBMixer {
 				}
 			}
 
-			current.recycle();
 			scheduler.submit(this, PriorityQueueScheduler.MIXER_MIX_QUEUE);
 			mixCount.incrementAndGet();
 			return 0;

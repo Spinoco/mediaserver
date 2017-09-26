@@ -68,23 +68,20 @@ public class AudioOutput extends AbstractSource {
 	@Override
 	public void stop() {
 		while (buffer.size() > 0) {
-			Frame frame = buffer.poll();
-			if(frame != null) {
-			    frame.recycle();
-			}
+			buffer.poll();
 		}
 		super.stop();
 	}
 
 	public void resetBuffer() {
 		while (buffer.size() > 0) {
-			buffer.poll().recycle();
+			buffer.poll();
 		}
 	}
 
 	public void offer(Frame frame) {
 		if (buffer.size() > 1) {
-			buffer.poll().recycle();
+			buffer.poll();
 		}
 		buffer.offer(frame);
 	}

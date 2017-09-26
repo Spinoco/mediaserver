@@ -70,11 +70,7 @@ public class Dsp implements Processor {
 		if (sourceFormat!=null && source.matches(sourceFormat) && destinationFormat != null && destination.matches(destinationFormat)) {
 			//do transcode if required
 			if (codec != null) {
-				try {
-					return codec.process(frame);
-				} finally {
-					frame.recycle();
-				}
+				return codec.process(frame);
 			}
 
 			//return the original frame if no transcoding required
@@ -102,11 +98,8 @@ public class Dsp implements Processor {
 		
 		//if codec found do the transcoding
 		if (codec != null) {
-			try {
-				return codec.process(frame);
-			} finally {
-				frame.recycle();
-			}    			    			    			
+			return codec.process(frame);
+
 		}    		
 		
 		//return frame without changes
