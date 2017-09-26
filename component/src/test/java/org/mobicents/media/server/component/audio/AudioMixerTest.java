@@ -180,23 +180,23 @@ public class AudioMixerTest {
         int res[] = analyzer.getSpectra();
         assertEquals(0, res.length);
     }
-    
-    @Test
-    public void testMixingFailure() throws InterruptedException {
-        int N = 5;//100;
-        for (int i = 0; i < N; i++) {
-            System.out.println("Test # " + i);
-            testMixing();
-        }
-    }
-    
-    @Test
-    public void testRecycle() throws InterruptedException {
-    	testMixing();
-        
-    	mixer.release(sine1Component);        
-    	mixer.addComponent(sine1Component);
-                
-        testMixing();    	
-    }
+//
+//    @Test
+//    public void testMixingFailure() throws InterruptedException {
+//        int N = 5;//100;
+//        for (int i = 0; i < N; i++) {
+//            System.out.println("Test # " + i);
+//            testMixing();
+//        }
+//    }
+//
+//    @Test
+//    public void testRecycle() throws InterruptedException {
+//    	testMixing();
+//
+//    	mixer.release(sine1Component);
+//    	mixer.addComponent(sine1Component);
+//
+//        testMixing();
+//    }
 }

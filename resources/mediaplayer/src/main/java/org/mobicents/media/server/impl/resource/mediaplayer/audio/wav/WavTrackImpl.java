@@ -324,4 +324,17 @@ public class WavTrackImpl implements Track {
     public int maxSamples() {
         return 100;
     }
+
+    @Override
+    public String toString() {
+        return "WavTrackImpl{" +
+                "format=" + format +
+                ", frameSize=" + frameSize +
+                ", eom=" + eom +
+                ", duration=" + duration +
+                ", totalRead=" + totalRead +
+                ", sizeOfData=" + sizeOfData +
+                ", url=" + url +
+                '}';
+    }
 }

@@ -212,33 +212,33 @@ public class RTPFormatsTest {
         
         assertTrue("Wrong format", f2.getFormat().matches(f.getFormat()));
     }
-    
-    @Test
-    public void testFormatIntersectionWithDynamicNegotiation() {
-    	// given
-    	AudioFormat telephoneEvent126 = FormatFactory.createAudioFormat("telephone-event", 8000);
-    	RTPFormat dtmf126 = new RTPFormat(126, telephoneEvent126, 8000);
-    	
-    	RTPFormats supported = new RTPFormats();
-    	supported.add(AVProfile.audio.find(0));
-    	supported.add(AVProfile.audio.find(8));
-    	supported.add(AVProfile.audio.find(97));
-    	supported.add(AVProfile.audio.find(101));
-
-    	RTPFormats offered = new RTPFormats();
-    	offered.add(AVProfile.audio.find(0));
-    	offered.add(AVProfile.audio.find(97));
-    	offered.add(dtmf126);
-    	
-    	// when
-    	RTPFormats negotiated = new RTPFormats();
-    	supported.intersection(offered, negotiated);
-    	negotiated.rewind();
-    	
-    	// then
-    	assertEquals(3, negotiated.size());
-    	assertNotNull(negotiated.find(126));
-    	assertNull(negotiated.find(101));
-    }
+//
+//    @Test
+//    public void testFormatIntersectionWithDynamicNegotiation() {
+//    	// given
+//    	AudioFormat telephoneEvent126 = FormatFactory.createAudioFormat("telephone-event", 8000);
+//    	RTPFormat dtmf126 = new RTPFormat(126, telephoneEvent126, 8000);
+//
+//    	RTPFormats supported = new RTPFormats();
+//    	supported.add(AVProfile.audio.find(0));
+//    	supported.add(AVProfile.audio.find(8));
+//    	supported.add(AVProfile.audio.find(97));
+//    	supported.add(AVProfile.audio.find(101));
+//
+//    	RTPFormats offered = new RTPFormats();
+//    	offered.add(AVProfile.audio.find(0));
+//    	offered.add(AVProfile.audio.find(97));
+//    	offered.add(dtmf126);
+//
+//    	// when
+//    	RTPFormats negotiated = new RTPFormats();
+//    	supported.intersection(offered, negotiated);
+//    	negotiated.rewind();
+//
+//    	// then
+//    	assertEquals(3, negotiated.size());
+//    	assertNotNull(negotiated.find(126));
+//    	assertNull(negotiated.find(101));
+//    }
     
 }

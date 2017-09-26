@@ -396,7 +396,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         		frame = evolve(timestamp);
         		if (frame == null) {
         			if(readCount==1)
-        			{     
+        			{
         				//stop if frame was not generated
         				isSynchronized = false;
         				return 0;

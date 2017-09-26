@@ -333,26 +333,6 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         onBinding(!isLocal);
     }
 
-    @Deprecated
-    public void bind(DatagramChannel channel) throws IOException, SocketException {
-        try {
-            // Register the channel on UDP Manager
-            this.selectionKey = udpManager.open(channel, this);
-            this.dataChannel = channel;
-        } catch (IOException e) {
-            throw new SocketException(e.getMessage());
-        }
-
-        // activate media elements
-        onBinding(true);
-
-        // Only bind channel if necessary
-        if (!channel.socket().isBound()) {
-            this.udpManager.bind(channel, PORT_ANY);
-        }
-        this.bound = true;
-    }
-
     public boolean isBound() {
         return this.bound;
     }

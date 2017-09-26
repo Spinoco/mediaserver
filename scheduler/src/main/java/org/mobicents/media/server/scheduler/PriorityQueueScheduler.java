@@ -22,13 +22,10 @@
 
 package org.mobicents.media.server.scheduler;
 
-import java.lang.InterruptedException;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.mobicents.media.server.scheduler.EventQueueType.*;
 
 
-import org.mobicents.media.server.concurrent.ConcurrentCyclicFIFO;
 import org.apache.log4j.Logger;
 
 /**

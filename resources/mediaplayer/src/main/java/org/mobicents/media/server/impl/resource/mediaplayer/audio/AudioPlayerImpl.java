@@ -23,14 +23,17 @@
 package org.mobicents.media.server.impl.resource.mediaplayer.audio;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.ComponentType;
+import org.mobicents.media.server.component.Dsp;
 import org.mobicents.media.server.component.audio.AudioInput;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.impl.resource.mediaplayer.Track;
@@ -239,6 +242,18 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
             } else {
                 // we have buffer, that means eom not yet received but we have drained media so much...
                 scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK); // causes to check each 20ms if we have enough samples read from the source.
+            }
+            if (f == null) {
+                f = Memory.allocate(320);
+                Arrays.fill(f.getData(), (byte)0);
+                f.setOffset(0);
+                f.setLength(320);
+                f.setTimestamp(timestamp);
+                f.setDuration(20000000);
+                f.setSequenceNumber(0);
+                f.setEOM(false);
+                f.setFormat(LINEAR);
+                f.setHeader(null);
             }
 
             return f;
