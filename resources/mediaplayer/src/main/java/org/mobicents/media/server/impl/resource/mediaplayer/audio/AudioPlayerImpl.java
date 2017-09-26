@@ -317,6 +317,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
 
         @Override
         public long perform() {
+            log.info("Closing playback: " + track);
             this.track.close();
             return 0;
         }
@@ -351,6 +352,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
                     int curr = destination.size(); // note this is not constant... but shall be always like 100 frames at max...
                     if (curr <= min) {
                         try {
+                            log.info("Opening for playback: " + track);
                             track.open();
                             while (curr < max) {
 
