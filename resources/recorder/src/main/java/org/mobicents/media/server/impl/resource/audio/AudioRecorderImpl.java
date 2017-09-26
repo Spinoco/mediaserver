@@ -246,7 +246,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
                     , frame.getLength()
                 )
             );
-            scheduler.submit(new WriteSample(snk, wb), EventQueueType.RECORDING, this.lock);
+            scheduler.submit(new WriteSample(snk, wb, this.lock), EventQueueType.RECORDING);
         }
 
         if (this.postSpeechTimer > 0 || this.preSpeechTimer > 0) {
