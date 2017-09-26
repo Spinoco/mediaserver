@@ -58,20 +58,10 @@ public class GsmTrackImpl implements Track {
     private long timestamp;
     
     private static final Logger logger = Logger.getLogger(GsmTrackImpl.class);
-    
-    public GsmTrackImpl(URL url) throws UnsupportedAudioFileException, IOException {
-    	inStream=url.openStream();
-        stream = AudioSystem.getAudioInputStream(inStream);
-        
-        format = getFormat(stream);
-        if (format == null) {
-        	stream.close();
-        	inStream.close();
-            throw new UnsupportedAudioFileException();
-        }
 
-        duration = (long)(stream.getFrameLength()/stream.getFormat().getFrameRate() * 1000);
-        frameSize = 33;
+    private URL url;
+    public GsmTrackImpl(URL url) throws UnsupportedAudioFileException, IOException {
+       this.url = url;
     }
 
     public void setPeriod(int period) {
@@ -176,5 +166,38 @@ public class GsmTrackImpl implements Track {
 
     public Format getFormat() {
         return format;
+    }
+
+    public int minSampleTreshold() {
+        return 50;
+    }
+
+    @Override
+    public int maxSamples() {
+        return 100;
+    }
+
+    @Override
+    public void open() throws IOException, UnsupportedAudioFileException {
+        if (inStream == null) {
+            // move io to open
+            inStream = url.openStream();
+            stream = AudioSystem.getAudioInputStream(inStream);
+
+            format = getFormat(stream);
+            if (format == null) {
+                stream.close();
+                inStream.close();
+                throw new UnsupportedAudioFileException();
+            }
+
+            duration = (long) (stream.getFrameLength() / stream.getFormat().getFrameRate() * 1000);
+            frameSize = 33;
+        }
+    }
+
+    @Override
+    public int frameSize() {
+        return frameSize;
     }
 }

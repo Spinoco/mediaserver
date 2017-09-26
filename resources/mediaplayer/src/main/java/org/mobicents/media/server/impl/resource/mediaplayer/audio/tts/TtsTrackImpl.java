@@ -30,6 +30,7 @@ import java.net.URLConnection;
 import java.util.Vector;
 
 import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 import org.mobicents.media.server.impl.resource.mediaplayer.Track;
 
@@ -67,6 +68,7 @@ public class TtsTrackImpl implements Track {
     private static final Logger logger = Logger.getLogger(TtsTrackImpl.class);
     
     public TtsTrackImpl(URL url, String voiceName,VoicesCache vc) throws IOException {
+        // todo move this to open;
     	this.voiceCache = vc;
 
         isReady = false;
@@ -418,5 +420,24 @@ public class TtsTrackImpl implements Track {
     public Format getFormat() {
         return format;
     }
-   
+
+    @Override
+    public int minSampleTreshold() {
+        return 50;
+    }
+
+    @Override
+    public int maxSamples() {
+        return 100;
+    }
+
+    @Override
+    public void open() throws IOException, UnsupportedAudioFileException {
+
+    }
+
+    @Override
+    public int frameSize() {
+        return frameSize;
+    }
 }

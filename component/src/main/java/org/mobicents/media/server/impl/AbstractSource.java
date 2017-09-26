@@ -62,7 +62,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     private long sn = 1;
 
     //scheduler instance
-    private PriorityQueueScheduler scheduler;
+    protected PriorityQueueScheduler scheduler;
 
     //media generator
     private final Worker worker;

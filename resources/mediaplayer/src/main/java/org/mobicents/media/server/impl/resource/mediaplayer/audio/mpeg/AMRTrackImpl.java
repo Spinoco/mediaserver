@@ -33,6 +33,8 @@ import org.mobicents.media.server.impl.resource.mediaplayer.mpeg.RTPSample;
 import org.mobicents.media.server.spi.format.Format;
 import org.mobicents.media.server.spi.memory.Frame;
 
+import javax.sound.sampled.UnsupportedAudioFileException;
+
 /**
  * 
  * @author kulikov
@@ -49,9 +51,9 @@ public class AMRTrackImpl implements Track {
     private long duration;
     private long ssrc;
 
+    private URL url;
     public AMRTrackImpl(URL url) throws IOException {
-        presentation = new MpegPresentation(url);
-        track = presentation.getAudioTrack();
+        this.url = url;
     }
 
     public Format getFormat() {
@@ -110,5 +112,27 @@ public class AMRTrackImpl implements Track {
 
     public long getDuration() {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public int minSampleTreshold() {
+        return 50;
+    }
+
+    @Override
+    public int maxSamples() {
+        return 100;
+    }
+
+    @Override
+    public void open() throws IOException, UnsupportedAudioFileException {
+        if (presentation == null) {
+            presentation = new MpegPresentation(url);
+            track = presentation.getAudioTrack();
+        }
+    }
+
+    @Override
+    public int frameSize() {
+        return 0;
     }
 }

@@ -25,6 +25,9 @@ package org.mobicents.media.server.impl.resource.mediaplayer.audio;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.ComponentType;
@@ -38,6 +41,7 @@ import org.mobicents.media.server.impl.resource.mediaplayer.audio.tts.TtsTrackIm
 import org.mobicents.media.server.impl.resource.mediaplayer.audio.wav.WavTrackImpl;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
+import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ResourceUnavailableException;
 import org.mobicents.media.server.spi.dsp.Processor;
 import org.mobicents.media.server.spi.format.AudioFormat;
@@ -45,10 +49,13 @@ import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.listener.Listeners;
 import org.mobicents.media.server.spi.listener.TooManyListenersException;
 import org.mobicents.media.server.spi.memory.Frame;
+import org.mobicents.media.server.spi.memory.Memory;
 import org.mobicents.media.server.spi.player.Player;
 import org.mobicents.media.server.spi.player.PlayerListener;
 import org.mobicents.media.server.spi.pooling.PooledObject;
 import org.mobicents.media.server.spi.resource.TTSEngine;
+
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
  * @author yulian oifa
@@ -69,20 +76,30 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
     private Processor dsp;
     private final AudioInput input;
 
-    // audio track
-    private Track track;
+    // audio track and buffer
+    private AtomicReference<Track> track = new AtomicReference<Track>(null);
+
+    // we keep about 1s of decoded frames in buffer that are decoded on non-realtime thread.
+    // then on the real time thread, in evolve, this is used to get next frame in timely 20ms samples
+    private AtomicReference<ConcurrentLinkedQueue<Frame>> buff = new AtomicReference<ConcurrentLinkedQueue<Frame>>(null);
+
+    // prevent to read concurrently, when one read did not finished in 20ms window.
+    private ReentrantLock readLock = new ReentrantLock();
+
+
     private int volume;
     private String voiceName = "kevin";
 
     // Listeners
     private final Listeners<PlayerListener> listeners;
 
+
+
     /**
      * Creates new instance of the Audio player.
      * 
      * @param name the name of the AudioPlayer to be created.
      * @param scheduler EDF job scheduler
-     * @param vc the TTS voice cache.
      */
     public AudioPlayerImpl(String name, PriorityQueueScheduler scheduler) {
         super(name, scheduler, EventQueueType.PLAYBACK);
@@ -116,28 +133,34 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
     @Override
     public void setURL(String passedURI) throws ResourceUnavailableException, MalformedURLException {
         // close previous track if was opened
-        if (this.track != null) {
-            track.close();
-            track = null;
+        Track track = this.track.getAndSet(null);
+        ConcurrentLinkedQueue<Frame> inBuff = this.buff.getAndSet(null);
+
+
+        if (track != null && inBuff != null) {
+            scheduler.submit(new CloseTrack(track), EventQueueType.PLAYBACK);
         }
 
         // let's disallow to assign file is player is not connected
         if (!this.isConnected()) {
             throw new IllegalStateException("Component should be connected");
         }
+
         URL targetURL;
         // now using extension we have to determine the suitable stream parser
         int pos = passedURI.lastIndexOf('.');
 
         // extension is not specified?
         if (pos == -1) {
-            throw new MalformedURLException("Unknow file type: " + passedURI);
+            throw new MalformedURLException("Unknown file type: " + passedURI);
         }
 
         String ext = passedURI.substring(pos + 1).toLowerCase();
         targetURL = new URL(passedURI);
 
         // creating required extension
+        // note that any constructors her must not allocate any resources at this stage, rather they shall only
+        // get configuration and prepare for buffered read in near future
         try {
             // check scheme, if its file, we should try to create dirs
             if (ext.matches(Extension.WAV)) {
@@ -157,6 +180,13 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
             throw new ResourceUnavailableException(e);
         }
 
+        // set track and set buffers.
+        this.track.set(track);
+        ConcurrentLinkedQueue<Frame> buff = new ConcurrentLinkedQueue<Frame>();
+        this.buff.set(buff);
+
+        this.scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK);
+
         // update duration
         this.duration = track.getDuration();
     }
@@ -174,10 +204,9 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
     @Override
     public void deactivate() {
         stop();
-        if (track != null) {
-            track.close();
-            track = null;
-        }
+        Track track = this.track.getAndSet(null);
+        this.buff.set(null);
+        if (track != null) scheduler.submit(new CloseTrack(track), EventQueueType.PLAYBACK);
     }
 
     @Override
@@ -193,46 +222,30 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
 
     @Override
     public Frame evolve(long timestamp) {
-        try {
-            // Null check is necessary when a DTMF detector stops the announcement earlier causing the player
-            // to stop and the track to null
-            if (track == null) {
-                return null;
-            }
-
-            Frame frame = track.process(timestamp);
-            if (frame == null)
-                return null;
-
-            frame.setTimestamp(timestamp);
-
-            if (frame.isEOM()) {
-                if(log.isInfoEnabled()) {
-                    log.info("End of file reached");
+        Track track = this.track.get();
+        ConcurrentLinkedQueue<Frame> buff = this.buff.get();
+        if (track != null && buff != null) {
+            Frame f = buff.poll();
+            if (f != null) {
+                f.setTimestamp(timestamp);
+                if (f.isEOM()) {
+                    this.buff.set(null); // causes to stop any further reading
+                    this.track.set(null);
+                    scheduler.submit(new CloseTrack(track), EventQueueType.PLAYBACK);
                 }
-            }
-
-            // do the transcoding job
-            if (dsp != null) {
-                try {
-                    frame = dsp.process(frame, frame.getFormat(), LINEAR);
-                } catch (Exception e) {
-                    // transcoding error , print error and try to move to next frame
-                    log.error(e);
+                else {
+                    scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK); // causes to check each 20ms if we have enough samples read from the source.
                 }
+            } else {
+                // we have buffer, that means eom not yet received but we have drained media so much...
+                scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK); // causes to check each 20ms if we have enough samples read from the source.
             }
 
-            if (frame.isEOM() && track != null) {
-                track.close();
-            }
-            return frame;
-        } catch (IOException e) {
-            log.error(e);
-            if (track != null) {
-                track.close();
-            }
+            return f;
+        } else {
+            return null;
         }
-        return null;
+
     }
 
     @Override
@@ -257,7 +270,9 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
 
     @Override
     public void setText(String text) {
-        track = new TtsTrackImpl(text, voiceName, null);
+        // seems this is not used anywhere
+        //track = new TtsTrackImpl(text, voiceName, null);
+
     }
 
     @Override
@@ -285,5 +300,93 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
     public void checkOut() {
         // TODO Auto-generated method stub
 
+    }
+
+
+    private class CloseTrack extends Task {
+        private Track track ;
+
+        public CloseTrack(Track track) {
+            this.track = track;
+        }
+
+        @Override
+        public EventQueueType getQueueType() {
+            return EventQueueType.PLAYBACK;
+        }
+
+        @Override
+        public long perform() {
+            this.track.close();
+            return 0;
+        }
+    }
+
+
+    // Reads samples to buffer (about 1s) so we don't need to perform IO on Real time thread.
+    private class ReadToBuffer extends Task {
+        private Track track;
+        private ConcurrentLinkedQueue<Frame> destination;
+        private Processor dsp;
+        private ReentrantLock lock;
+
+        public ReadToBuffer(Track track, ConcurrentLinkedQueue<Frame> destination, Processor dsp, ReentrantLock lock) {
+            this.track = track;
+            this.destination = destination;
+            this.dsp = dsp;
+            this.lock = lock;
+        }
+
+        @Override
+        public EventQueueType getQueueType() {
+            return EventQueueType.PLAYBACK;
+        }
+
+        @Override
+        public long perform() {
+            if (lock.tryLock()) {
+                try {
+                    int min = track.minSampleTreshold();
+                    int max = track.maxSamples();
+                    int curr = destination.size(); // note this is not constant... but shall be always like 100 frames at max...
+                    if (curr <= min) {
+                        try {
+                            track.open();
+                            while (curr < max) {
+
+                                    Frame f = track.process(0);
+                                    if (f != null) {
+                                        if (dsp != null) {
+                                            // decode frame if necessary...
+                                            f = dsp.process(f, f.getFormat(), LINEAR);
+                                        }
+                                        destination.offer(f);
+                                    }
+                                    if (f != null && f.isEOM()) curr = max;
+
+                                curr++;
+                            }
+                        } catch (Exception e) {
+                            log.error("Failed to get next sample from the audio prompt:" + track, e);
+
+                            Frame eomF = Memory.allocate(track.frameSize());
+                            eomF.setEOM(true);
+                            eomF.setFormat(track.getFormat());
+                            eomF.setOffset(0);
+                            eomF.setLength(track.frameSize());
+                            destination.offer(eomF);
+
+                            track.close();
+
+                        }
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+
+
+            return 0;
+        }
     }
 }

@@ -26,6 +26,8 @@ import java.io.IOException;
 import org.mobicents.media.server.spi.format.Format;
 import org.mobicents.media.server.spi.memory.Frame;
 
+import javax.sound.sampled.UnsupportedAudioFileException;
+
 /**
  *
  * @author kulikov
@@ -65,10 +67,23 @@ public interface Track {
      * @param timestamp - current media time expressed in nanoseconds
      */
     public Frame process(long timestamp) throws IOException;
-    
+
+    /** opens the stream, makes it ready for playback. implememntation must be idempotent **/
+    public void open() throws IOException, UnsupportedAudioFileException;
+
     /**
      * Closes this stream.
      */
     public void close();
+
+
+    /** returns minimum amount of samples required before new buffered load is executed **/
+    public int minSampleTreshold();
+
+    /** max samples to load in buffer **/
+    public int maxSamples();
+
+    /** gets size of frame **/
+    public int frameSize();
 
 }

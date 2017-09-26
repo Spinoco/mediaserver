@@ -64,13 +64,10 @@ public class WavTrackImpl implements Track {
     private final static byte[] factBytes = new byte[] { 0x66, 0x61, 0x63, 0x74 };
     private byte paddingByte = PCM_PADDING_BYTE;
 
+    private URL url;
     public WavTrackImpl(URL url) throws UnsupportedAudioFileException, IOException {
-        inStream = url.openStream();
+        this.url = url;
 
-        getFormat(inStream);
-        if (format == null) {
-            throw new UnsupportedAudioFileException();
-        }
     }
 
     public void setPeriod(int period) {
@@ -245,10 +242,14 @@ public class WavTrackImpl implements Track {
 
     @Override
     public Frame process(long timestamp) throws IOException {
+
+
+
         if (first) {
-            if (timestamp > 0) {
-                skip(timestamp);
-            }
+            // todo:  we are ignoring timestamp for now
+//            if (timestamp > 0) {
+//                skip(timestamp);
+//            }
             first = false;
         }
 
@@ -284,6 +285,23 @@ public class WavTrackImpl implements Track {
     }
 
     @Override
+    public void open() throws IOException, UnsupportedAudioFileException {
+        if (inStream == null) {
+            inStream = url.openStream();
+
+            getFormat(inStream);
+            if (format == null) {
+                throw new UnsupportedAudioFileException();
+            }
+        }
+    }
+
+    @Override
+    public int frameSize() {
+        return frameSize;
+    }
+
+    @Override
     public void close() {
         try {
             inStream.close();
@@ -295,5 +313,15 @@ public class WavTrackImpl implements Track {
     @Override
     public Format getFormat() {
         return format;
+    }
+
+    @Override
+    public int minSampleTreshold() {
+        return 50;
+    }
+
+    @Override
+    public int maxSamples() {
+        return 100;
     }
 }

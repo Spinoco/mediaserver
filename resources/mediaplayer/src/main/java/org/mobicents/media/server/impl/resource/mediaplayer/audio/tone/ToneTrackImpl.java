@@ -193,4 +193,23 @@ public class ToneTrackImpl implements Track {
     public Format getFormat() {
         return format;
     }
+
+    public int minSampleTreshold() {
+        return 50;
+    }
+
+    @Override
+    public int maxSamples() {
+        return 100;
+    }
+
+    @Override
+    public void open() throws IOException, UnsupportedAudioFileException {
+
+    }
+
+    @Override
+    public int frameSize() {
+        return frameSize;
+    }
 }
