@@ -139,4 +139,18 @@ public class Frame {
         frame.header = header;
         return frame;
     }
+
+    @Override
+    public String toString() {
+        return "Frame{" +
+                "offset=" + offset +
+                ", length=" + length +
+                ", timestamp=" + timestamp +
+                ", duration=" + duration +
+                ", sn=" + sn +
+                ", eom=" + eom +
+                ", format=" + format +
+                ", header='" + header + '\'' +
+                '}';
+    }
 }

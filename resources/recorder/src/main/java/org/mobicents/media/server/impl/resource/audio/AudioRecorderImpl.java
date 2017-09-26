@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.log4j.Logger;
@@ -111,6 +112,12 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
     private static final Logger logger = Logger.getLogger(AudioRecorderImpl.class);
 
+    // Hence the recorded runs in OUTPUT task queue, then this shall assure we won't
+    // touch any IO in the OUTPUT Queue and instead shift it to recording cycle
+    // essentially this is there to guarantee ordering of the packets so the tasks that flush
+    // the content of the file won't get reordered
+    private AtomicReference<ConcurrentLinkedQueue<ByteBuffer>> writeBuff = new AtomicReference<ConcurrentLinkedQueue<ByteBuffer>>(null);
+
     public AudioRecorderImpl(PriorityQueueScheduler scheduler) {
         super("recorder");
         this.scheduler = scheduler;
@@ -174,11 +181,12 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
             // deactivate can be concurrently invoked from  multiple threads (MediaGroup, KillRecording for example).
             // to make sure the sink is closed only once, we set the sink ref to null and proceed to commit only if obtained reference is not null.
-
             RecorderFileSink snk = sink.getAndSet(null);
-            if (snk != null) {
-                snk.commit();
+            ConcurrentLinkedQueue<ByteBuffer> wb = writeBuff.getAndSet(null);
+            if (snk != null && wb != null) {
+                scheduler.submit(new FlushRecording(snk, wb), EventQueueType.RECORDING);
             }
+
         } catch (Exception e) {
             logger.error("Error writing to file", e);
         } finally {
@@ -222,17 +230,20 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
     @Override
     public void onMediaTransfer(Frame frame) throws IOException {
-        // extract data
-        data = frame.getData();
-        offset = frame.getOffset();
-        len = frame.getLength();
 
-        byteBuffer.clear();
-        byteBuffer.limit(len - offset);
-        byteBuffer.put(data, offset, len - offset);
-        byteBuffer.rewind();
         RecorderFileSink snk = sink.get();
-        if (snk != null) snk.write(byteBuffer);
+        ConcurrentLinkedQueue<ByteBuffer> wb = writeBuff.get();
+
+        if (snk != null && wb != null) {
+            wb.offer(
+                ByteBuffer.wrap(
+                    frame.getData()
+                    , frame.getOffset()
+                    , frame.getLength()
+                )
+            );
+            scheduler.submit(new WriteSample(snk, wb), EventQueueType.RECORDING);
+        }
 
         if (this.postSpeechTimer > 0 || this.preSpeechTimer > 0) {
             // detecting silence
@@ -256,7 +267,10 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
         String path = uri.startsWith("file:") ? uri.replaceAll("file://", "") : this.recordDir + "/" + uri;
         Path file = Paths.get(path);
 
+        // initialize buffer and recording
         RecorderFileSink snk = sink.getAndSet(new RecorderFileSink(file,append));
+        writeBuff.getAndSet(new ConcurrentLinkedQueue<ByteBuffer>());
+
         if (snk != null) {
             logger.error("Sink for the recording is not cleaned properly, found " + snk);
         }
@@ -417,8 +431,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
         private boolean hasEndOfEvent = false;
         private long endSeq = 0;
-
-        private ByteBuffer toneBuffer = ByteBuffer.allocateDirect(1600);
+ 
 
         public OOBRecorder() {
             super("oob recorder");
@@ -462,12 +475,13 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
             latestSeq = buffer.getSequenceNumber();
             currTone = data[0];
-            toneBuffer.clear();
-            toneBuffer.limit(DtmfTonesData.buffer[data[0]].length);
-            toneBuffer.put(DtmfTonesData.buffer[data[0]]);
-            toneBuffer.rewind();
+
             RecorderFileSink snk = sink.get();
-            if (snk != null) snk.write(toneBuffer);
+            ConcurrentLinkedQueue<ByteBuffer> wb = writeBuff.get();
+            if (snk != null && wb != null) {
+                wb.offer(ByteBuffer.wrap(DtmfTonesData.buffer[currTone]));
+                scheduler.submit(new WriteSample(snk, wb), EventQueueType.RECORDING);
+            }
         }
 
         @Override
@@ -476,6 +490,75 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
         @Override
         public void deactivate() {
+        }
+    }
+
+
+    /**
+     * Write samples in supplied buff to sink
+     * @param snk           Sink where to write samples to
+     * @param writeBuff     Buffer where to read samples from
+     */
+    private static void writeSamples(RecorderFileSink snk, ConcurrentLinkedQueue<ByteBuffer> writeBuff) {
+        ByteBuffer data = writeBuff.poll();
+        while (data != null) {
+            try {
+                snk.write(data);
+            } catch (Exception ex) {
+                logger.error("Failed to write sample to file: " + snk, ex);
+            }
+            data = writeBuff.poll();
+        }
+    }
+
+
+    // Assures in timely manner on RECORDING queue, that the samples are written to disk
+    private class WriteSample extends Task {
+        private RecorderFileSink snk;
+        private ConcurrentLinkedQueue<ByteBuffer> writeBuff;
+
+        public WriteSample(RecorderFileSink snk, ConcurrentLinkedQueue<ByteBuffer> writeBuff) {
+            this.snk = snk;
+            this.writeBuff = writeBuff;
+        }
+
+
+        @Override
+        public EventQueueType getQueueType() {
+            return EventQueueType.RECORDING;
+        }
+
+        @Override
+        public long perform() {
+            writeSamples(this.snk, this.writeBuff);
+            return 0;
+        }
+    }
+
+    // when recording is completed, this assures file is closed and sink is committed.
+    private class FlushRecording extends Task {
+        private RecorderFileSink snk;
+        private ConcurrentLinkedQueue<ByteBuffer> writeBuff;
+
+        public FlushRecording(RecorderFileSink snk, ConcurrentLinkedQueue<ByteBuffer> writeBuff) {
+            this.snk = snk;
+            this.writeBuff = writeBuff;
+        }
+
+        @Override
+        public EventQueueType getQueueType() {
+            return EventQueueType.RECORDING;
+        }
+
+        @Override
+        public long perform() {
+            writeSamples(this.snk, this.writeBuff);
+            try {
+                this.snk.commit();
+            } catch (IOException e) {
+                logger.error("Failed to commit Recording Sink: " + this.snk, e);
+            }
+            return 0;
         }
     }
 
