@@ -287,6 +287,7 @@ public class WavTrackImpl implements Track {
     @Override
     public void open() throws IOException, UnsupportedAudioFileException {
         if (inStream == null) {
+            logger.info("Opening for playback: " + this);
             inStream = url.openStream();
 
             getFormat(inStream);
@@ -304,6 +305,7 @@ public class WavTrackImpl implements Track {
     @Override
     public void close() {
         try {
+            logger.info("Closing playback: " + this);
             inStream.close();
         } catch (Exception e) {
             logger.error("Could not close .wav track properly.", e);
