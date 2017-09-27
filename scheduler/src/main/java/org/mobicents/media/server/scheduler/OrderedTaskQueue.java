@@ -33,13 +33,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class OrderedTaskQueue {
 	//inner holder for tasks
-    private ConcurrentLinkedQueue<Task> taskList;
-    private AtomicInteger size = new AtomicInteger(0);
+    private ConcurrentLinkedQueue<Task> taskList = new ConcurrentLinkedQueue<Task>();
+
+
+    // return number of available tasks to be processed
+    private AtomicInteger available = new AtomicInteger(0);
     
 
     public OrderedTaskQueue() {
-        //intitalize task list
-		taskList = new ConcurrentLinkedQueue<Task>();
     }
 
     /**
@@ -52,7 +53,7 @@ public class OrderedTaskQueue {
         if(!task.isInQueue()) {
             taskList.offer(task);
             task.storedInQueue();
-            size.incrementAndGet();
+            available.incrementAndGet();
         }
     }
     
@@ -67,8 +68,12 @@ public class OrderedTaskQueue {
     	return result;
     }
 
-    public int size() {
-        return size.getAndSet(0);
+    /**
+     * Gets number of available tasks to be ready for processing
+     * @return
+     */
+    public int getAvailable() {
+        return available.getAndSet(0);
     }
     
     /**
