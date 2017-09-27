@@ -30,6 +30,7 @@ import org.apache.log4j.Logger;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
 import org.mobicents.media.server.spi.memory.Frame;
+import org.mobicents.media.server.spi.memory.Memory;
 
 /**
  * Implements jitter buffer.
@@ -106,9 +107,6 @@ public class JitterBuffer implements Serializable {
     private RTPFormat format;
     
     private Boolean useBuffer=true;
-
-    //last consumed Frame
-    private Frame lastConsumed = null;
     
     private final static Logger logger = Logger.getLogger(JitterBuffer.class);
     /**
@@ -271,8 +269,8 @@ public class JitterBuffer implements Serializable {
 
 
 
-
 			Frame f = packet.toFrame(rtpClock, this.format);
+
 
 			droppedInRaw = 0;
 
@@ -322,28 +320,13 @@ public class JitterBuffer implements Serializable {
 			// overflow?
 			// only now remove packet if overflow , possibly the same packet we just received
 			if (queue.size() > QUEUE_SIZE) {
-			    String lastConsumedStr = "---";
-
-			    if (lastConsumed != null) {
-			    	lastConsumedStr = String.valueOf(lastConsumed.getTimestamp());
-				}
-
-				StringBuilder otherFrames = new StringBuilder();
-			    for (int i = 0; i < QUEUE_SIZE; i++){
-			    	otherFrames.append(" ").append(i).append(": ").append(queue.get(i).getTimestamp()).append(",");
-				}
-
-
 				logger.warn("Buffer overflow!" +
 						" queue: " + queue.size() +
 						", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
 						", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
 						", seq: " + packet.getSeqNumber() +
 						", timestamp: " + packet.getTimestamp() +
-						", csrc: " + packet.getContributingSource() +
-						", lastConsumedAt: " + lastConsumedStr +
-                        ", otherFrames: " + otherFrames.toString()
-
+						", csrc: " + packet.getContributingSource()
 				);
 				dropCount++;
 				queue.remove(0);
@@ -395,8 +378,6 @@ public class JitterBuffer implements Serializable {
 			frame.setDuration(frame.getDuration() * 1000000L);
 			frame.setTimestamp(frame.getTimestamp() * 1000000L);
 
-			lastConsumed = frame;
-
 			return frame;
 		} finally {
 			LOCK.unlock();
@@ -410,7 +391,7 @@ public class JitterBuffer implements Serializable {
 		try {
 			LOCK.lock();
 			while (queue.size() > 0)
-				queue.remove(0);
+				queue.remove(0).recycle();
 		} finally {
 			LOCK.unlock();
 		}

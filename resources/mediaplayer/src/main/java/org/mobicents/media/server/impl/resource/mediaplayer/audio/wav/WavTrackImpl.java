@@ -25,6 +25,7 @@ package org.mobicents.media.server.impl.resource.mediaplayer.audio.wav;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 

@@ -22,32 +22,44 @@
 
 package org.mobicents.media.server.spi.memory;
 
-import org.mobicents.media.server.concurrent.ConcurrentMap;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  *
  * @author oifa yulian
  */
-public class Memory 
-{
-    private static ConcurrentMap<Partition> partitions = new ConcurrentMap<Partition>();
+public class Partition {
 
-	/**
-	 * Allocates frame from the pool of sized partitions. Always returns instance either from cached frames or new fresh allocated frame.
-	 * @param size
-	 * @return
-	 */
-	public static Frame allocate(int size)
-    {
-    	Partition currPartition=partitions.get(size);
-    	if(currPartition==null)
-    	{
-    		currPartition=new Partition(size);
-    		Partition oldPartition=partitions.putIfAbsent(size,currPartition);
-    		if(oldPartition!=null)
-    			currPartition=oldPartition;		
-    	}
-    	
-    	return currPartition.allocate();
+    protected int size;
+    private ConcurrentLinkedQueue<Frame> heap = new ConcurrentLinkedQueue<Frame>();
+
+    protected Partition(int size) {
+        this.size = size;
     }
+    
+    protected Frame allocate() {
+    	//if (true) return new Frame(this, new byte[size]);
+    	Frame result=heap.poll();    	
+    	
+        if (result==null) {
+            return new Frame(this, new byte[size]);
+        }
+        
+        result.inPartition.set(false);
+        return result;
+    }
+
+    protected void recycle(Frame frame) {
+    	if(frame.inPartition.getAndSet(true)) {
+    		//dont add duplicate,otherwise may be reused in different places
+    		return;
+    	}
+        frame.setHeader(null);
+        frame.setDuration(Long.MAX_VALUE);
+        frame.setEOM(false);        
+        heap.offer(frame);
+        //queue.offer(frame, frame.getDelay(TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS);
+    }
+
 }

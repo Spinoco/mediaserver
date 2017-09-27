@@ -94,6 +94,7 @@ public class OOBComponent {
 
 	public Frame getData() {
 		if (!this.shouldRead.get()) {
+			if (frame != null) frame.recycle();
 			return null;
 		}
 		return frame;
@@ -101,6 +102,7 @@ public class OOBComponent {
 
 	public void offer(Frame frame) {
 		if (!this.shouldWrite.get()) {
+			frame.recycle();
 			return;
 		}
 

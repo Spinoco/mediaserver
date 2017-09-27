@@ -244,12 +244,13 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
                 scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK); // causes to check each 20ms if we have enough samples read from the source.
             }
             if (f == null) {
-                f = Memory.allocate(320);
-                Arrays.fill(f.getData(), (byte)0);
+                // produce empty silent sample in LINEAR PCM hence the media are not yet done, neither samples are available.
+                f = Memory.allocate(320);       // Size of PCM LINER sample
+                Arrays.fill(f.getData(), (byte)0);      // assure sample is silent
                 f.setOffset(0);
                 f.setLength(320);
                 f.setTimestamp(timestamp);
-                f.setDuration(20000000);
+                f.setDuration(20000000); // 20 ms
                 f.setSequenceNumber(0);
                 f.setEOM(false);
                 f.setFormat(LINEAR);

@@ -242,6 +242,7 @@ public class SS7Output extends AbstractSink {
         		{
         			System.arraycopy(data, framePosition, smallBuffer, 0, data.length-framePosition);
         			readCount=data.length-framePosition;
+        			currFrame.recycle();
         			currFrame=null;
         			framePosition=0;
         		}    		

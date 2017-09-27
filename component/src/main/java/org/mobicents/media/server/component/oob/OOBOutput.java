@@ -70,20 +70,20 @@ public class OOBOutput extends AbstractSource {
     @Override
     public void stop() {
     	while(buffer.size()>0) {
-    		buffer.poll();
+    		buffer.poll().recycle();
     	}
     	super.stop();            
     }
     
     public void resetBuffer() {
     	while(buffer.size()>0) {
-    		buffer.poll();
+    		buffer.poll().recycle();
     	}
     }
     
     public void offer(Frame frame) {
     	if(buffer.size()>1) {
-        	buffer.poll();
+        	buffer.poll().recycle();
     	}
     	buffer.offer(frame);
     }
