@@ -86,7 +86,7 @@ public class PriorityQueueScheduler  {
 
 
     private RealTimeScheduler rtpScheduler = new RealTimeScheduler(
-            20000 // 20 ms
+            20000000 // 20 ms
             , new OrderedTaskQueue[] { rtpInputQ, rtpMixerQ, rtpOuputQ }
             , workerExecutorV2RT
             , new NamedThreadFactory("ms-rt-rtp")

@@ -105,7 +105,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
      * @param scheduler EDF job scheduler
      */
     public AudioPlayerImpl(String name, PriorityQueueScheduler scheduler) {
-        super(name, scheduler, EventQueueType.PLAYBACK);
+        super(name, scheduler, EventQueueType.RTP_INPUT);
         this.input = new AudioInput(ComponentType.PLAYER.getType(), packetSize);
         this.listeners = new Listeners<PlayerListener>();
         this.connect(this.input);
