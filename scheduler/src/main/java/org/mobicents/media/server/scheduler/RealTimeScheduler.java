@@ -53,9 +53,10 @@ public class RealTimeScheduler {
             tf.newThread(new Runnable() {
                 @Override
                 public void run() {
-                    // this stores time when the next cycle is supposed to be run
-                    // this is updated and computed at the next cycle
-                    // we use this to measure real time passed between the invocations of the cycle
+                    // noted start of cycle. This is increased in every cycle for `cyclicDelay` to possibly
+                    // compute correctly sleep time if we will finish earlier then next invocation should occur
+                    // if we are not able to compute everything in this 20ms cycle we will immediately schedule next invocation cycle
+                    // and as such we try to catchup with any delay occured (i.e. gc pause)
                     long cycleStart = System.nanoTime();
                     try {
                         while (running.get()) {
