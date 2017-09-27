@@ -507,10 +507,7 @@ public class UdpManager {
             if (active) {
                 try {
                     // Select channels enabled for reading operation (without blocking!)
-                    int selected = localSelector.selectNow();
-                    if (selected == 0) {
-                        return;
-                    }
+                    localSelector.selectNow();
                 } catch (IOException e) {
                     logger.error("Could not select channels from Selector!");
                 }
@@ -565,7 +562,6 @@ public class UdpManager {
                         logger.error("An unexpected problem occurred while reading from channel.", e);
                     }
                 }
-                localSelector.selectedKeys().clear();
             }
         }
     }

@@ -21,7 +21,6 @@
 package org.mobicents.media.server.impl.rtp;
 
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.impl.rtcp.RtcpHeader;
@@ -46,7 +45,7 @@ import javax.xml.bind.DatatypeConverter;
 public class RtpHandler implements PacketHandler {
 	
 	private static final Logger logger = Logger.getLogger(RtpHandler.class);
-	
+
 	private int pipelinePriority;
 	
 	private RTPFormats rtpFormats;
@@ -60,7 +59,7 @@ public class RtpHandler implements PacketHandler {
 	
 	private boolean loopable;
 	private boolean receivable;
-	
+
 	private final RtpStatistics statistics;
 	
 	// SRTP
@@ -238,11 +237,6 @@ public class RtpHandler implements PacketHandler {
         }
         return false;
     }
-	
-	public byte[] handle(byte[] packet, InetSocketAddress localPeer, InetSocketAddress remotePeer) throws PacketHandlerException {
-		return this.handle(packet, packet.length, 0, localPeer, remotePeer);
-	}
-
 
 	public byte[] handle(byte[] packet, int dataLength, int offset, InetSocketAddress localPeer, InetSocketAddress remotePeer) throws PacketHandlerException {
 		try {

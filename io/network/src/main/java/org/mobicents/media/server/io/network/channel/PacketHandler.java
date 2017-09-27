@@ -46,22 +46,6 @@ public interface PacketHandler extends Comparable<PacketHandler> {
 	 * 
 	 * @param packet
 	 *            The packet to be processed.
-	 * @param localPeer
-	 *            The local peer who received the packet
-	 * @param remotePeer
-	 *            The remote peer who sent the packet
-	 * @return The answer to be sent to the remote peer as response to the
-	 *         incoming packet.
-	 * @throws PacketHandlerException
-	 *             When the handler cannot process the packet.
-	 */
-	byte[] handle(byte[] packet, InetSocketAddress localPeer, InetSocketAddress remotePeer) throws PacketHandlerException;
-
-	/**
-	 * Processes the packet and provides a suitable answer.
-	 * 
-	 * @param packet
-	 *            The packet to be processed.
 	 * @param dataLength
 	 *            The length of the data to be read.
 	 * @param offset

@@ -264,20 +264,7 @@ public class MultiplexedChannel implements Channel {
 			throw new IOException("Channel is already open.");
 		}
 	}
-	
-	@Override
-	public void open(DatagramChannel dataChannel) throws IOException {
-		if(dataChannel == null) {
-			throw new IOException("The data channel cannot be null.");
-		}
-		
-		if(!dataChannel.isOpen()) {
-			throw new IOException("The data channel is closed.");
-		}
-		
-		this.dataChannel= dataChannel;
-	}
-	
+
 	@Override
 	public void close() {
 		if (isOpen()) {

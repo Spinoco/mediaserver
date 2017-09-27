@@ -139,7 +139,6 @@ public class IceHandler implements PacketHandler {
         return false;
     }
 
-    @Override
     public byte[] handle(byte[] packet, InetSocketAddress localPeer, InetSocketAddress remotePeer)
             throws PacketHandlerException {
         return handle(packet, packet.length, 0, localPeer, remotePeer);

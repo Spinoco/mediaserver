@@ -61,11 +61,6 @@ public abstract class PacketHandlerMock implements PacketHandler {
 	}
 
 	@Override
-	public byte[] handle(byte[] packet, InetSocketAddress localPeer, InetSocketAddress remotePeer) throws PacketHandlerException {
-		return handle(packet, packet.length, 0, localPeer, remotePeer);
-	}
-
-	@Override
 	public byte[] handle(byte[] packet, int dataLength, int offset, InetSocketAddress localPeer, InetSocketAddress remotePeer) throws PacketHandlerException {
 		String request = new String(Arrays.copyOfRange(packet, offset, dataLength));
 		return ("received " + request).getBytes();

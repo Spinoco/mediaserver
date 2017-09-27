@@ -57,7 +57,7 @@ public class JitterBuffer implements Serializable {
 	private final ReentrantLock LOCK = new ReentrantLock();
 
 	//The underlying buffer size
-    private static final int QUEUE_SIZE = 10;
+    private static final int QUEUE_SIZE = 5;
     //the underlying buffer
     private ArrayList<Frame> queue = new ArrayList<Frame>(QUEUE_SIZE);
     

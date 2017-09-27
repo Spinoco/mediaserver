@@ -23,7 +23,6 @@ package org.mobicents.media.server.impl.rtp;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.SocketException;
 import java.nio.channels.DatagramChannel;
 
 import org.apache.log4j.Logger;

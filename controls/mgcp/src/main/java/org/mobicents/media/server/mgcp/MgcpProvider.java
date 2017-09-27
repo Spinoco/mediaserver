@@ -203,12 +203,6 @@ public class MgcpProvider extends MultiplexedChannel {
         }
 
         @Override
-        public byte[] handle(byte[] packet, InetSocketAddress localPeer, InetSocketAddress remotePeer)
-                throws PacketHandlerException {
-            return handle(packet, packet.length, 0, localPeer, remotePeer);
-        }
-
-        @Override
         public byte[] handle(byte[] packet, int dataLength, int offset, InetSocketAddress localPeer,
                 InetSocketAddress remotePeer) throws PacketHandlerException {
             try {

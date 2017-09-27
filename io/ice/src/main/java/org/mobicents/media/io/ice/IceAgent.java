@@ -39,17 +39,16 @@ import org.mobicents.media.io.ice.harvest.ExternalCandidateHarvester;
 import org.mobicents.media.io.ice.harvest.HarvestException;
 import org.mobicents.media.io.ice.harvest.HarvestManager;
 import org.mobicents.media.io.ice.harvest.NoCandidatesGatheredException;
-import org.mobicents.media.io.ice.network.stun.ConnectivityCheckServer;
 import org.mobicents.media.server.io.network.PortManager;
 
 /**
  * Agent responsible for ICE negotiation.
- * 
+ *
  * @author Henrique Rosa (henrique.rosa@telestax.com)
- * 
+ *
  */
 public abstract class IceAgent implements IceAuthenticator {
-	
+
 	private static final Logger logger = Logger.getLogger(IceAgent.class);
 
 	private final Map<String, IceMediaStream> mediaStreams;
@@ -62,7 +61,6 @@ public abstract class IceAgent implements IceAuthenticator {
 
 	// Control stun checks
 	protected Selector selector;
-	protected ConnectivityCheckServer connectivityCheckServer;
 
 	// Control selection process
 	private volatile int selectedPairs;
@@ -73,7 +71,7 @@ public abstract class IceAgent implements IceAuthenticator {
 
 	// Delegate ICE-related events
 	protected final List<IceEventListener> iceListeners;
-	
+
 	// External address where Media Server is installed
 	// Required for fake SRFLX harvesting
 	private InetAddress externalAddress;
@@ -91,7 +89,7 @@ public abstract class IceAgent implements IceAuthenticator {
 		this.maxSelectedPairs = 0;
 		this.running = false;
 	}
-	
+
 	public void generateIceCredentials() {
 		this.ufrag = new BigInteger(24, this.random).toString(32);
 		this.password = new BigInteger(128, this.random).toString(32);
@@ -99,7 +97,7 @@ public abstract class IceAgent implements IceAuthenticator {
 
 	/**
 	 * Checks whether the Agent implements ICE Lite
-	 * 
+	 *
 	 * @return true if the agent implements ICE Lite. False, in case of full
 	 *         ICE.
 	 */
@@ -107,14 +105,14 @@ public abstract class IceAgent implements IceAuthenticator {
 
 	/**
 	 * Checks whether the Agent is controlling the ICE process.
-	 * 
+	 *
 	 * @return
 	 */
 	public abstract boolean isControlling();
 
 	/**
 	 * Indicates whether the ICE agent is currently started.
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isRunning() {
@@ -123,7 +121,7 @@ public abstract class IceAgent implements IceAuthenticator {
 
 	/**
 	 * Gets the local user fragment.
-	 * 
+	 *
 	 * @return the local <code>ice-ufrag</code>
 	 */
 	public String getUfrag() {
@@ -132,7 +130,7 @@ public abstract class IceAgent implements IceAuthenticator {
 
 	/**
 	 * Gets the password of the local user fragment
-	 * 
+	 *
 	 * @return the local <code>ice-pwd</code>
 	 */
 	public String getPassword() {
@@ -142,12 +140,12 @@ public abstract class IceAgent implements IceAuthenticator {
 	/**
 	 * Creates an <tt>IceMediaStream</tt> and adds to it an RTP and an RTCP
 	 * components.
-	 * 
+	 *
 	 * @param streamName
 	 *            the name of the stream to create
 	 * @param agent
 	 *            the <tt>Agent</tt> that should create the stream.
-	 * 
+	 *
 	 * @return the newly created <tt>IceMediaStream</tt>.
 	 */
 	public IceMediaStream addMediaStream(String streamName) {
@@ -157,7 +155,7 @@ public abstract class IceAgent implements IceAuthenticator {
 	/**
 	 * Creates and registers a new media stream with an RTP component.<br>
 	 * An secondary component may be created if the stream supports RTCP.
-	 * 
+	 *
 	 * @param streamName
 	 *            the name of the media stream
 	 * @param rtcp
@@ -167,11 +165,11 @@ public abstract class IceAgent implements IceAuthenticator {
 	public IceMediaStream addMediaStream(String streamName, boolean rtcp) {
 		return addMediaStream(streamName, rtcp, false);
 	}
-	
+
 	/**
 	 * Creates and registers a new media stream with an RTP component.<br>
 	 * An secondary component may be created if the stream supports RTCP.
-	 * 
+	 *
 	 * @param streamName
 	 *            the name of the media stream
 	 * @param rtcp
@@ -193,7 +191,7 @@ public abstract class IceAgent implements IceAuthenticator {
 
 	/**
 	 * Gets a media stream by name
-	 * 
+	 *
 	 * @param streamName
 	 *            The name of the media stream
 	 * @return The media stream. Returns null, if no media stream exists with
@@ -214,11 +212,11 @@ public abstract class IceAgent implements IceAuthenticator {
 		}
 		return copy;
 	}
-	
+
 	/**
 	 * Gathers all available candidates and sets the components of each media
 	 * stream.
-	 * 
+	 *
 	 * @param portManager
 	 *            The manager that handles port range for ICE candidate harvest
 	 * @throws HarvestException
@@ -268,7 +266,7 @@ public abstract class IceAgent implements IceAuthenticator {
 			logger.error("Candidate selection canceled: cannot get address of the candidate.", e);
 			return null;
 		}
-		
+
 		CandidatePair candidatePair = null;
 		for (IceMediaStream mediaStream : getMediaStreams()) {
 			// Search for RTP candidates
@@ -308,7 +306,7 @@ public abstract class IceAgent implements IceAuthenticator {
 	 * Attempts to select a candidate pair on a ICE component.<br>
 	 * A candidate pair is only selected if the local candidate channel is
 	 * registered with the provided Selection Key.
-	 * 
+	 *
 	 * @param component
 	 *            The component that holds the gathered candidates.
 	 * @param key
@@ -336,13 +334,13 @@ public abstract class IceAgent implements IceAuthenticator {
 			} else {
 				component = mediaStream.getRtcpComponent();
 			}
-			
+
 			// Get selected candidate from the component
 			return component.getSelectedCandidates();
 		}
 		return null;
 	}
-	
+
 	public CandidatePair getSelectedRtpCandidate(String stream) {
 		return getSelectedCandidate(stream, IceComponent.RTP_ID);
 	}
@@ -367,7 +365,7 @@ public abstract class IceAgent implements IceAuthenticator {
 
 	/**
 	 * Fires an event when all candidate pairs are selected.
-	 * 
+	 *
 	 * @param candidatePair
 	 *            The selected candidate pair
 	 */
@@ -434,7 +432,7 @@ public abstract class IceAgent implements IceAuthenticator {
 	 * its response of course) utilize the username RFRAG:LFRAG and a password
 	 * of RPASS. A connectivity check from R to L (and its response) utilize the
 	 * username LFRAG:RFRAG and a password of LPASS.
-	 * 
+	 *
 	 * @param media
 	 *            media name that we want to generate local username for.
 	 * @return a user name that this <tt>Agent</tt> can use in connectivity
@@ -455,14 +453,14 @@ public abstract class IceAgent implements IceAuthenticator {
 		String result = colon < 0 ? ufrag : ufrag.substring(0, colon);
 		return result.equals(this.ufrag);
 	}
-	
+
 	public InetAddress getExternalAddress() {
 		return externalAddress;
 	}
-	
+
 	public void setExternalAddress(final InetAddress externalAddress) {
 		this.externalAddress = externalAddress;
-		
+
 		if(externalAddress != null) {
 			// register an SRFLX harvester
 			this.harvestManager.addHarvester(new ExternalCandidateHarvester(harvestManager.getFoundationsRegistry(), externalAddress));
@@ -471,7 +469,7 @@ public abstract class IceAgent implements IceAuthenticator {
 			this.harvestManager.removeHarvester(CandidateType.SRFLX);
 		}
 	}
-	
+
 	@Override
 	public boolean validateUsername(String username) {
 		// Username must separate local and remote ufrags with a colon
@@ -482,7 +480,7 @@ public abstract class IceAgent implements IceAuthenticator {
 		// Local ufrag must match the one generated by this agent
 		return username.substring(0, colon).equals(this.ufrag);
 	}
-	
+
 	public void reset() {
 		this.iceListeners.clear();
 		this.mediaStreams.clear();
@@ -491,5 +489,5 @@ public abstract class IceAgent implements IceAuthenticator {
 		this.password = "";
 		this.ufrag = "";
 	}
-	
+
 }

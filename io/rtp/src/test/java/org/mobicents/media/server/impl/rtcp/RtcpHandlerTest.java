@@ -139,7 +139,7 @@ public class RtcpHandlerTest {
 		
 		// when
 		handler.joinRtpSession();
-		byte[] response = handler.handle(rtcpData, localPeer, remotePeer);
+		byte[] response = handler.handle(rtcpData, rtcpData.length, 0, localPeer, remotePeer);
 
 		// then
 		// There are no responses in RTCP
@@ -189,7 +189,7 @@ public class RtcpHandlerTest {
 		
 		// when
 		handler.joinRtpSession();
-		byte[] response = handler.handle(rtcpData, localPeer, remotePeer);
+		byte[] response = handler.handle(rtcpData, rtcpData.length, 0, localPeer, remotePeer);
 		
 		// then
 		// There are no responses in RTCP
@@ -239,13 +239,13 @@ public class RtcpHandlerTest {
 		
 		// when
 		handler.joinRtpSession();
-		handler.handle(rr1Data, localPeer, remotePeer);
+		handler.handle(rr1Data, rr1Data.length, 0, localPeer, remotePeer);
 		double expectedSize = (1.0/16.0) * rr1.getSize() + (15.0/16.0) * RtpStatistics.RTCP_DEFAULT_AVG_SIZE;
 
-		handler.handle(rr2Data, localPeer, remotePeer);
+		handler.handle(rr2Data, rr2Data.length, 0, localPeer, remotePeer);
 		expectedSize = (1.0/16.0) * rr2.getSize() + (15.0/16.0) * expectedSize;
 		
-		handler.handle(rr3Data, localPeer, remotePeer);
+		handler.handle(rr3Data, rr3Data.length, 0, localPeer, remotePeer);
 		expectedSize = (1.0/16.0) * rr3.getSize() + (15.0/16.0) * expectedSize;
 		
 		// then
@@ -253,7 +253,7 @@ public class RtcpHandlerTest {
 		Assert.assertEquals(expectedMembers, statistics.getMembers());
 		
 		// when
-		handler.handle(byeData, localPeer, remotePeer);
+		handler.handle(byeData, byeData.length, 0, localPeer, remotePeer);
 		expectedSize = (1.0/16.0) * bye.getSize() + (15.0/16.0) * expectedSize;
 		
 		// then

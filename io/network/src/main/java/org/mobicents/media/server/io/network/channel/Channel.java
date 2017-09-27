@@ -121,16 +121,7 @@ public interface Channel {
 	 *             If the channel is already open or if it could not be opened.
 	 */
 	void open() throws IOException;
-	
-	/**
-	 * Opens the channel with a pre-defined data channel.
-	 * 
-	 * @param transport the underlying data channel where the traffic will flow
-	 * 
-	 * @throws IOException In case the channel is already open or the data channel is invalid.
-	 */
-	void open(DatagramChannel dataChannel) throws IOException;
-	
+
 	/**
 	 * Disconnects and closes the channel.<br>
 	 * Invoking this method will have no effect if the channel is already

@@ -356,7 +356,6 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         return (contentType > 19 && contentType < 64);
     }
 
-    @Override
     public byte[] handle(byte[] packet, InetSocketAddress localPeer, InetSocketAddress remotePeer)
             throws PacketHandlerException {
         return this.handle(packet, packet.length, 0, localPeer, remotePeer);

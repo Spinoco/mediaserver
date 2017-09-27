@@ -323,12 +323,6 @@ public class RtcpHandler implements PacketHandler {
     }
 
     @Override
-    public byte[] handle(byte[] packet, InetSocketAddress localPeer, InetSocketAddress remotePeer)
-            throws PacketHandlerException {
-        return handle(packet, packet.length, 0, localPeer, remotePeer);
-    }
-
-    @Override
     public byte[] handle(byte[] packet, int dataLength, int offset, InetSocketAddress localPeer, InetSocketAddress remotePeer)
             throws PacketHandlerException {
         // Do NOT handle data if have not joined RTP session
