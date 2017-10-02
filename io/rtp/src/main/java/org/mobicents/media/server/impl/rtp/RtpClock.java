@@ -40,7 +40,6 @@ public class RtpClock {
     private Clock wallClock;
 
     //the clock rate measured in Hertz.
-    private int clockRate;
     private int scale;
 
     //the difference between media time measured by local and remote clock
@@ -69,17 +68,7 @@ public class RtpClock {
      * @param clockRate the new value of clock rate in Hertz.
      */
     public void setClockRate(int clockRate) {
-        this.clockRate = clockRate;
         this.scale = clockRate/1000;
-    }
-
-    /**
-     * Gets the clock rate.
-     *
-     * @return the value in Hertz
-     */
-    public int getClockRate() {
-        return clockRate;
     }
 
     /**
@@ -106,7 +95,6 @@ public class RtpClock {
      */
     public void reset() {
         this.drift = 0;
-        this.clockRate = 0;
         this.isSynchronized = false;
     }
 
@@ -125,7 +113,7 @@ public class RtpClock {
      * @return the time in milliseconds
      */
     public long convertToAbsoluteTime(long timestamp) {
-        return timestamp * 1000 / clockRate;
+        return timestamp / scale;
     }
     
     /**
@@ -135,7 +123,7 @@ public class RtpClock {
      * @return rtp timestamp.
      */
     public long convertToRtpTime(long time) {
-    	return time * clockRate / 1000;
+    	return time * scale;
     }
 
 }

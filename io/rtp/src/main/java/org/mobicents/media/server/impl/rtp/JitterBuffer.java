@@ -30,7 +30,6 @@ import org.apache.log4j.Logger;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
 import org.mobicents.media.server.spi.memory.Frame;
-import org.mobicents.media.server.spi.memory.Memory;
 
 /**
  * Implements jitter buffer.
@@ -56,8 +55,11 @@ public class JitterBuffer implements Serializable {
 	
 	private final ReentrantLock LOCK = new ReentrantLock();
 
+	private final double JC_BETA = .01d;
+	private final double JC_GAMMA = .01d;
+
 	//The underlying buffer size
-    private static final int QUEUE_SIZE = 5;
+    private static final int QUEUE_SIZE = 10;
     //the underlying buffer
     private ArrayList<Frame> queue = new ArrayList<Frame>(QUEUE_SIZE);
     
@@ -109,6 +111,12 @@ public class JitterBuffer implements Serializable {
     private Boolean useBuffer=true;
     
     private final static Logger logger = Logger.getLogger(JitterBuffer.class);
+
+    private long clockOffset = 0;
+    private int adaptJittCompTimestamp = 0;
+	private long jittCompTimestamp = 0;
+	private double jitter = 0d;
+
     /**
      * Creates new instance of jitter.
      * 
@@ -123,6 +131,8 @@ public class JitterBuffer implements Serializable {
         long arrival = rtpClock.getLocalRtpTime();
         long firstPacketTimestamp = firstPacket.getTimestamp();
         currentTransit = arrival - firstPacketTimestamp;
+        currentJitter = 0;
+        clockOffset = currentTransit;
     }
     
 	/**
@@ -138,9 +148,22 @@ public class JitterBuffer implements Serializable {
 		if (d < 0) {
 			d = -d;
 		}
-		//logger.info(String.format("recalculating jitter: arrival=%d, newPacketTimestamp=%d, transit=%d, transit delta=%d", arrival, newPacketTimestamp, transit, d ));
+
 		currentTransit = transit;
 		currentJitter += d - ((currentJitter + 8) >> 4);
+
+		long diff = newPacketTimestamp - arrival;
+    	double slide = (double)clockOffset*(1-JC_BETA) + (diff*JC_BETA);
+		double gap = diff - slide;
+
+    	gap = gap < 0 ? -gap : 0;
+    	jitter = jitter*(1-JC_GAMMA) + (gap*JC_GAMMA);
+
+		if (newPacket.getSeqNumber()%50 == 0) {
+			adaptJittCompTimestamp = Math.max((int)jittCompTimestamp, (int)(2*jitter));
+		}
+
+		clockOffset = (long)slide;
 	}
     
     /**
@@ -204,6 +227,10 @@ public class JitterBuffer implements Serializable {
         this.listener = listener;
     }
 
+	private long compensatedTimestamp(long userTimestamp) {
+    	return userTimestamp+clockOffset-adaptJittCompTimestamp;
+	}
+
     /**
      * Accepts specified packet
      *
@@ -230,6 +257,9 @@ public class JitterBuffer implements Serializable {
 				);
 				this.format = format;
 
+				// update clock rate
+				rtpClock.setClockRate(this.format.getClockRate());
+				jittCompTimestamp = rtpClock.convertToRtpTime(60);
 			}
 
 			// if this is first packet then synchronize clock
@@ -240,9 +270,6 @@ public class JitterBuffer implements Serializable {
 			} else {
 				estimateJitter(packet);
 			}
-
-			// update clock rate
-			rtpClock.setClockRate(this.format.getClockRate());
 
 			// drop outstanding packets
 			// packet is outstanding if its timestamp of arrived packet is less
@@ -267,10 +294,7 @@ public class JitterBuffer implements Serializable {
 				}
 			}
 
-
-
 			Frame f = packet.toFrame(rtpClock, this.format);
-
 
 			droppedInRaw = 0;
 
@@ -334,7 +358,7 @@ public class JitterBuffer implements Serializable {
 
 			// check if this buffer already full
 			if (!ready) {
-				ready = !useBuffer || (duration >= jitterBufferSize && queue.size() > 1);
+				ready = !useBuffer || (queue.size() > 1);
 				if (ready && listener != null) {
 					listener.onFill();
 				}
@@ -359,9 +383,29 @@ public class JitterBuffer implements Serializable {
 				return null;
 			}
 
+			Frame frame = null;
+			long rtpTime;
+			Frame old = null;
 
-			//extract packet
-			Frame frame = queue.remove(0);
+			long comp = compensatedTimestamp(rtpClock.getLocalRtpTime());
+
+			while (queue.size() != 0) {
+				frame = queue.remove(0);
+				rtpTime = rtpClock.convertToRtpTime(frame.getTimestamp());
+				if (old != null) {
+					old.recycle();
+				}
+
+				if (comp > rtpTime) {
+					old = frame;
+				} else {
+					break;
+				}
+			}
+
+			if (frame == null) {
+				return null;
+			}
 
 			//buffer empty now? - change ready flag.
 			if (queue.size() == 0) {
@@ -370,7 +414,6 @@ public class JitterBuffer implements Serializable {
 				//set it as 1 ms since otherwise will be dropped by pipe
 				frame.setDuration(1);
 			}
-
 
 			arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
 
