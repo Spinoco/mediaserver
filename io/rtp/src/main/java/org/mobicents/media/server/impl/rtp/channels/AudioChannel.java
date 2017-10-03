@@ -26,6 +26,8 @@ import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.scheduler.Clock;
 
+import java.nio.file.Path;
+
 /**
  * Media channel responsible for audio processing.
  * 
@@ -36,8 +38,8 @@ public class AudioChannel extends MediaChannel {
 
 	public static final String MEDIA_TYPE = "audio";
 
-	public AudioChannel(Clock wallClock, ChannelsManager channelsManager) {
-		super(MEDIA_TYPE, wallClock, channelsManager);
+	public AudioChannel(Clock wallClock, ChannelsManager channelsManager, Path dumpDir) {
+		super(MEDIA_TYPE, wallClock, channelsManager, dumpDir);
 //		super.supportedFormats = super.buildRTPMap(AVProfile.audio);
 		super.supportedFormats = AVProfile.audio;
 		super.setFormats(this.supportedFormats);

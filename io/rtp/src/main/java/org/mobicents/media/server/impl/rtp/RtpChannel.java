@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.DatagramChannel;
+import java.nio.file.Path;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.io.ice.IceAuthenticator;
@@ -116,7 +117,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     private RtpListener rtpListener;
 
     protected RtpChannel(int channelId, int jitterBufferSize, RtpStatistics statistics, RtpClock clock, RtpClock oobClock,
-            PriorityQueueScheduler scheduler, UdpManager udpManager) {
+            PriorityQueueScheduler scheduler, UdpManager udpManager, Path dumpDir) {
         // Initialize MultiplexedChannel elements
         super();
 
@@ -134,7 +135,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
 
         // Protocol Handlers
         this.transmitter = new RtpTransmitter(scheduler, clock, statistics);
-        this.rtpHandler = new RtpHandler(scheduler, clock, oobClock, jitterBufferSize, statistics);
+        this.rtpHandler = new RtpHandler(scheduler, clock, oobClock, jitterBufferSize, statistics, dumpDir);
         this.rtpHandler.setPipelinePriority(RTP_PRIORITY);
         this.rtcpHandler = new RtcpHandler(this.udpManager.getScheduler(), statistics);
         this.rtpHandler.setPipelinePriority(RTCP_PRIORITY);

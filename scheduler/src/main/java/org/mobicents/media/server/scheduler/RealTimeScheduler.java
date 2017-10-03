@@ -109,12 +109,17 @@ public class RealTimeScheduler {
                     es.submit(new Runnable() {
                         @Override
                         public void run() {
+                            long start = System.nanoTime();
                             try {
                                 task.run();
                             } catch (Throwable t) {
                                 logger.error("Failed to execute task: " + task , t);
                             } finally {
                                 taskCompletion.countDown();
+                            }
+                            long delay = System.nanoTime() - start;
+                            if (delay > 1000000) { // more than one millis
+                                logger.warn("Task took to long to complete: " + task.toString() + " took: " + delay + " nanos (" + delay / 1000000 + " millis)");
                             }
                         }
                     });

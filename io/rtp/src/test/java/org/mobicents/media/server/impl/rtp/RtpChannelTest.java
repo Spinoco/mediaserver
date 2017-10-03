@@ -133,13 +133,13 @@ public class RtpChannelTest {
         this.statistics1 = new RtpStatistics(rtpClock1);
         this.statistics2 = new RtpStatistics(rtpClock2);
         
-        channel1 = channelsManager.getRtpChannel(statistics1, rtpClock1, oobClock1);
+        channel1 = channelsManager.getRtpChannel(statistics1, rtpClock1, oobClock1, null);
         channel1.updateMode(ConnectionMode.SEND_RECV);
         channel1.setOutputDsp(dsp11);
         channel1.setOutputFormats(fmts);        
         channel1.setInputDsp(dsp12);
         
-        channel2 = channelsManager.getRtpChannel(statistics2, rtpClock2, oobClock2);
+        channel2 = channelsManager.getRtpChannel(statistics2, rtpClock2, oobClock2, null);
         channel2.updateMode(ConnectionMode.SEND_RECV);
         channel2.setOutputDsp(dsp21);
         channel2.setOutputFormats(fmts);

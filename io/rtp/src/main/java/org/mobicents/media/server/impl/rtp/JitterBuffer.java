@@ -23,12 +23,17 @@
 package org.mobicents.media.server.impl.rtp;
 
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
+import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.memory.Frame;
 
 /**
@@ -117,14 +122,30 @@ public class JitterBuffer implements Serializable {
 	private long jittCompTimestamp = 0;
 	private double jitter = 0d;
 
+	private PriorityQueueScheduler scheduler;
+
+	private static AtomicLong recordingIndex = new AtomicLong();
+	private AtomicReference<JitterBufferRTPDump> rtpDump = new AtomicReference<JitterBufferRTPDump>(null);
+
+	// directory to dump to. If null, this indicates nothing has to be dump at all
+	private Path dumpDir;
+	private List<String> dumpConfig;
+
     /**
      * Creates new instance of jitter.
      * 
      * @param clock the rtp clock.
      */
-    public JitterBuffer(RtpClock clock, int jitterBufferSize) {
+    public JitterBuffer(RtpClock clock, int jitterBufferSize, PriorityQueueScheduler scheduler, Path dumpDir) {
         this.rtpClock = clock;
-        this.jitterBufferSize = jitterBufferSize;        
+        this.jitterBufferSize = jitterBufferSize;
+        this.scheduler = scheduler;
+        if (dumpDir != null) {
+			this.dumpConfig = JitterBufferRTPDump.getDumpConfig(dumpDir);
+			this.rtpDump.set(new JitterBufferRTPDump(scheduler, recordingIndex.incrementAndGet(), dumpDir, this.dumpConfig));
+			this.dumpDir = dumpDir;
+
+		}
     }
 
     private void initJitter(RtpPacket firstPacket) {
@@ -245,15 +266,18 @@ public class JitterBuffer implements Serializable {
 				return;
 			}
 
+
+
 			if (this.format == null || this.format.getID() != format.getID()) {
-				logger.info("Format has been changed: " +
-						", from: " + (this.format != null ? this.format.toString() : "null")  +
-						", to: " + (format != null ? format.toString() : "null") +
-						", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
-						", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
-						", seq: " + packet.getSeqNumber() +
-						", timestamp: " + packet.getTimestamp() +
-						", csrc: " + packet.getContributingSource()
+				logger.info(
+					"Format has been changed: " +
+					", from: " + (this.format != null ? this.format.toString() : "null")  +
+					", to: " + (format != null ? format.toString() : "null") +
+					", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
+					", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
+					", seq: " + packet.getSeqNumber() +
+					", timestamp: " + packet.getTimestamp() +
+					", csrc: " + packet.getContributingSource()
 				);
 				this.format = format;
 
@@ -295,6 +319,12 @@ public class JitterBuffer implements Serializable {
 			}
 
 			Frame f = packet.toFrame(rtpClock, this.format);
+
+			// dump the packet to capture if enabled so
+			if (this.dumpConfig != null) {
+				JitterBufferRTPDump dump = rtpDump.get();
+				if (dump != null) dump.dump(packet, queue.size());
+			}
 
 			droppedInRaw = 0;
 
@@ -403,6 +433,14 @@ public class JitterBuffer implements Serializable {
 				}
 			}
 
+			if (this.dumpConfig != null) {
+				JitterBufferRTPDump dump = rtpDump.get();
+				if (dump != null) {
+					long seq = frame != null ? frame.getSequenceNumber() : -1;
+					dump.suppliedDump(seq, queue.size());
+				}
+			}
+
 			if (frame == null) {
 				return null;
 			}
@@ -420,6 +458,7 @@ public class JitterBuffer implements Serializable {
 			//convert duration to nanoseconds
 			frame.setDuration(frame.getDuration() * 1000000L);
 			frame.setTimestamp(frame.getTimestamp() * 1000000L);
+
 
 			return frame;
 		} finally {
@@ -439,6 +478,19 @@ public class JitterBuffer implements Serializable {
 			LOCK.unlock();
 		}
     }
+
+    private void restartRecording() {
+		JitterBufferRTPDump previous = this.rtpDump.get();
+		if (previous != null) previous.commit();
+
+
+		this.dumpConfig = JitterBufferRTPDump.getDumpConfig(dumpDir);
+		if (this.dumpConfig != null) {
+			this.rtpDump.set(new JitterBufferRTPDump(this.scheduler, recordingIndex.incrementAndGet(), this.dumpDir, this.dumpConfig));
+		}
+
+
+	}
     
     public void restart() {
     	reset();
@@ -448,5 +500,13 @@ public class JitterBuffer implements Serializable {
     	droppedInRaw=0;
     	format=null;
     	isn=-1;
+
+    	//
+		clockOffset = 0;
+		adaptJittCompTimestamp = 0;
+		jittCompTimestamp = 0;
+		jitter = 0d;
+
+		restartRecording();
     }
 }

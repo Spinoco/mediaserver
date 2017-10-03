@@ -34,6 +34,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
+import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.memory.Frame;
 
 /**
@@ -51,7 +52,7 @@ public class JitterBufferTest {
     private int period = 20;
     private int jitter = 40;
 
-    private JitterBuffer jitterBuffer = new JitterBuffer(rtpClock, jitter);
+    private JitterBuffer jitterBuffer = new JitterBuffer(rtpClock, jitter, new PriorityQueueScheduler(), null);
 
     @BeforeClass
     public static void setUpClass() throws Exception {

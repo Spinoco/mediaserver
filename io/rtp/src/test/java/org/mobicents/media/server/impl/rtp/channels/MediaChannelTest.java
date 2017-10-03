@@ -215,7 +215,7 @@ public class MediaChannelTest {
 	private class ChannelFactory {
 		
 		public AudioChannel buildAudioChannel() {
-			return new AudioChannel(wallClock, channelsManager);
+			return new AudioChannel(wallClock, channelsManager, null);
 		}
 		
 	}

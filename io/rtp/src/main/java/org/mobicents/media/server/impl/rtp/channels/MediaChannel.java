@@ -23,6 +23,7 @@ package org.mobicents.media.server.impl.rtp.channels;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.nio.file.Path;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.io.ice.IceAuthenticatorImpl;
@@ -98,7 +99,7 @@ public abstract class MediaChannel {
 	 * @param channelsManager
 	 *            The RTP and RTCP channel provider
 	 */
-	protected MediaChannel(String mediaType, Clock wallClock, ChannelsManager channelsManager) {
+	protected MediaChannel(String mediaType, Clock wallClock, ChannelsManager channelsManager, Path dumpDir) {
 	    // Media Session Properties
 	    this.mediaType = mediaType;
 		this.ssrc = 0L;
@@ -112,7 +113,7 @@ public abstract class MediaChannel {
 		this.clock = new RtpClock(wallClock);
 		this.oobClock = new RtpClock(wallClock);
 		this.statistics = new RtpStatistics(clock, this.ssrc);
-		this.rtpChannel = channelsManager.getRtpChannel(this.statistics, this.clock, this.oobClock);
+		this.rtpChannel = channelsManager.getRtpChannel(this.statistics, this.clock, this.oobClock, dumpDir);
 		this.rtcpChannel = channelsManager.getRtcpChannel(this.statistics);
 		
 		this.offeredFormats = new RTPFormats();

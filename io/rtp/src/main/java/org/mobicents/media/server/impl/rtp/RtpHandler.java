@@ -21,6 +21,7 @@
 package org.mobicents.media.server.impl.rtp;
 
 import java.net.InetSocketAddress;
+import java.nio.file.Path;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.impl.rtcp.RtcpHeader;
@@ -66,14 +67,14 @@ public class RtpHandler implements PacketHandler {
 	private boolean secure;
 	private DtlsHandler dtlsHandler;
 	
-	public RtpHandler(PriorityQueueScheduler scheduler, RtpClock clock, RtpClock oobClock, int jitterBufferSize, RtpStatistics statistics) {
+	public RtpHandler(PriorityQueueScheduler scheduler, RtpClock clock, RtpClock oobClock, int jitterBufferSize, RtpStatistics statistics, Path dumpDir) {
 		this.pipelinePriority = 0;
 		
 		this.rtpClock = clock;
 		this.oobClock = oobClock;
 		
 		this.jitterBufferSize = jitterBufferSize;
-		this.jitterBuffer = new JitterBuffer(this.rtpClock, this.jitterBufferSize);
+		this.jitterBuffer = new JitterBuffer(this.rtpClock, this.jitterBufferSize, scheduler, dumpDir);
 		
 		this.rtpInput = new RTPInput(scheduler, jitterBuffer);
 		this.jitterBuffer.setListener(this.rtpInput);

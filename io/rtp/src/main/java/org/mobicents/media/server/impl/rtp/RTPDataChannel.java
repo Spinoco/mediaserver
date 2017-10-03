@@ -25,6 +25,7 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
+import java.nio.file.Path;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.component.audio.AudioComponent;
@@ -140,7 +141,7 @@ public class RTPDataChannel {
 	 *            Channel manager
 	 * 
 	 */
-	protected RTPDataChannel(ChannelsManager channelsManager, int channelId) {
+	protected RTPDataChannel(ChannelsManager channelsManager, int channelId, Path dumpDir) {
 		this.channelsManager = channelsManager;
 		this.jitterBufferSize = channelsManager.getJitterBufferSize();
 
@@ -151,10 +152,13 @@ public class RTPDataChannel {
 		rtpClock = new RtpClock(channelsManager.getClock());
 		oobClock = new RtpClock(channelsManager.getClock());
 
-		rxBuffer = new JitterBuffer(rtpClock, jitterBufferSize);
+
 
 		scheduler = channelsManager.getScheduler();
 		udpManager = channelsManager.getUdpManager();
+
+		rxBuffer = new JitterBuffer(rtpClock, jitterBufferSize, scheduler, dumpDir);
+
 		// receiver
 		input = new RTPInput(scheduler, rxBuffer);
 		rxBuffer.setListener(input);

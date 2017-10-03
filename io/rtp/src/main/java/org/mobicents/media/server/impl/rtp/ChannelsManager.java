@@ -23,6 +23,7 @@
 package org.mobicents.media.server.impl.rtp;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.mobicents.media.server.impl.rtcp.RtcpChannel;
@@ -118,11 +119,11 @@ public class ChannelsManager {
     
     @Deprecated
     public RTPDataChannel getChannel() {
-        return new RTPDataChannel(this,channelIndex.incrementAndGet());
+        return new RTPDataChannel(this,channelIndex.incrementAndGet(), JitterBufferRTPDump.getDumpDir());
     }
     
-    public RtpChannel getRtpChannel(RtpStatistics statistics, RtpClock clock, RtpClock oobClock) {
-    	return new RtpChannel(channelIndex.incrementAndGet(), jitterBufferSize, statistics, clock, oobClock, scheduler, udpManager);
+    public RtpChannel getRtpChannel(RtpStatistics statistics, RtpClock clock, RtpClock oobClock, Path dumpDir) {
+    	return new RtpChannel(channelIndex.incrementAndGet(), jitterBufferSize, statistics, clock, oobClock, scheduler, udpManager, dumpDir);
     }
 
     public RtcpChannel getRtcpChannel(RtpStatistics statistics) {
@@ -141,7 +142,7 @@ public class ChannelsManager {
 	}
     
     public AudioChannel getAudioChannel() {
-    	return new AudioChannel(this.scheduler.getClock(), this);
+    	return new AudioChannel(this.scheduler.getClock(), this, JitterBufferRTPDump.getDumpDir());
     }
     
 }
