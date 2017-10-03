@@ -102,7 +102,9 @@ public class RealTimeScheduler {
 
         for ( OrderedTaskQueue queue: this.queues)  {
             int togo = queue.getAvailable();
+            int count = togo;
             final CountDownLatch taskCompletion = new CountDownLatch(togo);
+            long startAll = System.nanoTime();
             while(togo > 0) {
                 final Task task = queue.poll();
                 if (task != null) {
@@ -127,6 +129,10 @@ public class RealTimeScheduler {
                 togo --;
             }
             taskCompletion.await();
+            long diff = System.nanoTime() - startAll;
+            if (diff > 20000000L) {
+                logger.warn("All Tasks took to long to complete: " + (diff/1000000L) + "ms" + " count: " + count);
+            }
         }
     }
 

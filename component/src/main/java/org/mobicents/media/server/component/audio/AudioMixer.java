@@ -22,6 +22,7 @@
 
 package org.mobicents.media.server.component.audio;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
@@ -117,6 +118,14 @@ public class AudioMixer {
 		@Override
 		public EventQueueType getQueueType() {
 			return EventQueueType.RTP_MIXER;
+		}
+
+		@Override
+		public String toString() {
+			return "MixTask{" +
+					"values: " + components.size() +
+					"total:" + total.length +
+					"}";
 		}
 
 		@Override

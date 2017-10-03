@@ -1,5 +1,6 @@
 package org.mobicents.media.server.impl.rtp;
 
+import com.google.common.io.BaseEncoding;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.BufferedEncoder;
 import org.mobicents.media.server.scheduler.EventQueueType;
@@ -64,6 +65,7 @@ public class JitterBufferRTPDump {
     private BufferedWriter supplied;
 
     private long startTime;
+    private long startTimeNano;
 
     private ConcurrentLinkedQueue<DumpFrame> queue = new ConcurrentLinkedQueue<>();
     private ConcurrentLinkedQueue<DumpSuppliedFrame> queueSupplied = new ConcurrentLinkedQueue<>();
@@ -98,6 +100,7 @@ public class JitterBufferRTPDump {
         this.index = index;
         this.outputDir = outputDir;
         this.startTime = System.currentTimeMillis();
+        this.startTimeNano = System.nanoTime();
         this.captureFilter = captureFilter;
     }
 
@@ -134,15 +137,15 @@ public class JitterBufferRTPDump {
         if (w != null && df != null && df.packet != null) {
             byte[] dataRaw = new byte[df.packet.getPayloadLength()];
             df.packet.getPayload(dataRaw, 0);
-            BigInteger data = new BigInteger(dataRaw);
 
-
-            w.write(df.ts + ";");
+            long diff = df.ts - this.startTimeNano;
+            w.write(diff/1000000L + "." + diff%1000000L + ";");
             w.write(df.packet.getSeqNumber() + ";");
             w.write(df.packet.getTimestamp()+ ";");
             w.write(df.packet.getPayloadType() + ";");
             w.write(df.jbSize+ ";");
-            w.write(data.toString(16));
+            w.write(dataRaw.length+":");
+            w.write(BaseEncoding.base16().lowerCase().encode(dataRaw));
             w.newLine();
 
         }
@@ -151,7 +154,8 @@ public class JitterBufferRTPDump {
 
     private void writeOneSuppliedSample(DumpSuppliedFrame df, BufferedWriter w) throws IOException {
         if (w != null && df != null) {
-            w.write(df.ts + ";");
+            long diff = df.ts - this.startTimeNano;
+            w.write(diff/1000000L + "." + diff%1000000L + ";");
             w.write(df.seq + ";");
             w.write( df.jbSize + "");
             w.newLine();
@@ -166,19 +170,19 @@ public class JitterBufferRTPDump {
             if (f == null) return; // return if queue is empty, should not be ever the case
             try {
                 SocketAddress remote = f.packet.getRemotePeer();
-                String prefix = "" + this.index + "_" + (remote != null ? remote.toString() : "unknown_remote");
+                String prefix = "" + this.startTime + "_" + (remote != null ? remote.toString().replace('/', '_') : "unknown_remote");
                 received = Files.newBufferedWriter(this.outputDir.resolve(prefix+".jbr"));
                 supplied = Files.newBufferedWriter(this.outputDir.resolve(prefix+".jbs"));
 
                 received.write("RECEIVED RTP DUMP AT " + " FROM " + f.packet.getRemotePeer() + " TO: " + f.packet.getLocalPeer() + "CSRC: " + Integer.toHexString(f.packet.getContributingSource()));
                 received.newLine();
-                received.write("timestamp ; sequence ; timestamp_rtp ; format ; jbrSize; sample");
+                received.write("timestamp ; sequence ; timestamp_rtp ; format ; jbrSize; sample length; sample");
                 received.newLine();
 
-                received.write("SUPPLIED RTP DUMP AT " + " FROM " + f.packet.getRemotePeer() + " TO: " + f.packet.getLocalPeer());
-                received.newLine();
-                received.write("timestamp ; sequence ; jbrSize ");
-                received.newLine();
+                supplied.write("SUPPLIED RTP DUMP AT " + " FROM " + f.packet.getRemotePeer() + " TO: " + f.packet.getLocalPeer());
+                supplied.newLine();
+                supplied.write("timestamp ; sequence ; jbrSize ");
+                supplied.newLine();
 
                 writeOneReceivedSample(f, received);
 

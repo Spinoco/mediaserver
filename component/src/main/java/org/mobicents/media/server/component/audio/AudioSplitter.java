@@ -223,6 +223,14 @@ public class AudioSplitter {
 		}
 
 		@Override
+		public String toString() {
+			return "OutsideMixTask{" +
+					"values: " + outsideComponents.size() +
+					"total:" + total.length +
+					"}";
+		}
+
+		@Override
 		public long perform() {
 			// summarize all
 			boolean first = true;
