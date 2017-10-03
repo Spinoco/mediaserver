@@ -295,6 +295,7 @@ public class JitterBuffer implements Serializable {
 			}
 
 			Frame f = packet.toFrame(rtpClock, this.format);
+			f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
 
 			droppedInRaw = 0;
 
@@ -326,12 +327,12 @@ public class JitterBuffer implements Serializable {
 				duration = queue.get(queue.size() - 1).getTimestamp() - queue.get(0).getTimestamp();
 			}
 
-			for (int i = 0; i < queue.size() - 1; i++) {
-				// duration measured by wall clock
-				long d = queue.get(i + 1).getTimestamp() - queue.get(i).getTimestamp();
-				// in case of RFC2833 event timestamp remains same
-				queue.get(i).setDuration(d > 0 ? d : 0);
-			}
+//			for (int i = 0; i < queue.size() - 1; i++) {
+//				// duration measured by wall clock
+//				long d = queue.get(i + 1).getTimestamp() - queue.get(i).getTimestamp();
+//				// in case of RFC2833 event timestamp remains same
+//				queue.get(i).setDuration(d > 0 ? d : 0);
+//			}
 
 			// if overall duration is negative we have some mess here,try to
 			// reset
@@ -410,9 +411,6 @@ public class JitterBuffer implements Serializable {
 			//buffer empty now? - change ready flag.
 			if (queue.size() == 0) {
 				this.ready = false;
-				//arrivalDeadLine = 0;
-				//set it as 1 ms since otherwise will be dropped by pipe
-				frame.setDuration(1);
 			}
 
 			arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
@@ -448,5 +446,9 @@ public class JitterBuffer implements Serializable {
     	droppedInRaw=0;
     	format=null;
     	isn=-1;
+		clockOffset = 0;
+		adaptJittCompTimestamp = 0;
+		jittCompTimestamp = 0;
+		jitter = 0d;
     }
 }
