@@ -141,10 +141,11 @@ public class JitterBuffer implements Serializable {
         this.jitterBufferSize = jitterBufferSize;
         this.scheduler = scheduler;
         if (dumpDir != null) {
-			this.dumpConfig = JitterBufferRTPDump.getDumpConfig(dumpDir);
-			this.rtpDump.set(new JitterBufferRTPDump(scheduler, recordingIndex.incrementAndGet(), dumpDir, this.dumpConfig));
 			this.dumpDir = dumpDir;
-
+			this.dumpConfig = JitterBufferRTPDump.getDumpConfig(dumpDir);
+			if (this.dumpConfig != null) {
+				this.rtpDump.set(new JitterBufferRTPDump(scheduler, recordingIndex.incrementAndGet(), dumpDir, this.dumpConfig));
+			}
 		}
     }
 
@@ -480,8 +481,8 @@ f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
 		JitterBufferRTPDump previous = this.rtpDump.get();
 		if (previous != null) previous.commit();
 
-
 		this.dumpConfig = JitterBufferRTPDump.getDumpConfig(dumpDir);
+
 		if (this.dumpConfig != null) {
 			this.rtpDump.set(new JitterBufferRTPDump(this.scheduler, recordingIndex.incrementAndGet(), this.dumpDir, this.dumpConfig));
 		}

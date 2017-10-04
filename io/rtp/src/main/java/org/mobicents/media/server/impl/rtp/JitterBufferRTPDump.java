@@ -1,5 +1,6 @@
 package org.mobicents.media.server.impl.rtp;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.BufferedEncoder;
@@ -14,11 +15,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -132,14 +137,18 @@ public class JitterBufferRTPDump {
         scheduler.submit(new DumpTask(), EventQueueType.RECORDING);
     }
 
+    /** return formatted delta of nanotime since start of the capture **/
+    private String deltaNano(long nowNano) {
+        long diff = nowNano - this.startTimeNano;
+        return (diff/1000000L + "." + diff%1000000L);
+    }
 
     private void writeOneReceivedSample(DumpFrame df, BufferedWriter w) throws IOException {
         if (w != null && df != null && df.packet != null) {
             byte[] dataRaw = new byte[df.packet.getPayloadLength()];
             df.packet.getPayload(dataRaw, 0);
-
-            long diff = df.ts - this.startTimeNano;
-            w.write(diff/1000000L + "." + diff%1000000L + ";");
+ 
+            w.write(deltaNano(df.ts) + ";");
             w.write(df.packet.getSeqNumber() + ";");
             w.write(df.packet.getTimestamp()+ ";");
             w.write(df.packet.getPayloadType() + ";");
@@ -154,12 +163,19 @@ public class JitterBufferRTPDump {
 
     private void writeOneSuppliedSample(DumpSuppliedFrame df, BufferedWriter w) throws IOException {
         if (w != null && df != null) {
-            long diff = df.ts - this.startTimeNano;
-            w.write(diff/1000000L + "." + diff%1000000L + ";");
+            w.write(deltaNano(df.ts)+ ";");
             w.write(df.seq + ";");
             w.write( df.jbSize + "");
             w.newLine();
         }
+    }
+
+
+    private boolean shallCapture(String address) {
+        for (String filter : this.captureFilter ) {
+            if (address.startsWith(filter)) return true;
+        }
+        return (this.captureFilter.isEmpty());
     }
 
 
@@ -170,22 +186,40 @@ public class JitterBufferRTPDump {
             if (f == null) return; // return if queue is empty, should not be ever the case
             try {
                 SocketAddress remote = f.packet.getRemotePeer();
-                String prefix = "" + this.startTime + "_" + (remote != null ? remote.toString().replace('/', '_') : "unknown_remote");
-                received = Files.newBufferedWriter(this.outputDir.resolve(prefix+".jbr"));
-                supplied = Files.newBufferedWriter(this.outputDir.resolve(prefix+".jbs"));
 
-                received.write("RECEIVED RTP DUMP AT " + " FROM " + f.packet.getRemotePeer() + " TO: " + f.packet.getLocalPeer() + "CSRC: " + Integer.toHexString(f.packet.getContributingSource()));
-                received.newLine();
-                received.write("timestamp ; sequence ; timestamp_rtp ; format ; jbrSize; sample length; sample");
-                received.newLine();
+                if (! (remote instanceof InetSocketAddress)) {
+                    count.set(-1);
+                    return;
+                } else {
+                    String addressAsString = ((InetSocketAddress)remote).getAddress().getHostAddress();
+                    if (!shallCapture(addressAsString)) {
+                        count.set(-1);
+                        return;
+                    }
 
-                supplied.write("SUPPLIED RTP DUMP AT " + " FROM " + f.packet.getRemotePeer() + " TO: " + f.packet.getLocalPeer());
-                supplied.newLine();
-                supplied.write("timestamp ; sequence ; jbrSize ");
-                supplied.newLine();
+                    String addressAndPort = addressAsString + "_" + ((InetSocketAddress)remote).getPort();
+                    String prefix = "" + this.startTime + "_" + addressAndPort;
+                    received = Files.newBufferedWriter(this.outputDir.resolve(prefix+".jbr"));
+                    supplied = Files.newBufferedWriter(this.outputDir.resolve(prefix+".jbs"));
 
-                writeOneReceivedSample(f, received);
+                    received.write(
+                            "RECEIVED RTP DUMP AT " + DateTimeFormatter.ISO_DATE.format(Instant.ofEpochMilli(this.startTime))
+                            + " FROM " + f.packet.getRemotePeer()
+                            + " TO: " + f.packet.getLocalPeer()
+                            + " SSRC: " + Long.toHexString(f.packet.getSyncSource())
+                    );
+                    received.newLine();
+                    received.write("timestamp ; sequence ; timestamp_rtp ; format ; jbrSize; sample length; sample hex");
+                    received.newLine();
 
+                    supplied.write("SUPPLIED RTP DUMP AT " + " FROM " + f.packet.getRemotePeer() + " TO: " + f.packet.getLocalPeer());
+                    supplied.newLine();
+                    supplied.write("timestamp ; sequence ; jbrSize ");
+                    supplied.newLine();
+
+                    writeOneReceivedSample(f, received);
+
+                }
             } catch (IOException e) {
                 logger.error("Failed to create outputStreams: " + this + "[" + f + "]", e);
             }
