@@ -212,7 +212,11 @@ public class JitterBufferRTPDump {
                     received.write("timestamp ; sequence ; timestamp_rtp ; format ; jbrSize; sample length; sample hex");
                     received.newLine();
 
-                    supplied.write("SUPPLIED RTP DUMP AT " + " FROM " + f.packet.getRemotePeer() + " TO: " + f.packet.getLocalPeer());
+                    supplied.write("SUPPLIED RTP DUMP AT "
+                            + DateTimeFormatter.ISO_DATE.format(Instant.ofEpochMilli(this.startTime))
+                            +" FROM " + f.packet.getRemotePeer()
+                            + " TO: " + f.packet.getLocalPeer()
+                    );
                     supplied.newLine();
                     supplied.write("timestamp ; sequence ; jbrSize ");
                     supplied.newLine();
