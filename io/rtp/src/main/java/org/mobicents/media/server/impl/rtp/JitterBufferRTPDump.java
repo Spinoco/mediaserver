@@ -203,7 +203,7 @@ public class JitterBufferRTPDump {
                     supplied = Files.newBufferedWriter(this.outputDir.resolve(prefix+".jbs"));
 
                     received.write(
-                            "RECEIVED RTP DUMP AT " + DateTimeFormatter.ISO_DATE.format(Instant.ofEpochMilli(this.startTime))
+                            "RECEIVED RTP DUMP AT " + DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(this.startTime))
                             + " FROM " + f.packet.getRemotePeer()
                             + " TO: " + f.packet.getLocalPeer()
                             + " SSRC: " + Long.toHexString(f.packet.getSyncSource())
@@ -212,8 +212,8 @@ public class JitterBufferRTPDump {
                     received.write("timestamp ; sequence ; timestamp_rtp ; format ; jbrSize; sample length; sample hex");
                     received.newLine();
 
-                    supplied.write("SUPPLIED RTP DUMP AT "
-                            + DateTimeFormatter.ISO_DATE.format(Instant.ofEpochMilli(this.startTime))
+                    supplied.write(
+                            "SUPPLIED RTP DUMP AT " + DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(this.startTime))
                             +" FROM " + f.packet.getRemotePeer()
                             + " TO: " + f.packet.getLocalPeer()
                     );
@@ -248,13 +248,6 @@ public class JitterBufferRTPDump {
                 logger.error("Failed to write frame supplied: " + this + "[" + f + "]", e);
             }
             fs = queueSupplied.poll();
-        }
-
-        try {
-            received.flush();
-            supplied.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
