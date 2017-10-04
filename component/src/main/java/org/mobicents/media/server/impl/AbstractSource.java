@@ -426,12 +426,17 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
             	frameDuration = frame.getDuration();            	            	            	          
             	isEOM=frame.isEOM();
             	length=frame.getLength();
-            	
+
             	//delivering data to the other party.
             	if (mediaSink != null) {
+                    long start = System.nanoTime();
             		mediaSink.perform(frame);
+                    long diff = System.nanoTime() - start;
+                    if (diff > 1000000) {
+                        logger.warn("Perform took too long: " + diff + " , sink: " + mediaSink);
+                    }
             	}
-            	
+
             	//update transmission statistics
             	txPackets++;
             	txBytes += length;
@@ -458,7 +463,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
 
         @Override
         public String toString() {
-            return getName();
+            return AbstractSource.this.toString();
         }
 
     }
