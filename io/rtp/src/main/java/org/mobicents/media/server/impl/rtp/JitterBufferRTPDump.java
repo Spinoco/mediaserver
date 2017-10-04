@@ -245,6 +245,13 @@ public class JitterBufferRTPDump {
             }
             fs = queueSupplied.poll();
         }
+
+        try {
+            received.flush();
+            supplied.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /** flush any samples in queue and recycle them, close files **/
