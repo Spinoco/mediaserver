@@ -297,25 +297,6 @@ public class UdpManager {
         return connectImmediately;
     }
 
-    /**
-     * Opens and binds new datagram channel.
-     * 
-     * @param handler the packet handler implementation
-     * @param port the port to bind to
-     * @return datagram channel
-     * @throws IOException
-     */
-    @Deprecated
-    public DatagramChannel open(ProtocolHandler handler) throws IOException {
-        DatagramChannel channel = DatagramChannel.open();
-        channel.configureBlocking(false);
-        int index = currSelectorIndex.getAndIncrement();
-        SelectionKey key = channel.register(selectors.get(index % selectors.size()), SelectionKey.OP_READ);
-        key.attach(handler);
-        handler.setKey(key);
-        return channel;
-    }
-
     public SelectionKey open(Channel channel) throws IOException {
         DatagramChannel dataChannel = DatagramChannel.open();
         dataChannel.configureBlocking(false);
@@ -323,30 +304,6 @@ public class UdpManager {
         SelectionKey key = dataChannel.register(selectors.get(index % selectors.size()), SelectionKey.OP_READ);
         key.attach(channel);
         return key;
-    }
-
-    @Deprecated
-    public SelectionKey open(DatagramChannel dataChannel, Channel channel) throws IOException {
-        // Get a selector
-        int index = currSelectorIndex.getAndIncrement();
-        Selector selector = selectors.get(index % selectors.size());
-        // Register the channel under the chosen selector
-        SelectionKey key = dataChannel.register(selector, SelectionKey.OP_READ);
-        // Attach the multiplexer to the key
-        key.attach(channel);
-        return key;
-    }
-
-    @Deprecated
-    public void open(DatagramChannel channel, ProtocolHandler handler) throws IOException {
-        // Get a selector
-        int index = currSelectorIndex.getAndIncrement();
-        Selector selector = selectors.get(index % selectors.size());
-        // Register the channel under the chosen selector
-        SelectionKey key = channel.register(selector, SelectionKey.OP_READ);
-        // Attach the protocol handler to the key
-        key.attach(handler);
-        handler.setKey(key);
     }
 
     public void bind(DatagramChannel channel, int port, boolean local) throws IOException {
