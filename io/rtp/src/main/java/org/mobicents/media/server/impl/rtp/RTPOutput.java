@@ -128,7 +128,12 @@ public class RTPOutput extends AbstractSink {
 		// do transcoding
 		if (dsp != null && formats != null && !formats.isEmpty()) {
 			try {
+				long start = System.nanoTime();
 				frame = dsp.process(frame, format, formats.get(0));
+				long diff = System.nanoTime() - start;
+				if (diff > 1000000) {
+					logger.warn("dsp.process took too long: " + diff/1000000 + "ms");
+				}
 			} catch (Exception e) {
 				// transcoding error , print error and try to move to next frame
 				logger.error(e.getMessage(), e);
@@ -137,7 +142,12 @@ public class RTPOutput extends AbstractSink {
 		}
 
 		if (this.transmitter != null) {
+		    long start = System.nanoTime();
 			this.transmitter.send(frame);
+			long diff = System.nanoTime() - start;
+			if (diff > 1000000) {
+				logger.warn("transmitter.send took too long: " + diff/1000000 + "ms");
+			}
 		}
 
 		// XXX deprecated code

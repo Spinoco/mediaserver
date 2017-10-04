@@ -203,7 +203,7 @@ public class JitterBufferRTPDump {
                     supplied = Files.newBufferedWriter(this.outputDir.resolve(prefix+".jbs"));
 
                     received.write(
-                            "RECEIVED RTP DUMP AT " + DateTimeFormatter.ISO_DATE.format(Instant.ofEpochMilli(this.startTime))
+                            "RECEIVED RTP DUMP AT " + DateTimeFormatter.ISO_INSTANT.format(Instant.ofEpochMilli(this.startTime))
                             + " FROM " + f.packet.getRemotePeer()
                             + " TO: " + f.packet.getLocalPeer()
                             + " SSRC: " + Long.toHexString(f.packet.getSyncSource())

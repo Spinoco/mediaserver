@@ -63,6 +63,16 @@ public class AudioOutput extends AbstractSource {
 	}
 
 	@Override
+	public String toString() {
+		return "AudioOutput{" +
+				"name=" + getName() +
+				"outputId=" + outputId +
+				", bufferSize=" + buffer.size() +
+				", sink="+ ((mediaSink!=null) ? mediaSink : "null") +
+				'}';
+	}
+
+	@Override
 	public Frame evolve(long timestamp) {
 		return buffer.poll();
 	}
