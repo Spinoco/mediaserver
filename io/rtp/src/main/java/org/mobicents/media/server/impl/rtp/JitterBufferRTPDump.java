@@ -76,6 +76,7 @@ public class JitterBufferRTPDump {
     private ConcurrentLinkedQueue<DumpSuppliedFrame> queueSupplied = new ConcurrentLinkedQueue<>();
     private AtomicInteger count = new AtomicInteger(0); // if this is set to -1 the recorder is closed for more updates
 
+    private  BaseEncoding encoder = BaseEncoding.base16().lowerCase();
 
     /** gets dump directory from env if configured **/
     public static Path getDumpDir() {
@@ -153,8 +154,8 @@ public class JitterBufferRTPDump {
             w.write(df.packet.getTimestamp()+ ";");
             w.write(df.packet.getPayloadType() + ";");
             w.write(df.jbSize+ ";");
-            w.write(dataRaw.length+":");
-            w.write(BaseEncoding.base16().lowerCase().encode(dataRaw));
+            w.write(dataRaw.length+";");
+            w.write(encoder.encode(dataRaw));
             w.newLine();
 
         }
