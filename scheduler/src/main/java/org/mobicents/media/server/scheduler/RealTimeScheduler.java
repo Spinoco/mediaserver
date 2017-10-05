@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -42,19 +43,16 @@ public class RealTimeScheduler {
     protected OrderedTaskQueue<RTEventQueueType> dtmfInQ = new OrderedTaskQueue();
 
     private long cycleDelay;                        // delay between cycles, computed since start of each cycle, in nanos
-    private OrderedTaskQueue[] queues = { rtpInputQ, rtpMixerQ, rtpOutputQ, dtmfInQ, dtmfGenQ, ss7ReceiverQ }; // available queues to process in each cycle
     private ExecutorService es;                     // executor service to use to schedule execution of tasks in parallel
     private ScheduledExecutorService scheduler;     // Executor, that schedules next drain cycle to execute all tasks.
 
     private AtomicBoolean running = new AtomicBoolean(false); // when true scheduler is running
-    private CountDownLatch done = new CountDownLatch(1);
 
 
 
 
     public RealTimeScheduler(long cycleDelay, ExecutorService es, ScheduledExecutorService scheduler) {
         this.cycleDelay = cycleDelay;
-        this.queues = queues;
         this.es = es;
         this.scheduler = scheduler;
     }
@@ -112,7 +110,7 @@ public class RealTimeScheduler {
                               }
                           }, sleepNanos, TimeUnit.NANOSECONDS);
                       } else {
-                          // compute constant start of the next cycle
+                          // compute constant start of the next cycle 
                           scheduleCycle(start + cycleDelay);
                           // continue
                       }
@@ -135,13 +133,29 @@ public class RealTimeScheduler {
      *
      */
     private void executeCycle(final Runnable whenDone)  {
+        executeForQueue(this.rtpInputQ, () -> {
+        executeForQueue(this.rtpMixerQ, () -> {
+        executeForQueue(this.dtmfInQ, () -> {
+        executeForQueue(this.dtmfGenQ, () -> {
+        executeForQueue(this.rtpOutputQ, () -> {
+        executeForQueue(this.ss7ReceiverQ, () -> {
+            scheduler.execute(whenDone);
+        });  }); }); }); }); });
+    }
 
-        for ( OrderedTaskQueue queue: this.queues)  {
-            int togo = queue.getAvailable();
-            int count = togo;
+
+    /**
+     * Executes tasks in
+     * @param queue
+     * @param next
+     */
+    private void executeForQueue(OrderedTaskQueue<RTEventQueueType>  queue, Runnable next) {
+        int togo = queue.getAvailable();
+        int count = togo;
+        if (count > 0) {
             final AtomicInteger active = new AtomicInteger(count);
             long startAll = System.nanoTime();
-            while(togo > 0) {
+            while (togo > 0) {
                 final Task task = queue.poll();
                 if (task != null) {
                     es.submit(new Runnable() {
@@ -151,7 +165,7 @@ public class RealTimeScheduler {
                             try {
                                 task.run();
                             } catch (Throwable t) {
-                                logger.error("Failed to execute task: " + task , t);
+                                logger.error("Failed to execute task: " + task, t);
                             }
                             long delay = System.nanoTime() - start;
                             if (delay > 1000000) { // more than one millis
@@ -164,19 +178,22 @@ public class RealTimeScheduler {
                             if (remains == 0) {
                                 long diff = System.nanoTime() - startAll;
                                 if (diff > 20000000L) {
-                                    logger.warn("All Tasks took to long to complete: " + (diff/1000000L) + "ms" + " count: " + count);
+                                    logger.warn("All Tasks took to long to complete: " + (diff / 1000000L) + "ms" + " count: " + count);
                                 }
 
                                 // run the callback on the scheduler to avoid SoE
-                                scheduler.execute(whenDone);
+                                scheduler.execute(next);
 
                             }
 
                         }
                     });
                 }
-                togo --;
+                togo--;
             }
+        } else {
+            // nothing to do, just scheduler the next runnable
+            next.run();
         }
     }
 

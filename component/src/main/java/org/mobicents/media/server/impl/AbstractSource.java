@@ -143,6 +143,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
      * @see org.mobicents.media.MediaSource#start().
      */
     public void start() {
+        System.out.println("XXXR STARTING RT SCHEDULER");
         rtScheduler.start();
     	synchronized(worker) {
     		//check scheduler
