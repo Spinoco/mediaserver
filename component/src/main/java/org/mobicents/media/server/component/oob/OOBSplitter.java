@@ -26,9 +26,7 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.memory.Frame;
 
 /**
@@ -51,10 +49,13 @@ public class OOBSplitter {
 	private final OutsideMixTask outsideMixer;
 	private final AtomicBoolean started;
 
+	private RealTimeScheduler rtScheduler;
+
 	protected long mixCount = 0;
 
 	public OOBSplitter(PriorityQueueScheduler scheduler) {
 		this.scheduler = scheduler;
+		this.rtScheduler = scheduler.providRealTimeScheduler();
 		this.insideComponents = new ConcurrentMap<OOBComponent>();
 		this.outsideComponents = new ConcurrentMap<OOBComponent>();
 		this.insideMixer = new InsideMixTask();
@@ -89,27 +90,29 @@ public class OOBSplitter {
 	}
 
 	public void start() {
+		rtScheduler.start();
 		mixCount = 0;
 		started.set(true);
-		scheduler.submit(insideMixer, EventQueueType.RTP_MIXER);
-		scheduler.submit(outsideMixer, EventQueueType.RTP_MIXER);
+		rtScheduler.schedule(insideMixer, RTEventQueueType.RTP_MIXER);
+		rtScheduler.schedule(outsideMixer, RTEventQueueType.RTP_MIXER);
 	}
 
 	public void stop() {
 		started.set(false);
 		insideMixer.cancel();
 		outsideMixer.cancel();
+		rtScheduler.shutdown();
 	}
 
-	private class InsideMixTask extends Task {
+	private class InsideMixTask extends Task<RTEventQueueType> {
 
 	    public InsideMixTask() {
 			super();
 		}
 
 		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.RTP_MIXER;
+		public RTEventQueueType getQueueType() {
+			return RTEventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -128,7 +131,7 @@ public class OOBSplitter {
 			}
 
 			if (current == null) {
-				scheduler.submit(this, EventQueueType.RTP_MIXER);
+				rtScheduler.schedule(this, RTEventQueueType.RTP_MIXER);
 				mixCount++;
 				return 0;
 			}
@@ -144,21 +147,21 @@ public class OOBSplitter {
 				}
 			}
 
-			scheduler.submit(this, EventQueueType.RTP_MIXER);
+			rtScheduler.schedule(this, RTEventQueueType.RTP_MIXER);
 			mixCount++;
 			return 0;
 		}
 	}
 
-	private class OutsideMixTask extends Task {
+	private class OutsideMixTask extends Task<RTEventQueueType> {
 
 		public OutsideMixTask() {
 			super();
 		}
 
 		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.RTP_MIXER;
+		public RTEventQueueType getQueueType() {
+			return RTEventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -177,7 +180,7 @@ public class OOBSplitter {
 			}
 
 			if (current == null) {
-				scheduler.submit(this, EventQueueType.RTP_MIXER);
+				rtScheduler.schedule(this, RTEventQueueType.RTP_MIXER);
 				mixCount++;
 				return 0;
 			}
@@ -193,7 +196,7 @@ public class OOBSplitter {
 				}
 			}
 
-			scheduler.submit(this, EventQueueType.RTP_MIXER);
+			rtScheduler.schedule(this, RTEventQueueType.RTP_MIXER);
 			mixCount++;
 			return 0;
 		}

@@ -25,9 +25,7 @@ package org.mobicents.media.server.impl;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.MediaSource;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.memory.Frame;
 
 /**
@@ -64,6 +62,9 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     //scheduler instance
     protected PriorityQueueScheduler scheduler;
 
+    // for realtime tasks
+    protected RealTimeScheduler rtScheduler;
+
     //media generator
     private final Worker worker;
 
@@ -83,10 +84,11 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
      * @param name
      *            the name of the source to be created.
      */
-    public AbstractSource(String name, PriorityQueueScheduler scheduler,EventQueueType queueNumber) {
+    public AbstractSource(String name, PriorityQueueScheduler scheduler, RTEventQueueType queueNumber) {
         super(name);
         this.scheduler = scheduler;
-        this.worker = new Worker(queueNumber);        
+        this.rtScheduler = scheduler.providRealTimeScheduler();
+        this.worker = new Worker(queueNumber, this.rtScheduler);
     }    
 
     /**
@@ -141,6 +143,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
      * @see org.mobicents.media.MediaSource#start().
      */
     public void start() {
+        rtScheduler.start();
     	synchronized(worker) {
     		//check scheduler
     		try {
@@ -173,7 +176,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     			
     			//scheduler worker    
     			worker.reinit();
-    			scheduler.submit(worker,worker.getQueueType());
+                rtScheduler.schedule(worker,worker.getQueueType());
     			
     			//started!
     			started();
@@ -196,7 +199,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
             
             if (!this.isSynchronized) {
                 this.isSynchronized = true;
-                scheduler.submit(worker,worker.getQueueType());
+                rtScheduler.schedule(worker,worker.getQueueType());
             }
         }
     }
@@ -220,6 +223,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         }
         	
         timestamp = 0;
+        rtScheduler.shutdown();
     }
 
     public void activate()
@@ -235,7 +239,6 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     /**
      * (Non Java-doc).
      *
-     * @see org.mobicents.media.MediaSource#connect(org.mobicents.media.MediaSink)
      */
     protected void connect(AbstractSink sink) {
         this.mediaSink = sink;
@@ -246,7 +249,6 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     /**
      * (Non Java-doc).
      *
-     * @see org.mobicents.media.MediaSource#disconnect(org.mobicents.media.server.spi.io.Pipe)
      */
     protected void disconnect() {
     	if(this.mediaSink!=null)
@@ -258,8 +260,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
 
     /**
      * (Non Java-doc).
-     * 
-     * @see org.mobicents.media.MediaSink#isConnected().
+     *
      */
     public boolean isConnected() {
         return mediaSink != null;
@@ -278,10 +279,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
      * This method must be overriden by concrete media source. T
      * he media have to fill buffer with media data and
      * attributes.
-     * 
-     * @param buffer the buffer object for media.
-     * @param sequenceNumber
-     *            the number of timer ticks from the begining.
+     *
      */
     public abstract Frame evolve(long timestamp);
 
@@ -316,8 +314,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
 
     /**
      * (Non Java-doc).
-     * 
-     * @see org.mobicents.media.MediaSource#getPacketsReceived()
+     *
      */
     public long getPacketsTransmitted() {
     	return txPackets;
@@ -345,23 +342,26 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     /**
      * Media generator task
      */
-    private class Worker extends Task {
+    private class Worker extends Task<RTEventQueueType> {
     	/**
          * Creates new instance of task.
          *
          * @param scheduler the scheduler instance.
          */
-    	private EventQueueType queueNumber;
+    	private RTEventQueueType queueNumber;
+    	private RealTimeScheduler rtScheduler;
     	private long initialTime;
     	int readCount=0,length;
     	long overallDelay=0;
     	Frame frame;
     	long frameDuration;
     	Boolean isEOM;
+
     	
-    	public Worker(EventQueueType queueNumber) {
+    	public Worker(RTEventQueueType queueNumber, RealTimeScheduler rtScheduler) {
             super();
             this.queueNumber=queueNumber;
+            this.rtScheduler=rtScheduler;
             initialTime=scheduler.getClock().getTime();            
         }
         
@@ -370,7 +370,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         	initialTime=scheduler.getClock().getTime();        	
         }
         
-        public EventQueueType getQueueType()
+        public RTEventQueueType getQueueType()
         {
         	return queueNumber;
         }
@@ -384,7 +384,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         	if(initialDelay+initialTime>scheduler.getClock().getTime())
         	{
         		//not a time yet
-        		scheduler.submit(this,queueNumber);
+        		rtScheduler.schedule(this,queueNumber);
                 return 0;
         	}
         	
@@ -404,7 +404,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         			else
         			{
         				//frame was generated so continue
-        				scheduler.submit(this,queueNumber);
+        				rtScheduler.schedule(this,queueNumber);
         	            return 0;
         			}
             	}
@@ -457,7 +457,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
             	}            
         	}
         	
-        	scheduler.submit(this,queueNumber);
+        	rtScheduler.schedule(this,queueNumber);
             return 0;
         }
 

@@ -28,6 +28,7 @@ import org.mobicents.media.server.component.oob.OOBInput;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
+import org.mobicents.media.server.scheduler.RTEventQueueType;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.format.Formats;
@@ -95,7 +96,7 @@ public class GeneratorImpl extends AbstractSource implements DtmfGenerator, Pool
     DtmfGeneratorEvent event=new DtmfGeneratorEvent(GeneratorImpl.this,DtmfGeneratorEvent.COMPLETED);
     
     public GeneratorImpl(String name, PriorityQueueScheduler scheduler) {
-        super(name, scheduler, EventQueueType.PLAYBACK);
+        super(name, scheduler, RTEventQueueType.DTMF_GEN);
         dt = 1.0 / linear.getSampleRate();
         
         this.input=new AudioInput(ComponentType.DTMF_GENERATOR.getType(),packetSize);
@@ -275,7 +276,7 @@ public class GeneratorImpl extends AbstractSource implements DtmfGenerator, Pool
         int eventDuration=0;
         int oobVolume;
         public OOBGenerator(PriorityQueueScheduler scheduler,OOBInput input) {
-            super("oob generator", scheduler,EventQueueType.PLAYBACK);
+            super("oob generator", scheduler, RTEventQueueType.DTMF_GEN);
             this.connect(input);
         }
         

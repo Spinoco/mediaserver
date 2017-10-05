@@ -24,15 +24,13 @@ package org.mobicents.media.server.io.ss7;
 
 import java.io.IOException;
 
-import org.mobicents.media.server.scheduler.EventQueueType;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.protocols.stream.api.SelectorKey;
 import org.mobicents.media.hardware.dahdi.Channel;
 import org.mobicents.media.hardware.dahdi.SelectorKeyImpl;
 import org.mobicents.media.hardware.dahdi.Selector;
 import javolution.util.FastList;
 import org.apache.log4j.Logger;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
 
 /**
  * Implements schedulable IO over UDP
@@ -62,6 +60,7 @@ public class SS7Manager {
     private final Object LOCK = new Object();
     
     protected PriorityQueueScheduler scheduler;
+    private RealTimeScheduler rtScheduler;
     /**
      * Creates UDP periphery.
      * 
@@ -71,6 +70,7 @@ public class SS7Manager {
      */
     public SS7Manager(PriorityQueueScheduler scheduler) throws IOException {
     	this.scheduler=scheduler;
+    	this.rtScheduler = scheduler.providRealTimeScheduler();
         this.selector = new Selector();
         pollTask = new PollTask();
     }
@@ -115,6 +115,7 @@ public class SS7Manager {
      * Starts polling the network.
      */
     public void start() {
+        rtScheduler.start();
     	synchronized(LOCK) {
     		if (this.isActive) return;
 
@@ -129,6 +130,7 @@ public class SS7Manager {
      * Stops polling the network.
      */
     public void stop() {
+        rtScheduler.shutdown();
     	synchronized(LOCK) {
     		if (!this.isActive) return;
 
@@ -141,7 +143,7 @@ public class SS7Manager {
     /**
      * Schedulable task for polling UDP channels
      */
-    private class PollTask extends Task {
+    private class PollTask extends Task<RTEventQueueType> {
 
         /**
          * Creates new instance of this task
@@ -151,8 +153,8 @@ public class SS7Manager {
             super();
         }
 
-        public EventQueueType getQueueType() {
-            return EventQueueType.SS7_RECEIVER;
+        public RTEventQueueType getQueueType() {
+            return RTEventQueueType.SS7_RECEIVER;
         }       
 
         @Override
@@ -172,7 +174,7 @@ public class SS7Manager {
             } catch (IOException e) {              	
                 return 0;
             } finally {
-                scheduler.submit(this, EventQueueType.SS7_RECEIVER);
+                rtScheduler.schedule(this, RTEventQueueType.SS7_RECEIVER);
             }
 
             return 0;
@@ -182,7 +184,7 @@ public class SS7Manager {
          * Immediately start current task
          */
         public void startNow() {
-            scheduler.submit(this, EventQueueType.SS7_RECEIVER);
+            rtScheduler.schedule(this, RTEventQueueType.SS7_RECEIVER);
         }
     }
 }

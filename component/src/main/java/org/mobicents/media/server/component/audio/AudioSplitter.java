@@ -27,9 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 
@@ -43,6 +41,7 @@ public class AudioSplitter {
 
 	// scheduler for mixer job scheduling
 	private final PriorityQueueScheduler scheduler;
+	private final RealTimeScheduler realTimeScheduler;
 
 	// the format of the output stream.
 	private static final AudioFormat FORMAT = FormatFactory.createAudioFormat("LINEAR", 8000, 16, 1);
@@ -63,6 +62,7 @@ public class AudioSplitter {
 
 	public AudioSplitter(PriorityQueueScheduler scheduler) {
 		this.scheduler = scheduler;
+		this.realTimeScheduler = scheduler.providRealTimeScheduler();
 		this.insideMixer = new InsideMixTask();
 		this.outsideMixer = new OutsideMixTask();
 		this.insideComponents = new ConcurrentMap<AudioComponent>();
@@ -113,22 +113,24 @@ public class AudioSplitter {
 
 	public void start() {
 	    if(!this.started.get()) {
+	    	realTimeScheduler.start();
 	        mixCount.set(0);
 	        started.set(true);
-	        scheduler.submit(insideMixer, EventQueueType.RTP_MIXER);
-	        scheduler.submit(outsideMixer, EventQueueType.RTP_MIXER);
+	        realTimeScheduler.schedule(insideMixer, RTEventQueueType.RTP_MIXER);
+	        realTimeScheduler.schedule(outsideMixer, RTEventQueueType.RTP_MIXER);
 	    }
 	}
 
 	public void stop() {
 	    if(this.started.get()) {
+	    	realTimeScheduler.shutdown();
 	        started.set(false);
 	        insideMixer.cancel();
 	        outsideMixer.cancel();
 	    }
 	}
 
-	private class InsideMixTask extends Task {
+	private class InsideMixTask extends Task<RTEventQueueType> {
 
 	    private final int[] total = new int[PACKET_SIZE / 2];
 
@@ -137,8 +139,8 @@ public class AudioSplitter {
 		}
 
 		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.RTP_MIXER;
+		public RTEventQueueType getQueueType() {
+			return RTEventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -164,7 +166,7 @@ public class AudioSplitter {
 			}
 
 			if (first) {
-				scheduler.submit(this, EventQueueType.RTP_MIXER);
+				realTimeScheduler.schedule(this, RTEventQueueType.RTP_MIXER);
 				mixCount.incrementAndGet();
 				return 0;
 			}
@@ -203,13 +205,13 @@ public class AudioSplitter {
 				component.offer(total);
 			}
 
-			scheduler.submit(this, EventQueueType.RTP_MIXER);
+			realTimeScheduler.schedule(this, RTEventQueueType.RTP_MIXER);
 			mixCount.incrementAndGet();
 			return 0;
 		}
 	}
 
-	private class OutsideMixTask extends Task {
+	private class OutsideMixTask extends Task<RTEventQueueType> {
 	    
 		private final int[] total = new int[PACKET_SIZE / 2];
 
@@ -218,8 +220,8 @@ public class AudioSplitter {
 		}
 
 		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.RTP_MIXER;
+		public RTEventQueueType getQueueType() {
+			return RTEventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -253,7 +255,7 @@ public class AudioSplitter {
 			}
 
 			if (first) {
-				scheduler.submit(this, EventQueueType.RTP_MIXER);
+				realTimeScheduler.schedule(this, RTEventQueueType.RTP_MIXER);
 				mixCount.incrementAndGet();
 				return 0;
 			}
@@ -289,7 +291,7 @@ public class AudioSplitter {
 				component.offer(total);
 			}
 
-			scheduler.submit(this, EventQueueType.RTP_MIXER);
+			realTimeScheduler.schedule(this, RTEventQueueType.RTP_MIXER);
 			mixCount.incrementAndGet();
 			return 0;
 		}

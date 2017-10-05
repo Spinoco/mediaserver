@@ -26,6 +26,7 @@ import org.mobicents.media.server.impl.AbstractSink;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
+import org.mobicents.media.server.scheduler.RTEventQueueType;
 import org.mobicents.media.server.spi.memory.Frame;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -46,7 +47,7 @@ public class OOBOutput extends AbstractSource {
      * Creates new instance with default name.
      */
     public OOBOutput(PriorityQueueScheduler scheduler,int outputId) {
-        super("compound.output(OOBOutput)", scheduler, EventQueueType.RTP_OUTPUT);
+        super("compound.output(OOBOutput)", scheduler, RTEventQueueType.RTP_OUTPUT);
         this.outputId=outputId;
     }
 

@@ -48,14 +48,8 @@ public class PriorityQueueScheduler  {
     //The clock for time measurement
     private Clock clock;
 
-    // Queues for RTP Tasks, real time 20ms timer
-    protected OrderedTaskQueue rtpInputQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue rtpMixerQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue rtpOuputQ = new OrderedTaskQueue();
-
     // queues for heartbeat, 100ms, nest effort
     protected OrderedTaskQueue heartbeatQ = new OrderedTaskQueue();
-
 
 
     private Logger logger = Logger.getLogger(PriorityQueueScheduler.class) ;
@@ -78,19 +72,14 @@ public class PriorityQueueScheduler  {
         }
     }
 
+    // all resources are static and reused by scheduler.
     private ScheduledExecutorService schedulerV2 = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory("ms-v2-scheduler"));
-
-
     private ExecutorService workerExecutorV2 =  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4, new NamedThreadFactory("ms-v2-worker"));
-    private ExecutorService workerExecutorV2RT =  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-v2-rt-worker"));
+
+    private ExecutorService workerExecutorV2RT =  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4, new NamedThreadFactory("ms-v2-rt-worker"));
+    private ScheduledExecutorService schedulerV2RT = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-v2-rt-scheduler"));
 
 
-    private RealTimeScheduler rtpScheduler = new RealTimeScheduler(
-            20000000 // 20 ms
-            , new OrderedTaskQueue[] { rtpInputQ, rtpMixerQ, rtpOuputQ }
-            , workerExecutorV2RT
-            , new NamedThreadFactory("ms-rt-rtp")
-    );
 
     private class DrainQueue implements Runnable {
         private OrderedTaskQueue queue;
@@ -141,7 +130,18 @@ public class PriorityQueueScheduler  {
     }
 
 
-    
+    /** for real time tasks, provides scheduler that schedules tasks with 20ms metronome **/
+    public RealTimeScheduler providRealTimeScheduler() {
+        return (
+            new RealTimeScheduler(
+                20000000 // 20 ms
+                , workerExecutorV2RT
+                , schedulerV2RT
+            )
+        );
+    }
+
+
     /**
      * Sets clock.
      *
@@ -168,17 +168,6 @@ public class PriorityQueueScheduler  {
     public void submit(Task task, EventQueueType tpe) {
         task.activateTask();
         switch(tpe) {
-            case RTP_INPUT :
-                rtpInputQ.accept(task);
-                break;
-
-            case RTP_OUTPUT :
-                rtpOuputQ.accept(task);
-                break;
-
-            case RTP_MIXER :
-                rtpMixerQ.accept(task);
-                break;
 
             case HEARTBEAT :
                 heartbeatQ.accept(task);
@@ -233,14 +222,8 @@ public class PriorityQueueScheduler  {
         }
         logger.info("Starting Priority Queue Scheduler started");
 
-
         logger.info("Starting HEARTBEAT scheduler");
         schedulerV2.scheduleAtFixedRate(new DrainQueue(heartbeatQ, EventQueueType.HEARTBEAT, workerExecutorV2), 100, 100, TimeUnit.MILLISECONDS);
-
-        logger.info("Starting RTP Queues");
-
-        rtpScheduler.start();
-
 
         logger.info("Priority Queue Scheduler started");
     }
@@ -252,8 +235,9 @@ public class PriorityQueueScheduler  {
         logger.info("Shutting down Priority Queue Scheduler");
         schedulerV2.shutdown();
         workerExecutorV2.shutdown();
-        rtpScheduler.shutdown();
         workerExecutorV2RT.shutdown();
+        schedulerV2RT.shutdown();
+
         logger.info("Shutdown of Priority Queue Scheduler completed");
 
     }

@@ -31,9 +31,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 
  * @author yulian oifa
  */
-public class OrderedTaskQueue {
+public class OrderedTaskQueue<E> {
 	//inner holder for tasks
-    private ConcurrentLinkedQueue<Task> taskList = new ConcurrentLinkedQueue<Task>();
+    private ConcurrentLinkedQueue<Task<E>> taskList = new ConcurrentLinkedQueue<Task<E>>();
 
 
     // return number of available tasks to be processed
@@ -49,7 +49,7 @@ public class OrderedTaskQueue {
      * @param task the task to be queued.
      * @return TaskExecutor for the scheduled task.
      */
-    public void accept(Task task) {
+    public void accept(Task<E> task) {
         if(!task.isInQueue()) {
             taskList.offer(task);
             task.storedInQueue();
@@ -62,7 +62,7 @@ public class OrderedTaskQueue {
      * 
      * @return task which has earliest dead line
      */
-    public Task poll() {
+    public Task<E> poll() {
     	Task result = taskList.poll();
     	result.removeFromQueue();
     	return result;

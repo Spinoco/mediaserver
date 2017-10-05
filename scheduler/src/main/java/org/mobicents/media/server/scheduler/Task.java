@@ -30,7 +30,7 @@ import org.apache.log4j.Logger;
  * 
  * @author Oifa Yulian
  */
-public abstract class Task implements Runnable {
+public abstract class Task< E > implements Runnable {
 
     private volatile boolean isActive = true;
     //error handler instance
@@ -73,7 +73,7 @@ public abstract class Task implements Runnable {
      * 
      * @return the value of queue
      */
-    public abstract EventQueueType getQueueType();
+    public abstract E getQueueType();
     
     
     /**

@@ -44,6 +44,7 @@ import org.mobicents.media.server.impl.resource.mediaplayer.audio.tts.TtsTrackIm
 import org.mobicents.media.server.impl.resource.mediaplayer.audio.wav.WavTrackImpl;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
+import org.mobicents.media.server.scheduler.RTEventQueueType;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ResourceUnavailableException;
 import org.mobicents.media.server.spi.dsp.Processor;
@@ -105,7 +106,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
      * @param scheduler EDF job scheduler
      */
     public AudioPlayerImpl(String name, PriorityQueueScheduler scheduler) {
-        super(name, scheduler, EventQueueType.RTP_INPUT);
+        super(name, scheduler, RTEventQueueType.RTP_INPUT);
         this.input = new AudioInput(ComponentType.PLAYER.getType(), packetSize);
         this.listeners = new Listeners<PlayerListener>();
         this.connect(this.input);

@@ -26,6 +26,7 @@ import org.mobicents.media.server.impl.AbstractSink;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
+import org.mobicents.media.server.scheduler.RTEventQueueType;
 import org.mobicents.media.server.spi.memory.Frame;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -46,7 +47,7 @@ public class AudioOutput extends AbstractSource {
 	 * Creates new instance with default name.
 	 */
 	public AudioOutput(PriorityQueueScheduler scheduler, int outputId) {
-		super("compound.output(AudioOutput)", scheduler, EventQueueType.RTP_MIXER);
+		super("compound.output(AudioOutput)", scheduler, RTEventQueueType.RTP_MIXER);
 		this.outputId = outputId;
 	}
 

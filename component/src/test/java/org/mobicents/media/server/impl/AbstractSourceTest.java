@@ -15,10 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mobicents.media.server.scheduler.Clock;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.WallClock;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.format.Formats;
@@ -156,7 +153,7 @@ public class AbstractSourceTest {
 		private long seq = 0;
         
         public MyTestSource(PriorityQueueScheduler scheduler) {
-            super("", scheduler, EventQueueType.RTP_OUTPUT);
+            super("", scheduler, RTEventQueueType.RTP_OUTPUT);
         }
 
         @Override

@@ -26,6 +26,7 @@ import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
+import org.mobicents.media.server.scheduler.RTEventQueueType;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.memory.Frame;
@@ -47,7 +48,7 @@ public class OOBSender extends AbstractSource {
     private int currentIndex=0;
     
     public OOBSender(PriorityQueueScheduler scheduler) {
-        super("oob.generator", scheduler, EventQueueType.RTP_INPUT);
+        super("oob.generator", scheduler, RTEventQueueType.RTP_INPUT);
         
         this.input=new OOBInput(ComponentType.SINE.getType());
         this.connect(this.input); 

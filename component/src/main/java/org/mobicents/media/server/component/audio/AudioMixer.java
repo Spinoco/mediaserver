@@ -26,9 +26,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 
@@ -40,6 +38,7 @@ import org.mobicents.media.server.spi.format.FormatFactory;
 public class AudioMixer {
 	// scheduler for mixer job scheduling
 	private PriorityQueueScheduler scheduler;
+	private RealTimeScheduler realTimeScheduler;
 
 	// the format of the output stream.
 	private AudioFormat format = FormatFactory.createAudioFormat("LINEAR", 8000, 16, 1);
@@ -60,6 +59,7 @@ public class AudioMixer {
 
 	public AudioMixer(PriorityQueueScheduler scheduler) {
 		this.scheduler = scheduler;
+		this.realTimeScheduler = scheduler.providRealTimeScheduler();
 		this.mixer = new MixTask();
 	}
 
@@ -92,17 +92,19 @@ public class AudioMixer {
 	}
 
 	public void start() {
+		this.realTimeScheduler.start();
 		mixCount = 0;
 		started = true;
-		scheduler.submit(mixer, EventQueueType.RTP_MIXER);
+		realTimeScheduler.schedule(mixer, RTEventQueueType.RTP_MIXER);
 	}
 
 	public void stop() {
 		started = false;
 		mixer.cancel();
+		this.realTimeScheduler.shutdown();
 	}
 
-	private class MixTask extends Task {
+	private class MixTask extends Task<RTEventQueueType> {
 		int sourcesCount = 0;
 		private int i;
 		private int minValue = 0;
@@ -116,8 +118,8 @@ public class AudioMixer {
 		}
 
 		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.RTP_MIXER;
+		public RTEventQueueType getQueueType() {
+			return RTEventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -150,7 +152,7 @@ public class AudioMixer {
 			}
 
 			if (sourcesCount == 0) {
-				scheduler.submit(this,  EventQueueType.RTP_MIXER);
+				realTimeScheduler.schedule(this,  RTEventQueueType.RTP_MIXER);
 				mixCount++;
 				return 0;
 			}
@@ -197,7 +199,7 @@ public class AudioMixer {
 				}
 			}
 
-			scheduler.submit(this,  EventQueueType.RTP_MIXER);
+			realTimeScheduler.schedule(this,  RTEventQueueType.RTP_MIXER);
 			mixCount++;
 			return 0;
 		}

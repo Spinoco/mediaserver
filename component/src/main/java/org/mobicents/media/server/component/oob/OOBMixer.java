@@ -27,9 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.memory.Frame;
 
 /**
@@ -41,6 +39,7 @@ import org.mobicents.media.server.spi.memory.Frame;
 public class OOBMixer {
 
 	private final PriorityQueueScheduler scheduler;
+	private final RealTimeScheduler realTimeScheduler;
 	private final ConcurrentMap<OOBComponent> components;
 	private final MixTask mixer;
 
@@ -49,6 +48,7 @@ public class OOBMixer {
 
 	public OOBMixer(PriorityQueueScheduler scheduler) {
 		this.scheduler = scheduler;
+		this.realTimeScheduler = scheduler.providRealTimeScheduler();
 		this.components = new ConcurrentMap<OOBComponent>();
 		this.mixer = new MixTask();
 		this.started = new AtomicBoolean(false);
@@ -65,8 +65,7 @@ public class OOBMixer {
 
 	/**
 	 * Releases unused input stream
-	 * 
-	 * @param input
+	 *
 	 *            the input stream previously created
 	 */
 	public void release(OOBComponent component) {
@@ -75,28 +74,30 @@ public class OOBMixer {
 
     public void start() {
         if (!this.started.get()) {
+        	realTimeScheduler.start();
             started.set(true);
             mixCount.set(0);
-            scheduler.submit(mixer,  EventQueueType.RTP_MIXER);
+            realTimeScheduler.schedule(mixer,  RTEventQueueType.RTP_MIXER);
         }
     }
 
     public void stop() {
         if (this.started.get()) {
+        	realTimeScheduler.shutdown();
             started.set(false);
             mixer.cancel();
         }
     }
 
-	private final class MixTask extends Task {
+	private final class MixTask extends Task<RTEventQueueType> {
 
 		public MixTask() {
 			super();
 		}
 
 		@Override
-		public EventQueueType getQueueType() {
-			return  EventQueueType.RTP_MIXER;
+		public RTEventQueueType getQueueType() {
+			return  RTEventQueueType.RTP_MIXER;
 		}
 
 		@Override
@@ -117,7 +118,7 @@ public class OOBMixer {
 			}
 
 			if (current == null) {
-				scheduler.submit(this,  EventQueueType.RTP_MIXER);
+				realTimeScheduler.schedule(this,  RTEventQueueType.RTP_MIXER);
 				mixCount.incrementAndGet();
 				return 0;
 			}
@@ -132,7 +133,7 @@ public class OOBMixer {
 			}
 
 			if (current != null) current.recycle();
-			scheduler.submit(this,  EventQueueType.RTP_MIXER);
+			realTimeScheduler.schedule(this,  RTEventQueueType.RTP_MIXER);
 			mixCount.incrementAndGet();
 			return 0;
 		}
