@@ -182,7 +182,7 @@ public class RealTimeScheduler {
                                 }
 
                                 // run the callback on the scheduler to avoid SoE
-                                scheduler.execute(next);
+                                next.run();
 
                             }
 
