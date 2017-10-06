@@ -185,26 +185,6 @@ public class RtcpChannel extends MultiplexedChannel implements DtlsListener, Ice
 		this.bound = true;
 	}
 
-	@Deprecated
-	public void bind(DatagramChannel channel) throws SocketException {
-		// External channel must be bound already
-		if (!channel.socket().isBound()) {
-			throw new SocketException("Datagram channel is not bound!");
-		}
-
-		try {
-			// Register the channel on UDP Manager
-			this.selectionKey = udpManager.open(channel, this);
-			this.dataChannel = channel;
-		} catch (IOException e) {
-			throw new SocketException(e.getMessage());
-		}
-
-		// activate media elements
-		onBinding();
-		this.bound = true;
-	}
-	
 	/**
 	 * Checks whether the channel is secure or not.
 	 * 

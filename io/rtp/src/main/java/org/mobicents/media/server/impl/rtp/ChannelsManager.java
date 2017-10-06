@@ -116,12 +116,7 @@ public class ChannelsManager {
     public UdpManager getUdpManager() {
     	return this.udpManager;
     }    
-    
-    @Deprecated
-    public RTPDataChannel getChannel() {
-        return new RTPDataChannel(this,channelIndex.incrementAndGet(), JitterBufferRTPDump.getDumpDir());
-    }
-    
+
     public RtpChannel getRtpChannel(RtpStatistics statistics, RtpClock clock, RtpClock oobClock, Path dumpDir) {
     	return new RtpChannel(channelIndex.incrementAndGet(), jitterBufferSize, statistics, clock, oobClock, scheduler, udpManager, dumpDir);
     }

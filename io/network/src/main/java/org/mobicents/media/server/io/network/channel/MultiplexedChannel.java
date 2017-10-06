@@ -116,7 +116,7 @@ public class MultiplexedChannel implements Channel {
 	}
 	
 	/**
-	 * 
+	 *
 	 * @param channel
 	 * @deprecated use {@link #setSelectionKey(SelectionKey)}
 	 */
@@ -124,7 +124,7 @@ public class MultiplexedChannel implements Channel {
 	public void setTransport(final DatagramChannel channel) {
 		this.dataChannel = channel;
 	}
-	
+
     protected void queueData(final byte[] data) {
         if (data != null && data.length > 0) {
             this.pendingData.offer(data);

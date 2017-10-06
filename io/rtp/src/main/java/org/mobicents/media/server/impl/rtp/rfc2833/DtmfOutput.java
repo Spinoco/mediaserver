@@ -26,7 +26,6 @@ import java.io.IOException;
 
 import org.mobicents.media.server.component.oob.OOBOutput;
 import org.mobicents.media.server.impl.AbstractSink;
-import org.mobicents.media.server.impl.rtp.RTPDataChannel;
 import org.mobicents.media.server.impl.rtp.RtpTransmitter;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.memory.Frame;
@@ -40,23 +39,10 @@ public class DtmfOutput extends AbstractSink {
 
 	private static final long serialVersionUID = 1333531209641759516L;
 
-	@Deprecated
-    private RTPDataChannel channel;
 	private RtpTransmitter transmitter;
     
     private OOBOutput oobOutput;
-    
-    /**
-     * Creates new transmitter
-     */
-    @Deprecated
-    public DtmfOutput(PriorityQueueScheduler scheduler,RTPDataChannel channel) {
-        super("Output");
-        this.channel=channel;
-        oobOutput=new OOBOutput(scheduler,1);
-        oobOutput.join(this);        
-    }
-    
+
     public DtmfOutput(final PriorityQueueScheduler scheduler,final RtpTransmitter transmitter) {
         super("Output");
         this.transmitter = transmitter;
@@ -81,11 +67,6 @@ public class DtmfOutput extends AbstractSink {
     
     @Override
     public void onMediaTransfer(Frame frame) throws IOException {
-    	// TODO deprecated - hrosa
-    	if(this.channel != null) {
-    		channel.sendDtmf(frame);
-    	}
-    	
     	if(this.transmitter != null) {
     		this.transmitter.sendDtmf(frame);
     	}

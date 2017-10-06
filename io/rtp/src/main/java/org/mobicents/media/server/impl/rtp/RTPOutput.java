@@ -48,9 +48,6 @@ public class RTPOutput extends AbstractSink {
 
 	private AudioFormat format = FormatFactory.createAudioFormat("LINEAR", 8000, 16, 1);
 
-	@Deprecated
-	private RTPDataChannel channel;
-
 	private RtpTransmitter transmitter;
 
 	// active formats
@@ -60,17 +57,6 @@ public class RTPOutput extends AbstractSink {
 	private Processor dsp;
 
 	private AudioOutput output;
-
-	/**
-	 * Creates new transmitter
-	 */
-	@Deprecated
-	protected RTPOutput(PriorityQueueScheduler scheduler, RTPDataChannel channel) {
-		super("Output");
-		this.channel = channel;
-		output = new AudioOutput(scheduler, 1);
-		output.join(this);
-	}
 
 	protected RTPOutput(PriorityQueueScheduler scheduler, RtpTransmitter transmitter) {
 		super("Output");
@@ -148,11 +134,6 @@ public class RTPOutput extends AbstractSink {
 			if (diff > 1000000) {
 				logger.warn("transmitter.send took too long: " + diff/1000000 + "ms");
 			}
-		}
-
-		// XXX deprecated code
-		if (this.channel != null) {
-			channel.send(frame);
 		}
 
 	}
