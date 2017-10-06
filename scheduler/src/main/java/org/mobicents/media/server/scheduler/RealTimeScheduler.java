@@ -47,9 +47,6 @@ public class RealTimeScheduler {
 
     private AtomicBoolean running = new AtomicBoolean(false); // when true scheduler is running
 
-
-
-
     public RealTimeScheduler(long cycleDelay, ExecutorService es, ScheduledExecutorService scheduler) {
         this.cycleDelay = cycleDelay;
         this.es = es;
@@ -84,7 +81,6 @@ public class RealTimeScheduler {
         }
     }
 
-
     /** schedules single cycle **/
     private void scheduleCycle(long start) {
         // start indicates start of cycle. This is increased in every cycle for `cyclicDelay` to possibly
@@ -118,9 +114,7 @@ public class RealTimeScheduler {
               });
           }
 
-
     }
-
 
     /**
      * Executes all task in given cycle.
@@ -142,7 +136,6 @@ public class RealTimeScheduler {
             scheduler.execute(whenDone)
         ))))));
     }
-
 
     /**
      * Executes tasks in
@@ -183,7 +176,6 @@ public class RealTimeScheduler {
 
                                 // run the callback on the scheduler to avoid SoE
                                 scheduler.execute(next);
-
                             }
 
                         }

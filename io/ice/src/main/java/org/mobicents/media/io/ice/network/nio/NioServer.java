@@ -45,7 +45,7 @@ import org.mobicents.media.io.ice.network.ProtocolHandler;
  */
 public class NioServer implements Runnable {
 	
-	private Logger logger = Logger.getLogger(NioServer.class);
+	private static Logger logger = Logger.getLogger(NioServer.class);
 
 	private static final int BUFFER_SIZE = 8192;
 

@@ -50,7 +50,7 @@ public class EventBuffer implements DtmfDetectorListener {
     private volatile boolean isActive = false;
     private ConcurrentLinkedQueue<DtmfEvent> queue = new ConcurrentLinkedQueue<DtmfEvent>();
     
-    private Logger logger = Logger.getLogger(EventBuffer.class);
+    private static Logger logger = Logger.getLogger(EventBuffer.class);
     
     public void activate() {
     	this.isActive = true;
