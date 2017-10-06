@@ -144,6 +144,14 @@ public class AudioSplitter {
 		}
 
 		@Override
+		public String toString() {
+			return "InsideMixerTask{" +
+					"values: " + insideComponents.size() +
+					"total:" + total.length +
+					"}";
+		}
+
+		@Override
 		public long perform() {
 			// summarize all
 			boolean first = true;

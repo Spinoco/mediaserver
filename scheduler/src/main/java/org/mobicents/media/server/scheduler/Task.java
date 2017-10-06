@@ -32,15 +32,13 @@ import org.apache.log4j.Logger;
  */
 public abstract class Task< E > implements Runnable {
 
-    private volatile boolean isActive = true;
+    private AtomicBoolean isActive = new AtomicBoolean(true);
     //error handler instance
     protected TaskListener listener;
     
-    private final Object LOCK = new Object();    
-        
-    private AtomicBoolean inQueue=new AtomicBoolean(false);
+    private AtomicBoolean inQueue =new AtomicBoolean(false);
 
-    private Logger logger = Logger.getLogger(Task.class);
+    private static Logger logger = Logger.getLogger(Task.class);
     
     public Task() { }
 
@@ -74,8 +72,7 @@ public abstract class Task< E > implements Runnable {
      * @return the value of queue
      */
     public abstract E getQueueType();
-    
-    
+
     /**
      * Executes task.
      * 
@@ -87,34 +84,30 @@ public abstract class Task< E > implements Runnable {
      * Cancels task execution
      */
     public void cancel() {
-    	synchronized(LOCK) {
-    		this.isActive = false;    		
-    	}
+        this.isActive.set(false);
     }
 
     //call should not be synchronized since can run only once in queue cycle
     public void run() {
-    		if (this.isActive)  {
-    			try {
-    				perform();                
-                
-    				//notify listener                
-    				if (this.listener != null) {
-    					this.listener.onTerminate();
-    				}
-    				
-    			} catch (Exception e) {
-    			    logger.error("Could not execute task: "+ e.getMessage(), e);
-    				if (this.listener != null) {
-    					listener.handlerError(e);
-    				} 
-    			}
-    		}      		    		    	
+        if (this.isActive.get())  {
+            try {
+                perform();
+
+                //notify listener
+                if (this.listener != null) {
+                    this.listener.onTerminate();
+                }
+
+            } catch (Exception e) {
+                logger.error("Could not execute task: "+ e.getMessage(), e);
+                if (this.listener != null) {
+                    listener.handlerError(e);
+                }
+            }
+        }
     }
 
     protected void activateTask() {
-    	synchronized(LOCK) {
-    		this.isActive = true;
-    	}
-    }    
+        this.isActive.set(true);
+    }
 }

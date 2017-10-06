@@ -52,7 +52,7 @@ public class AudioInput extends AbstractSink {
      * Creates new stream
      */
     public AudioInput(int inputId,int packetSize) {
-        super("compound.input");
+        super("compound.input(AudioInput)");
         this.inputId=inputId;
         this.packetSize=packetSize;
     }
