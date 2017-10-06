@@ -75,8 +75,6 @@ public class SS7DataChannel {
     
     private Formats formats = new Formats();
     
-    private Logger logger = Logger.getLogger(SS7DataChannel.class) ;
-    
     private boolean isALaw=false;
     private boolean shouldLoop=false;
     

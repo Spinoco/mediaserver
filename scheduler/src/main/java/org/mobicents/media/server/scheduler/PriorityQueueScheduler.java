@@ -52,7 +52,7 @@ public class PriorityQueueScheduler  {
     protected OrderedTaskQueue heartbeatQ = new OrderedTaskQueue();
 
 
-    private Logger logger = Logger.getLogger(PriorityQueueScheduler.class) ;
+    private static Logger logger = Logger.getLogger(PriorityQueueScheduler.class) ;
 
 
     private class NamedThreadFactory implements ThreadFactory {

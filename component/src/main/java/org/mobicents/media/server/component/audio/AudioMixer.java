@@ -22,7 +22,6 @@
 
 package org.mobicents.media.server.component.audio;
 
-import java.util.Arrays;
 import java.util.Iterator;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
@@ -83,7 +82,7 @@ public class AudioMixer {
 
 	/**
 	 * Modify gain of the output stream.
-	 * 
+	 *
 	 * @param gain
 	 *            the new value of the gain in dBm.
 	 */
@@ -167,13 +166,7 @@ public class AudioMixer {
 				}
 			}
 
-			if (minValue > 0) {
-				minValue = 0 - minValue;
-			}
-
-			if (minValue > maxValue) {
-				maxValue = minValue;
-			}
+			maxValue = Math.max(maxValue, Math.abs(minValue));
 
 			currGain = gain;
 			if (maxValue > Short.MAX_VALUE) {
@@ -189,13 +182,13 @@ public class AudioMixer {
 			while (activeComponents.hasNext()) {
 				AudioComponent component = activeComponents.next();
 				current = component.getData();
-				if (current != null && sourcesCount > 1) {
+				if (current == null) {
+					component.offer(total);
+				} else if (sourcesCount > 1) {
 					for (i = 0; i < total.length; i++) {
 						current[i] = total[i] - (short) ((double) current[i] * currGain);
 					}
 					component.offer(current);
-				} else if (current == null) {
-					component.offer(total);
 				}
 			}
 

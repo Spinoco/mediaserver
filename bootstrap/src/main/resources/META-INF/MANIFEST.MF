@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Main-Class: org.mobicents.media.server.bootstrap.decoder.DecodeRTPDump
+

@@ -55,7 +55,7 @@ public class DriverImpl implements Driver, JainMgcpListener {
     private ScheduledExecutorService scheduler;
     
     private MsControlFactoryImpl factory;
-    private Logger logger = Logger.getLogger(DriverImpl.class);
+    private static Logger logger = Logger.getLogger(DriverImpl.class);
     
     private int txID;
     

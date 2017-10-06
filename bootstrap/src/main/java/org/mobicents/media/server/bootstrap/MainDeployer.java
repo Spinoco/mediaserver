@@ -59,7 +59,7 @@ public class MainDeployer {
     /** Root deployment directory as file object */
     private File root;
     /** Logger instance */
-    private Logger logger = Logger.getLogger(MainDeployer.class);
+    private static Logger logger = Logger.getLogger(MainDeployer.class);
 
     /**
      * Creates new instance of deployer.

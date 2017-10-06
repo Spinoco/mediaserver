@@ -45,6 +45,7 @@ import org.mobicents.media.server.component.audio.AudioMixer;
 import org.mobicents.media.server.component.oob.OOBComponent;
 import org.mobicents.media.server.component.oob.OOBMixer;
 import org.mobicents.media.server.impl.resource.dtmf.DetectorImpl;
+import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.scheduler.Clock;
@@ -67,6 +68,7 @@ public class RTPEventTest implements DtmfDetectorListener {
 
     //clock and scheduler
     private Clock clock;
+    private RtpClock rtpClock;
     private PriorityQueueScheduler mediaScheduler;
     private Scheduler scheduler;
 
@@ -76,12 +78,11 @@ public class RTPEventTest implements DtmfDetectorListener {
 //    private SpectraAnalyzer analyzer;
     private DetectorImpl detector;
     
-    private RTPDataChannel channel;
+    private RtpChannel channel;
     
     private DspFactoryImpl dspFactory = new DspFactoryImpl();
     
-    private Dsp dsp11, dsp12;
-    private Dsp dsp21, dsp22;
+    private Dsp dsp11;
 
     private Sender sender;
     
@@ -113,13 +114,10 @@ public class RTPEventTest implements DtmfDetectorListener {
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.alaw.Decoder");
 
         dsp11 = dspFactory.newProcessor();
-        dsp12 = dspFactory.newProcessor();
 
-        dsp21 = dspFactory.newProcessor();
-        dsp22 = dspFactory.newProcessor();
-        
         //use default clock
         clock = new WallClock();
+        rtpClock = new RtpClock(clock);
 
         //create single thread scheduler
         mediaScheduler = new PriorityQueueScheduler();
@@ -138,12 +136,12 @@ public class RTPEventTest implements DtmfDetectorListener {
         detector.setDuration(40);
         detector.addListener(this);
         
-        channel = channelsManager.getChannel();
-        channel.bind(false);
+        channel = channelsManager.getRtpChannel(new RtpStatistics(rtpClock), rtpClock, rtpClock, null);
+        channel.bind(false, false);
 
         sender = new Sender(channel.getLocalPort());
         
-        channel.setPeer(new InetSocketAddress("127.0.0.1", 9200));
+        channel.setRemotePeer(new InetSocketAddress("127.0.0.1", 9200));
         channel.setInputDsp(dsp11);
         channel.setFormatMap(AVProfile.audio);
 
@@ -156,7 +154,7 @@ public class RTPEventTest implements DtmfDetectorListener {
         audioMixer.addComponent(detectorComponent);               
         
         oobMixer=new OOBMixer(mediaScheduler);
-        oobMixer.addComponent(channel.getOOBComponent());
+        oobMixer.addComponent(channel.getOobComponent());
         
         oobComponent=new OOBComponent(1);
         oobComponent.addOutput(detector.getOOBOutput());
@@ -204,14 +202,7 @@ public class RTPEventTest implements DtmfDetectorListener {
         private DatagramSocket socket;
         private ArrayList<byte[]> stream = new ArrayList<byte[]>();
         
-        private int port;
         private InetSocketAddress dst;
-        
-        private byte[][] evt = new byte[][]{
-            new byte[] {0x03, 0x0a, 0x00, (byte)0xa0},
-            new byte[] {0x03, 0x0a, 0x01, (byte)0x40},
-            new byte[] {0x03, 0x0a, 0x01, (byte)0xe0}
-        };
 
         private byte[][] evt1 = new byte[][]{
             new byte[] {0x0b, 0x0a, 0x00, (byte)0xa0},
@@ -234,7 +225,6 @@ public class RTPEventTest implements DtmfDetectorListener {
         	for(int i=0;i<zeroContent.length;i++)
         		zeroContent[i]=(byte)0xD5;
         	
-            this.port = port;
             dst = new InetSocketAddress("127.0.0.1", port);
             socket = new DatagramSocket(new InetSocketAddress("127.0.0.1", 9200));
             this.generateSequence(250);

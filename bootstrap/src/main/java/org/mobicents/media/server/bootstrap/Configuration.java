@@ -51,7 +51,7 @@ public class Configuration {
     private boolean isDirectory;
     private long lastModified;
     
-    private Logger logger = Logger.getLogger(Configuration.class);
+    private static Logger logger = Logger.getLogger(Configuration.class);
     
     public Configuration(String s, File directory) {
         this.directory = directory;

@@ -2,12 +2,11 @@ package org.mobicents.media.server.scheduler;
 
 import org.apache.log4j.Logger;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * A scheduler, that assures to run supplied tasks in real time.
@@ -35,21 +34,18 @@ public class RealTimeScheduler {
     private static Logger logger =  Logger.getLogger(RealTimeScheduler.class) ;
 
     // Queues for RTP Tasks, real time 20ms timer
-    protected OrderedTaskQueue<RTEventQueueType> rtpInputQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue<RTEventQueueType> rtpMixerQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue<RTEventQueueType> rtpOutputQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue<RTEventQueueType> ss7ReceiverQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue<RTEventQueueType> dtmfGenQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue<RTEventQueueType> dtmfInQ = new OrderedTaskQueue();
+    protected OrderedTaskQueue<RTEventQueueType> rtpInputQ = new OrderedTaskQueue<>();
+    protected OrderedTaskQueue<RTEventQueueType> rtpMixerQ = new OrderedTaskQueue<>();
+    protected OrderedTaskQueue<RTEventQueueType> rtpOutputQ = new OrderedTaskQueue<>();
+    protected OrderedTaskQueue<RTEventQueueType> ss7ReceiverQ = new OrderedTaskQueue<>();
+    protected OrderedTaskQueue<RTEventQueueType> dtmfGenQ = new OrderedTaskQueue<>();
+    protected OrderedTaskQueue<RTEventQueueType> dtmfInQ = new OrderedTaskQueue<>();
 
     private long cycleDelay;                        // delay between cycles, computed since start of each cycle, in nanos
     private ExecutorService es;                     // executor service to use to schedule execution of tasks in parallel
     private ScheduledExecutorService scheduler;     // Executor, that schedules next drain cycle to execute all tasks.
 
     private AtomicBoolean running = new AtomicBoolean(false); // when true scheduler is running
-
-
-
 
     public RealTimeScheduler(long cycleDelay, ExecutorService es, ScheduledExecutorService scheduler) {
         this.cycleDelay = cycleDelay;
@@ -74,6 +70,7 @@ public class RealTimeScheduler {
 
     /** schedules task to this queue mixer **/
     public void schedule(Task<RTEventQueueType> task , RTEventQueueType tpe) {
+        task.activateTask();
         switch (tpe) {
             case RTP_INPUT: rtpInputQ.accept(task); break;
             case RTP_OUTPUT: rtpOutputQ.accept(task); break;
@@ -83,7 +80,6 @@ public class RealTimeScheduler {
             case DTMF_IN: dtmfInQ.accept(task); break;
         }
     }
-
 
     /** schedules single cycle **/
     private void scheduleCycle(long start) {
@@ -110,7 +106,7 @@ public class RealTimeScheduler {
                               }
                           }, sleepNanos, TimeUnit.NANOSECONDS);
                       } else {
-                          // compute constant start of the next cycle 
+                          // compute constant start of the next cycle
                           scheduleCycle(start + cycleDelay);
                           // continue
                       }
@@ -118,9 +114,7 @@ public class RealTimeScheduler {
               });
           }
 
-
     }
-
 
     /**
      * Executes all task in given cycle.
@@ -133,16 +127,15 @@ public class RealTimeScheduler {
      *
      */
     private void executeCycle(final Runnable whenDone)  {
-        executeForQueue(this.rtpInputQ, () -> {
-        executeForQueue(this.rtpMixerQ, () -> {
-        executeForQueue(this.dtmfInQ, () -> {
-        executeForQueue(this.dtmfGenQ, () -> {
-        executeForQueue(this.rtpOutputQ, () -> {
-        executeForQueue(this.ss7ReceiverQ, () -> {
-            scheduler.execute(whenDone);
-        });  }); }); }); }); });
+        executeForQueue(this.rtpInputQ, () ->
+        executeForQueue(this.rtpMixerQ, () ->
+        executeForQueue(this.dtmfInQ, () ->
+        executeForQueue(this.dtmfGenQ, () ->
+        executeForQueue(this.rtpOutputQ, () ->
+        executeForQueue(this.ss7ReceiverQ, () ->
+            scheduler.execute(whenDone)
+        ))))));
     }
-
 
     /**
      * Executes tasks in
@@ -183,7 +176,6 @@ public class RealTimeScheduler {
 
                                 // run the callback on the scheduler to avoid SoE
                                 next.run();
-
                             }
 
                         }
@@ -196,10 +188,5 @@ public class RealTimeScheduler {
             next.run();
         }
     }
-
-
-
-
-
 
 }

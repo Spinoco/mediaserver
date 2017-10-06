@@ -31,6 +31,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +40,7 @@ import org.apache.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mobicents.media.server.io.network.channel.Channel;
 import org.mobicents.media.server.scheduler.Scheduler;
 import org.mobicents.media.server.scheduler.ServiceScheduler;
 
@@ -76,9 +78,9 @@ public class UdpPeripheryTest {
      */
     @Test
     public void testOpen() throws Exception {
-    	DatagramChannel channel = udpPeriphery.open(new TestHandler());
-        udpPeriphery.bind(channel, 1024);
-        assertTrue("Excepted bound socket", channel.socket().isBound());    	
+    	SelectionKey channel = udpPeriphery.open(new TestHandler());
+        udpPeriphery.bind((DatagramChannel) channel.channel(), 1024);
+        assertTrue("Excepted bound socket", ((DatagramChannel)channel.channel()).socket().isBound());
     }
 
     /**
@@ -96,27 +98,71 @@ public class UdpPeripheryTest {
         channel.socket().close();
     }
 
-    private class TestHandler implements ProtocolHandler {
+    private class TestHandler implements Channel {
 
-        public void receive(DatagramChannel channel) {
+        @Override
+        public String getLocalHost() {
+            return null;
         }
 
-        public void send(DatagramChannel channel) {
+        @Override
+        public int getLocalPort() {
+            return 0;
         }
 
-        public void setKey(SelectionKey key) {
+        @Override
+        public SocketAddress getLocalAddress() {
+            return null;
         }
 
-        public boolean isReadable() {
-            return true;
+        @Override
+        public void receive() throws IOException {
+
         }
 
-        public boolean isWriteable() {
-            return true;
+        @Override
+        public void send() throws IOException {
+
         }
 
-        public void onClosed() {
-        	
+        @Override
+        public boolean hasPendingData() {
+            return false;
+        }
+
+        @Override
+        public boolean isConnected() {
+            return false;
+        }
+
+        @Override
+        public boolean isOpen() {
+            return false;
+        }
+
+        @Override
+        public void bind(SocketAddress address) throws IOException {
+
+        }
+
+        @Override
+        public void connect(SocketAddress address) throws IOException {
+
+        }
+
+        @Override
+        public void disconnect() throws IOException {
+
+        }
+
+        @Override
+        public void open() throws IOException {
+
+        }
+
+        @Override
+        public void close() {
+
         }
     }
 
