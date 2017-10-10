@@ -101,7 +101,7 @@ public class AudioInput extends AbstractSink {
     			count+=activeData.length-byteIndex;
     			
     			if (buffer.size() >= limit) 
-            		buffer.poll().recycle();
+            		buffer.poll();
                 
             	buffer.offer(activeFrame);
             	
@@ -109,8 +109,6 @@ public class AudioInput extends AbstractSink {
     			activeData=null;    			    			
     		}
     	}
-    	frame.recycle();
-
     }
 
     /**
@@ -136,16 +134,10 @@ public class AudioInput extends AbstractSink {
      */
     public void recycle() {
     	while(buffer.size()>0)
-    		buffer.poll().recycle();
+    		buffer.poll();
     	
         activeFrame=null;
 		activeData=null;
 		byteIndex=0;		        
-    }
-    
-    public void resetBuffer()
-    {
-    	while(buffer.size()>0)
-    		buffer.poll().recycle();
     }
 }

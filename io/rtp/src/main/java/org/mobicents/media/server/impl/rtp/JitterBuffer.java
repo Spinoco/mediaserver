@@ -417,20 +417,14 @@ f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
 
 			Frame frame = null;
 			long rtpTime;
-			Frame old = null;
 
 			long comp = compensatedTimestamp(rtpClock.getLocalRtpTime());
 
 			while (queue.size() != 0) {
 				frame = queue.remove(0);
 				rtpTime = rtpClock.convertToRtpTime(frame.getTimestamp());
-				if (old != null) {
-					old.recycle();
-				}
 
-				if (comp > rtpTime) {
-					old = frame;
-				} else {
+				if (comp <= rtpTime) {
 					break;
 				}
 			}
@@ -471,7 +465,7 @@ f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
 		try {
 			LOCK.lock();
 			while (queue.size() > 0)
-				queue.remove(0).recycle();
+				queue.remove(0);
 		} finally {
 			LOCK.unlock();
 		}

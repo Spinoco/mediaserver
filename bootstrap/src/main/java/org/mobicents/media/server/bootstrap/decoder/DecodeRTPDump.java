@@ -84,8 +84,6 @@ public class DecodeRTPDump {
                 e.printStackTrace();
             }
             // recycle frames
-            pcmFrame.recycle();
-            rtpFrame.recycle();
 
         });
 

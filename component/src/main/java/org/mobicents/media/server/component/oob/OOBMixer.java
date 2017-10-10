@@ -120,9 +120,6 @@ public class OOBMixer {
 						component.offer(current.clone());
 					}
 				}
-
-				current.recycle();
-
 			}
 
 			next();

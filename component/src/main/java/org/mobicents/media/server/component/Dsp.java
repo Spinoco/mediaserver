@@ -59,11 +59,7 @@ public class Dsp implements Processor {
     }
 
     private Frame processFrame(Frame frame, Codec codec) {
-    	try {
-    		return codec.process(frame);
-		} finally {
-    		frame.recycle();
-		}
+		return codec.process(frame);
 	}
 
     @Override
