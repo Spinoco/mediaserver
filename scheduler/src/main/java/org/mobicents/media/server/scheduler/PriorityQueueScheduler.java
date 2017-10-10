@@ -90,7 +90,10 @@ public class PriorityQueueScheduler  {
     private ScheduledExecutorService heartBeatScheduler =
             Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-heartbeat"));
 
-
+    // rt scheduler that schedules tasks, that need to be run in 20ms metronome
+    // so the scheduled tasks here are scheduled from 1ns until 20ms
+    private ScheduledExecutorService rtScheduler =
+            Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-rt-scheduler"));
 
     // where realtime tasks are executed after being in rtScheduler
     private ExecutorService rtWorkerExecutor =
@@ -99,11 +102,6 @@ public class PriorityQueueScheduler  {
                     , new NamedForkJoinWorkerThreadFactory("ms-rt-worker")
                     , null, true
               );
-
-    // rt scheduler that schedules tasks, that need to be run in 20ms metronome
-    // so the scheduled tasks here are scheduled from 1ns until 20ms
-    private RealTimeScheduler rtScheduler = new RealTimeScheduler(20, rtWorkerExecutor);
-           // Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-rt-scheduler"));
 
     // scheudler for non realtime tasks. Note that here we expect blocking to occur
     private ExecutorService workerExecutor =
@@ -194,15 +192,13 @@ public class PriorityQueueScheduler  {
      * @param nanoDelay
      */
     public void submitRT(Task task, long nanoDelay) {
-        rtScheduler.schedule(task, nanoDelay);
-//        if (nanoDelay <= 0) {
-//            scheduleRTTaskNow(task);
-//        } else {
-//            rtScheduler.schedule(task, nanoDelay);
-////            rtScheduler.schedule(() -> {
-////               scheduleRTTaskNow(task);
-////            }, nanoDelay/1000000L, TimeUnit.MILLISECONDS);
-//        }
+        if (nanoDelay <= 0) {
+            scheduleRTTaskNow(task);
+        } else {
+            rtScheduler.schedule(() -> {
+               scheduleRTTaskNow(task);
+            }, nanoDelay/1000000L, TimeUnit.MILLISECONDS);
+        }
 
     }
 
@@ -225,8 +221,6 @@ public class PriorityQueueScheduler  {
         if (clock == null) {
             throw new IllegalStateException("Clock is not set");
         }
-
-        rtScheduler.start();
 
         logger.info("Priority Queue Scheduler started");
     }
