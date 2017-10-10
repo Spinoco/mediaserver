@@ -22,18 +22,17 @@
 
 package org.mobicents.media.core;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.scheduler.Clock;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ControlProtocol;
 import org.mobicents.media.server.spi.MediaServer;
 import org.mobicents.media.server.spi.ServerManager;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implementation of a Media Server.
@@ -166,6 +165,7 @@ public class Server implements MediaServer {
 
         public void restart() {
             ttl = heartbeatTime * 600;
+            this.activateTask();
             scheduler.submitHeartbeat(this);
         }
 

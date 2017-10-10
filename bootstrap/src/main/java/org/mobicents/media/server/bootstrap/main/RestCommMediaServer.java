@@ -21,12 +21,9 @@
 
 package org.mobicents.media.server.bootstrap.main;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Scheduler;
 import org.mobicents.media.server.scheduler.Task;
@@ -34,7 +31,8 @@ import org.mobicents.media.server.spi.ControlProtocol;
 import org.mobicents.media.server.spi.MediaServer;
 import org.mobicents.media.server.spi.ServerManager;
 
-import com.google.inject.Inject;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Henrique Rosa (henrique.rosa@telestax.com)
@@ -148,6 +146,7 @@ public class RestCommMediaServer implements MediaServer {
 
         public void restart() {
             ttl = heartbeatTime * 600;
+            this.activateTask();
             mediaScheduler.submitHeartbeat(this);
         }
 

@@ -25,14 +25,11 @@ package org.mobicents.media.server.impl;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.MediaSource;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.MetronomeTask;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.memory.Frame;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The base implementation of the Media source.
@@ -174,7 +171,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
                         mediaSink.start();
 
                     //scheduler worker
-                    worker.reinit();
+                    worker.activateTask();
                     scheduler.submitRT(worker, initialDelay);
 
                     //started!

@@ -22,9 +22,6 @@
 
 package org.mobicents.media.server.mgcp.pkg.trunk;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetector;
@@ -32,13 +29,15 @@ import org.mobicents.media.server.impl.resource.phone.PhoneSignalGenerator;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
 import org.mobicents.media.server.mgcp.controller.signal.Signal;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.MediaType;
 import org.mobicents.media.server.spi.tone.ToneDetectorListener;
 import org.mobicents.media.server.spi.tone.ToneEvent;
 import org.mobicents.media.server.utils.Text;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Implements continuity transporder signal.
  * 

@@ -178,6 +178,7 @@ public class SS7Manager {
          * Immediately start current task
          */
         public void startNow() {
+            this.activateTask();
             scheduler.submit(this);
         }
     }

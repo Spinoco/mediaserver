@@ -161,6 +161,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
         output.start();
         oobOutput.start();
         if (this.postSpeechTimer > 0 || this.preSpeechTimer > 0 || this.maxRecordTime > 0) {
+            this.heartbeat.activateTask();
             scheduler.submitHeartbeat(this.heartbeat);
         }
 

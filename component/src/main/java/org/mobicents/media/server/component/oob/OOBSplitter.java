@@ -22,15 +22,14 @@
 
 package org.mobicents.media.server.component.oob;
 
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import org.apache.log4j.Logger;
 import org.mobicents.media.server.concurrent.ConcurrentMap;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.MetronomeTask;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.memory.Frame;
+
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Implements compound oob splitter , one of core components of mms 3.0
@@ -47,6 +46,7 @@ public class OOBSplitter {
 	private final ConcurrentMap<OOBComponent> insideComponents;
 	private final ConcurrentMap<OOBComponent> outsideComponents;
 
+	private static final Logger logger = Logger.getLogger(OOBSplitter.class);
 	// Mixing Tasks
 	private final InsideMixTask insideMixer;
 	private final OutsideMixTask outsideMixer;
@@ -92,7 +92,8 @@ public class OOBSplitter {
 	public void start() {
 		if (! started.getAndSet(true)) {
 			mixCount = 0;
-			started.set(true);
+			insideMixer.activateTask();
+			outsideMixer.activateTask();
 			scheduler.submitRT(insideMixer, 0);
 			scheduler.submitRT(outsideMixer, 0);
 		}
@@ -100,7 +101,6 @@ public class OOBSplitter {
 
 	public void stop() {
 		if (started.getAndSet(false)) {
-			started.set(false);
 			insideMixer.cancel();
 			outsideMixer.cancel();
 		}

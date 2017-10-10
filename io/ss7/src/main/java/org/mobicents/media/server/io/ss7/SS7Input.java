@@ -22,30 +22,18 @@
 
 package org.mobicents.media.server.io.ss7;
 
-import java.io.IOException;
-import java.text.Format;
-import java.util.ArrayList;
-
-import org.mobicents.media.server.component.audio.AudioInput;
-import org.mobicents.media.MediaSink;
-import org.mobicents.media.MediaSource;
 import org.mobicents.media.hardware.dahdi.Channel;
-import org.mobicents.media.server.impl.AbstractSink;
+import org.mobicents.media.server.component.audio.AudioInput;
 import org.mobicents.media.server.impl.AbstractSource;
-import org.mobicents.media.server.io.ss7.ProtocolHandler;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
-import org.mobicents.media.server.spi.FormatNotSupportedException;
-import org.mobicents.media.server.spi.ConnectionMode;
+import org.mobicents.media.server.spi.dsp.Processor;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
-import org.mobicents.media.server.spi.format.Formats;
-import org.mobicents.media.server.spi.memory.Memory;
 import org.mobicents.media.server.spi.memory.Frame;
-import org.mobicents.media.server.spi.dsp.Codec;
-import org.mobicents.media.server.spi.dsp.Processor;
-import org.apache.log4j.Logger;
+import org.mobicents.media.server.spi.memory.Memory;
+
+import java.io.IOException;
+import java.util.ArrayList;
 /**
  *
  * @author Oifa Yulian

@@ -22,17 +22,15 @@
 
 package org.mobicents.media.server.component.audio;
 
+import org.mobicents.media.server.concurrent.ConcurrentMap;
+import org.mobicents.media.server.scheduler.MetronomeTask;
+import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
+import org.mobicents.media.server.spi.format.AudioFormat;
+import org.mobicents.media.server.spi.format.FormatFactory;
+
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.mobicents.media.server.concurrent.ConcurrentMap;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.MetronomeTask;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
-import org.mobicents.media.server.spi.format.AudioFormat;
-import org.mobicents.media.server.spi.format.FormatFactory;
 
 /**
  * Implements compound audio splitter , one of core components of mms 3.0
@@ -115,7 +113,8 @@ public class AudioSplitter {
 	public void start() {
 	    if(!this.started.getAndSet(true)) {
 	        mixCount.set(0);
-	        started.set(true);
+	        insideMixer.activateTask();
+	        outsideMixer.activateTask();
 	        scheduler.submitRT(insideMixer, 0);
 	        scheduler.submitRT(outsideMixer, 0);
 	    }

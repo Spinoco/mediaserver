@@ -130,6 +130,7 @@ public abstract class BaseConnection implements Connection {
 
 		switch (state) {
 		case HALF_OPEN:
+			heartBeat.activateTask();
 			scheduler.submitHeartbeat(heartBeat);
 			break;
 		case NULL:
