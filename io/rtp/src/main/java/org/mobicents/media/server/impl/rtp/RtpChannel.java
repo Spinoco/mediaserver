@@ -41,7 +41,6 @@ import org.mobicents.media.server.impl.srtp.DtlsListener;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.network.channel.MultiplexedChannel;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ConnectionMode;
@@ -540,9 +539,6 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
 
     private class HeartBeat extends Task {
 
-        public EventQueueType getQueueType() {
-            return EventQueueType.HEARTBEAT;
-        }
 
         @Override
         public long perform() {

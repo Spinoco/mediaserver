@@ -97,10 +97,6 @@ public class DeleteConnectionCmd extends Action {
 			super();
 		}
 
-		public EventQueueType getQueueType() {
-			return EventQueueType.MGCP_SIGNALLING;
-		}
-
 		private void deleteForEndpoint(MgcpRequest request) {
 			// getting endpoint name
 			request.getEndpoint().divide('@', endpointName);
@@ -217,10 +213,6 @@ public class DeleteConnectionCmd extends Action {
 			super();
 		}
 
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.MGCP_SIGNALLING;
-		}
 
 		@Override
 		public long perform() {
@@ -253,10 +245,6 @@ public class DeleteConnectionCmd extends Action {
 			super();
 		}
 
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.MGCP_SIGNALLING;
-		}
 
 		@Override
 		public long perform() {
@@ -290,10 +278,6 @@ public class DeleteConnectionCmd extends Action {
 			super();
 		}
 
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.MGCP_SIGNALLING;
-		}
 
 		@Override
 		public long perform() {

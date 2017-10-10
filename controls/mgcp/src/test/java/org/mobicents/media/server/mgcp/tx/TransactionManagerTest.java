@@ -131,10 +131,6 @@ public class TransactionManagerTest {
 			super();
 		}
 
-		public EventQueueType getQueueType() {
-			return EventQueueType.MGCP_SIGNALLING;
-		}
-
 		@Override
 		public long perform() {
 			boolean flag = rnd.nextBoolean();

@@ -156,7 +156,7 @@ public class AbstractSourceTest {
 		private long seq = 0;
         
         public MyTestSource(PriorityQueueScheduler scheduler) {
-            super("", scheduler, EventQueueType.RTP_OUTPUT);
+            super("", scheduler);
         }
 
         @Override

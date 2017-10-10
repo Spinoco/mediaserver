@@ -46,7 +46,7 @@ public class AudioOutput extends AbstractSource {
 	 * Creates new instance with default name.
 	 */
 	public AudioOutput(PriorityQueueScheduler scheduler, int outputId) {
-		super("compound.output(AudioOutput)", scheduler, EventQueueType.RTP_MIXER);
+		super("compound.output(AudioOutput)", scheduler);
 		this.outputId = outputId;
 	}
 

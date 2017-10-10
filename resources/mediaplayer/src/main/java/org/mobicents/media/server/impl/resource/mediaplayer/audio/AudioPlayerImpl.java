@@ -105,7 +105,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
      * @param scheduler EDF job scheduler
      */
     public AudioPlayerImpl(String name, PriorityQueueScheduler scheduler) {
-        super(name, scheduler, EventQueueType.RTP_INPUT);
+        super(name, scheduler);
         this.input = new AudioInput(ComponentType.PLAYER.getType(), packetSize);
         this.listeners = new Listeners<PlayerListener>();
         this.connect(this.input);
@@ -141,7 +141,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
 
 
         if (track != null && inBuff != null) {
-            scheduler.submit(new CloseTrack(track), EventQueueType.PLAYBACK);
+            scheduler.submit(new CloseTrack(track));
         }
 
         // let's disallow to assign file is player is not connected
@@ -188,7 +188,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
         ConcurrentLinkedQueue<Frame> buff = new ConcurrentLinkedQueue<Frame>();
         this.buff.set(buff);
 
-        this.scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK);
+        this.scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock));
 
         // update duration
         this.duration = track.getDuration();
@@ -209,7 +209,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
         stop();
         Track track = this.track.getAndSet(null);
         this.buff.set(null);
-        if (track != null) scheduler.submit(new CloseTrack(track), EventQueueType.PLAYBACK);
+        if (track != null) scheduler.submit(new CloseTrack(track));
     }
 
     @Override
@@ -234,14 +234,14 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
                 if (f.isEOM()) {
                     this.buff.set(null); // causes to stop any further reading
                     this.track.set(null);
-                    scheduler.submit(new CloseTrack(track), EventQueueType.PLAYBACK);
+                    scheduler.submit(new CloseTrack(track));
                 }
                 else {
-                    scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK); // causes to check each 20ms if we have enough samples read from the source.
+                    scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock)); // causes to check each 20ms if we have enough samples read from the source.
                 }
             } else {
                 // we have buffer, that means eom not yet received but we have drained media so much...
-                scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK); // causes to check each 20ms if we have enough samples read from the source.
+                scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock)); // causes to check each 20ms if we have enough samples read from the source.
             }
             if (f == null) {
                 // produce empty silent sample in LINEAR PCM hence the media are not yet done, neither samples are available.
@@ -326,10 +326,6 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
             this.track = track;
         }
 
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.PLAYBACK;
-        }
 
         @Override
         public long perform() {
@@ -353,10 +349,6 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
             this.lock = lock;
         }
 
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.PLAYBACK;
-        }
 
         @Override
         public long perform() {

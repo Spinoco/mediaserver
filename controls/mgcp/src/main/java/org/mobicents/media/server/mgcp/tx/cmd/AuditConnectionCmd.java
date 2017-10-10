@@ -119,10 +119,6 @@ public class AuditConnectionCmd extends Action {
 	
 	private class Audit extends Task {
 
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.MGCP_SIGNALLING;
-		}
 
 		@Override
 		public long perform() {
@@ -221,10 +217,6 @@ public class AuditConnectionCmd extends Action {
 	
 	private class Respond extends Task {
 
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.MGCP_SIGNALLING;
-		}
 
 		@Override
 		public long perform() {
@@ -297,10 +289,6 @@ public class AuditConnectionCmd extends Action {
 	
 	private class Rollback extends Task {
 
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.MGCP_SIGNALLING;
-		}
 
 		@Override
 		public long perform() {

@@ -32,7 +32,6 @@ import org.mobicents.media.server.impl.resource.phone.PhoneSignalGenerator;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
 import org.mobicents.media.server.mgcp.controller.signal.Signal;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.MediaType;
@@ -226,11 +225,7 @@ public class Continuity2 extends Signal implements ToneDetectorListener {
         	active=new AtomicBoolean(false);
             this.signal=signal;
         }
-        
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.HEARTBEAT;
-        }     
+
         
         public void setTtl(int value)
         {

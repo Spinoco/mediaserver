@@ -145,11 +145,6 @@ public class CreateConnectionCmd extends Action {
         public Preprocessor() {
             super();
         }
-        
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
 
         @Override
         public long perform() {
@@ -312,11 +307,6 @@ public class CreateConnectionCmd extends Action {
         public Responder() {
             super();
         }
-        
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
 
         @Override
         public long perform() {     
@@ -360,11 +350,6 @@ public class CreateConnectionCmd extends Action {
     private class ErrorHandle extends Task {
     	public ErrorHandle() {
             super();
-        }
-        
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
         }
 
         @Override

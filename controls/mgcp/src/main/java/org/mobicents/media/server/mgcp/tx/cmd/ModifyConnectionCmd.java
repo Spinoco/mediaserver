@@ -83,11 +83,6 @@ public class ModifyConnectionCmd extends Action {
             super();
         }
 
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
-
         @Override
         public long perform() {
         	request = (MgcpRequest) getEvent().getMessage();
@@ -179,11 +174,7 @@ public class ModifyConnectionCmd extends Action {
         public ErrorHandler() {
             super();
         }
-        
-        @Override
-        public EventQueueType getQueueType() {
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
+
 
         @Override
         public long perform() {

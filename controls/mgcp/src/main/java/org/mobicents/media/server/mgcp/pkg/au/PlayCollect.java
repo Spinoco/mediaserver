@@ -857,10 +857,6 @@ public class PlayCollect extends Signal {
             this.signal = signal;
         }
 
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.HEARTBEAT;
-        }
 
         public void setTtl(int value) {
             ttl.set(value);

@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
 import org.mobicents.media.server.scheduler.EventQueueType;
+import org.mobicents.media.server.scheduler.MetronomeTask;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.memory.Frame;
@@ -57,8 +58,8 @@ public class OOBSplitter {
 		this.scheduler = scheduler;
 		this.insideComponents = new ConcurrentMap<OOBComponent>();
 		this.outsideComponents = new ConcurrentMap<OOBComponent>();
-		this.insideMixer = new InsideMixTask();
-		this.outsideMixer = new OutsideMixTask();
+		this.insideMixer = new InsideMixTask(scheduler, 20000000);
+		this.outsideMixer = new OutsideMixTask(scheduler, 20000000);
 		this.started = new AtomicBoolean(false);
 	}
 
@@ -89,35 +90,36 @@ public class OOBSplitter {
 	}
 
 	public void start() {
-		mixCount = 0;
-		started.set(true);
-		scheduler.submit(insideMixer, EventQueueType.RTP_MIXER);
-		scheduler.submit(outsideMixer, EventQueueType.RTP_MIXER);
+		if (! started.getAndSet(true)) {
+			mixCount = 0;
+			started.set(true);
+			scheduler.submitRT(insideMixer, 0);
+			scheduler.submitRT(outsideMixer, 0);
+		}
 	}
 
 	public void stop() {
-		started.set(false);
-		insideMixer.cancel();
-		outsideMixer.cancel();
+		if (started.getAndSet(false)) {
+			started.set(false);
+			insideMixer.cancel();
+			outsideMixer.cancel();
+		}
 	}
 
-	private class InsideMixTask extends Task {
+	private class InsideMixTask extends MetronomeTask {
 
-	    public InsideMixTask() {
-			super();
+
+	    public InsideMixTask(PriorityQueueScheduler scheduler, long metronomeDelay) {
+			super(scheduler, metronomeDelay);
 		}
 
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.RTP_MIXER;
-		}
 
 		@Override
 		public long perform() {
-		    Frame current = null;
+			Frame current = null;
 
-		    // summarize all
-		    final Iterator<OOBComponent> insideRIterator = insideComponents.valuesIterator();
+			// summarize all
+			final Iterator<OOBComponent> insideRIterator = insideComponents.valuesIterator();
 			while (insideRIterator.hasNext()) {
 				OOBComponent component = insideRIterator.next();
 				component.perform();
@@ -127,74 +129,71 @@ public class OOBSplitter {
 				}
 			}
 
-			if (current == null) {
-				scheduler.submit(this, EventQueueType.RTP_MIXER);
-				mixCount++;
-				return 0;
-			}
-
-			// get data for each component
-			final Iterator<OOBComponent> outsideSIterator = outsideComponents.valuesIterator();
-			while (outsideSIterator.hasNext()) {
-				OOBComponent component = outsideSIterator.next();
-				if (!outsideSIterator.hasNext()) {
-					component.offer(current);
-				} else {
-					component.offer(current.clone());
+			if (current != null) {
+				// frame is available, lets split it
+				// get data for each component
+				final Iterator<OOBComponent> outsideSIterator = outsideComponents.valuesIterator();
+				while (outsideSIterator.hasNext()) {
+					OOBComponent component = outsideSIterator.next();
+					if (!outsideSIterator.hasNext()) {
+						component.offer(current);
+					} else {
+						component.offer(current.clone());
+					}
 				}
 			}
 
-			scheduler.submit(this, EventQueueType.RTP_MIXER);
+
+			next();
 			mixCount++;
+
+
 			return 0;
 		}
 	}
 
-	private class OutsideMixTask extends Task {
+	private class OutsideMixTask extends MetronomeTask {
 
-		public OutsideMixTask() {
-			super();
-		}
-
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.RTP_MIXER;
+		public OutsideMixTask(PriorityQueueScheduler scheduler, long metronomeDelay) {
+			super(scheduler, metronomeDelay);
 		}
 
 		@Override
 		public long perform() {
-		    Frame current = null;
-		    
-			// summarize all
-			final Iterator<OOBComponent> outsideRIterator = outsideComponents.valuesIterator();
-			while (outsideRIterator.hasNext()) {
-				OOBComponent component = outsideRIterator.next();
-				component.perform();
-				current = component.getData();
+			if (started.get()) {
+				Frame current = null;
+
+				// summarize all
+				final Iterator<OOBComponent> outsideRIterator = outsideComponents.valuesIterator();
+				while (outsideRIterator.hasNext()) {
+					OOBComponent component = outsideRIterator.next();
+					component.perform();
+					current = component.getData();
+					if (current != null) {
+						break;
+					}
+				}
+
 				if (current != null) {
-					break;
-				}
-			}
 
-			if (current == null) {
-				scheduler.submit(this, EventQueueType.RTP_MIXER);
+					// get data for each component
+					final Iterator<OOBComponent> insideSIterator = insideComponents.valuesIterator();
+					while (insideSIterator.hasNext()) {
+						OOBComponent component = insideSIterator.next();
+						if (!insideSIterator.hasNext()) {
+							component.offer(current);
+						} else {
+							component.offer(current.clone());
+						}
+					}
+
+				}
+
+				next();
 				mixCount++;
-				return 0;
+
 			}
 
-			// get data for each component
-			final Iterator<OOBComponent> insideSIterator = insideComponents.valuesIterator();
-			while (insideSIterator.hasNext()) {
-				OOBComponent component = insideSIterator.next();
-				if (!insideSIterator.hasNext()) {
-					component.offer(current);
-				} else {
-					component.offer(current.clone());
-				}
-			}
-
-			scheduler.submit(this, EventQueueType.RTP_MIXER);
-			mixCount++;
 			return 0;
 		}
 	}

@@ -47,7 +47,7 @@ public class OOBSender extends AbstractSource {
     private int currentIndex=0;
     
     public OOBSender(PriorityQueueScheduler scheduler) {
-        super("oob.generator", scheduler, EventQueueType.RTP_INPUT);
+        super("oob.generator", scheduler);
         
         this.input=new OOBInput(ComponentType.SINE.getType());
         this.connect(this.input); 

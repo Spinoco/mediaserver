@@ -88,11 +88,6 @@ public class EndpointConfigurationCmd extends Action {
             super();
         }
 
-        @Override
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
 
         @Override
         public long perform() {
@@ -139,12 +134,6 @@ public class EndpointConfigurationCmd extends Action {
         public Responder() {
             super();
         }
-        
-        @Override
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
 
         @Override
         public long perform() {
@@ -171,11 +160,6 @@ public class EndpointConfigurationCmd extends Action {
 
         public ErrorHandler() {
             super();
-        }
-        
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
         }
 
         @Override

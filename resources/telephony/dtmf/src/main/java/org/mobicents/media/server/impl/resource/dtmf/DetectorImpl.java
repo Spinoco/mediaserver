@@ -324,20 +324,20 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
     protected void fireEvent(String tone) {
         eventSender.events.add(new DtmfEventImpl(this, tone, 0));
         // schedule event delivery
-        scheduler.submit(eventSender, EventQueueType.PLAYBACK);
+        scheduler.submit(eventSender);
     }
 
     protected void fireEvent(DtmfEventImpl evt) {
         eventSender.events.add(evt);
         // schedule event delivery
-        scheduler.submit(eventSender, EventQueueType.PLAYBACK);
+        scheduler.submit(eventSender);
     }
 
     protected void fireEvent(Collection<DtmfEventImpl> evts) {
         eventSender.events.addAll(evts);
 
         // schedule event delivery
-        scheduler.submit(eventSender, EventQueueType.PLAYBACK);
+        scheduler.submit(eventSender);
     }
 
     @Override
@@ -377,10 +377,6 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
             super();
         }
 
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.PLAYBACK;
-        }
 
         @Override
         public long perform() {

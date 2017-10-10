@@ -24,7 +24,6 @@ package org.mobicents.media.server.io.ss7;
 
 import java.io.IOException;
 
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.protocols.stream.api.SelectorKey;
 import org.mobicents.media.hardware.dahdi.Channel;
 import org.mobicents.media.hardware.dahdi.SelectorKeyImpl;
@@ -145,15 +144,12 @@ public class SS7Manager {
 
         /**
          * Creates new instance of this task
-         * @param scheduler
          */
         public PollTask() {
             super();
         }
 
-        public EventQueueType getQueueType() {
-            return EventQueueType.SS7_RECEIVER;
-        }       
+
 
         @Override
         public long perform() {
@@ -172,7 +168,7 @@ public class SS7Manager {
             } catch (IOException e) {              	
                 return 0;
             } finally {
-                scheduler.submit(this, EventQueueType.SS7_RECEIVER);
+                scheduler.submit(this);
             }
 
             return 0;
@@ -182,7 +178,7 @@ public class SS7Manager {
          * Immediately start current task
          */
         public void startNow() {
-            scheduler.submit(this, EventQueueType.SS7_RECEIVER);
+            scheduler.submit(this);
         }
     }
 }

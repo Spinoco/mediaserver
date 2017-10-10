@@ -35,7 +35,6 @@ import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.oob.OOBOutput;
 import org.mobicents.media.server.impl.AbstractSink;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.dtmf.DtmfTonesData;
@@ -189,7 +188,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             RecorderFileSink snk = sink.getAndSet(null);
             ConcurrentLinkedQueue<Frame> wb = writeBuff.getAndSet(null);
             if (snk != null && wb != null) {
-                scheduler.submit(new FlushRecording(snk, wb,  this.lock), EventQueueType.RECORDING);
+                scheduler.submit(new FlushRecording(snk, wb,  this.lock));
             }
 
         } catch (Exception e) {
@@ -230,7 +229,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
      */
     private void fireEvent(RecorderEventImpl event) {
         eventSender.event = event;
-        scheduler.submit(eventSender, EventQueueType.RECORDING);
+        scheduler.submit(eventSender);
     }
 
     @Override
@@ -241,7 +240,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
         if (snk != null && wb != null) {
             wb.offer(frame.clone());
-            scheduler.submit(new WriteSample(snk, wb, this.lock), EventQueueType.RECORDING);
+            scheduler.submit(new WriteSample(snk, wb, this.lock));
         }
 
         if (this.postSpeechTimer > 0 || this.preSpeechTimer > 0) {
@@ -350,9 +349,6 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             return 0;
         }
 
-        public EventQueueType getQueueType() {
-            return EventQueueType.RECORDING;
-        }
     }
 
     /**
@@ -371,10 +367,6 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             listeners.dispatch(event);
             return 0;
         }
-
-        public EventQueueType getQueueType() {
-            return EventQueueType.MGCP_SIGNALLING;
-        }
     }
 
     /**
@@ -392,13 +384,13 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
             if (preSpeechTimer > 0 && !speechDetected && currTime - lastPacketData > preSpeechTimer) {
                 qualifier = RecorderEvent.NO_SPEECH;
-                scheduler.submit(killRecording, EventQueueType.RECORDING);
+                scheduler.submit(killRecording);
                 return 0;
             }
 
             if (postSpeechTimer > 0 && speechDetected && currTime - lastPacketData > postSpeechTimer) {
                 qualifier = RecorderEvent.NO_SPEECH;
-                scheduler.submit(killRecording, EventQueueType.RECORDING);
+                scheduler.submit(killRecording);
                 return 0;
             }
 
@@ -406,7 +398,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             if (maxRecordTime > 0 && currTime - startTime >= maxRecordTime) {
                 // set qualifier
                 qualifier = RecorderEvent.MAX_DURATION_EXCEEDED;
-                scheduler.submit(killRecording, EventQueueType.RECORDING);
+                scheduler.submit(killRecording);
                 return 0;
             }
 
@@ -414,10 +406,6 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             return 0;
         }
 
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.HEARTBEAT;
-        }
 
     }
 
@@ -484,7 +472,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
                 f.setOffset(0);
                 f.setLength(sample.length);
                 wb.offer(f);
-                scheduler.submit(new WriteSample(snk, wb,  AudioRecorderImpl.this.lock), EventQueueType.RECORDING);
+                scheduler.submit(new WriteSample(snk, wb,  AudioRecorderImpl.this.lock));
             }
         }
 
@@ -533,10 +521,6 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             this.lock = lock;
         }
 
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.RECORDING;
-        }
 
         @Override
         public long perform() {
@@ -563,14 +547,10 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             this.lock = lock;
         }
 
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.RECORDING;
-        }
 
         @Override
         public long perform() {
-            lock.lock(); // unfortunately here we must block as we don't get mulitple guaranteed invocations of this
+            lock.lock(); // unfortunately here we must block as we don't get multiple guaranteed invocations of this
             try {
                 writeSamples(this.snk, this.writeBuff);
                 try {

@@ -81,7 +81,7 @@ public class SS7Input extends AbstractSource {
      * Creates new receiver.
      */
     protected SS7Input(PriorityQueueScheduler scheduler,Channel channel,AudioFormat sourceFormat) {
-        super("input", scheduler, EventQueueType.SS7_RECEIVER);
+        super("input", scheduler);
         this.channel=channel;
         this.sourceFormat=sourceFormat;
         

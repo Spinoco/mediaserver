@@ -49,10 +49,6 @@ public class NotifyCmd extends Action {
             super();
         }
 
-        @Override
-        public EventQueueType getQueueType() {
-        	return EventQueueType.HEARTBEAT;
-        }
 
         @Override
         public long perform() {

@@ -240,12 +240,7 @@ public class ContinuityTransporder extends Signal implements ToneDetectorListene
         	active=new AtomicBoolean(false);
             this.signal=signal;
         }
-        
-    	@Override
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.HEARTBEAT;
-        }     
+
         
         public void setTtl(int value)
         {

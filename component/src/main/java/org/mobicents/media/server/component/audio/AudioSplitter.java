@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
 import org.mobicents.media.server.scheduler.EventQueueType;
+import org.mobicents.media.server.scheduler.MetronomeTask;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.format.AudioFormat;
@@ -63,8 +64,8 @@ public class AudioSplitter {
 
 	public AudioSplitter(PriorityQueueScheduler scheduler) {
 		this.scheduler = scheduler;
-		this.insideMixer = new InsideMixTask();
-		this.outsideMixer = new OutsideMixTask();
+		this.insideMixer = new InsideMixTask(scheduler, 20000000);
+		this.outsideMixer = new OutsideMixTask(scheduler, 20000000);
 		this.insideComponents = new ConcurrentMap<AudioComponent>();
 		this.outsideComponents = new ConcurrentMap<AudioComponent>();
 		this.started = new AtomicBoolean(false);
@@ -112,115 +113,109 @@ public class AudioSplitter {
 	}
 
 	public void start() {
-	    if(!this.started.get()) {
+	    if(!this.started.getAndSet(true)) {
 	        mixCount.set(0);
 	        started.set(true);
-	        scheduler.submit(insideMixer, EventQueueType.RTP_MIXER);
-	        scheduler.submit(outsideMixer, EventQueueType.RTP_MIXER);
+	        scheduler.submitRT(insideMixer, 0);
+	        scheduler.submitRT(outsideMixer, 0);
 	    }
 	}
 
 	public void stop() {
-	    if(this.started.get()) {
-	        started.set(false);
+	    if(this.started.getAndSet(false)) {
 	        insideMixer.cancel();
 	        outsideMixer.cancel();
 	    }
 	}
 
-	private class InsideMixTask extends Task {
+	private class InsideMixTask extends MetronomeTask {
 
 	    private final int[] total = new int[PACKET_SIZE / 2];
 
-		public InsideMixTask() {
-			super();
+		public InsideMixTask(PriorityQueueScheduler scheduler, long metronomeDelay) {
+			super(scheduler, metronomeDelay);
 		}
 
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.RTP_MIXER;
-		}
 
 		@Override
 		public long perform() {
-			// summarize all
-			boolean first = true;
+			if (started.get()) {
+				// summarize all
+				boolean first = true;
 
-			final Iterator<AudioComponent> insideRIterator = insideComponents.valuesIterator();
-			while (insideRIterator.hasNext()) {
-				AudioComponent component = insideRIterator.next();
-				component.perform();
-				int[] current = component.getData();
-				if (current != null) {
-					if (first) {
-						System.arraycopy(current, 0, total, 0, total.length);
-						first = false;
-					} else {
-						for (int i = 0; i < total.length; i++) {
-							total[i] += current[i];
+				final Iterator<AudioComponent> insideRIterator = insideComponents.valuesIterator();
+				while (insideRIterator.hasNext()) {
+					AudioComponent component = insideRIterator.next();
+					component.perform();
+					int[] current = component.getData();
+					if (current != null) {
+						if (first) {
+							System.arraycopy(current, 0, total, 0, total.length);
+							first = false;
+						} else {
+							for (int i = 0; i < total.length; i++) {
+								total[i] += current[i];
+							}
 						}
 					}
 				}
-			}
 
-			if (first) {
-				scheduler.submit(this, EventQueueType.RTP_MIXER);
-				mixCount.incrementAndGet();
-				return 0;
-			}
+				if (! first) {
 
-			int minValue = 0;
-			int maxValue = 0;
-			for (int i = 0; i < total.length; i++) {
-				if (total[i] > maxValue) {
-					maxValue = total[i];
-				} else if (total[i] < minValue) {
-					minValue = total[i];
+
+					int minValue = 0;
+					int maxValue = 0;
+					for (int i = 0; i < total.length; i++) {
+						if (total[i] > maxValue) {
+							maxValue = total[i];
+						} else if (total[i] < minValue) {
+							minValue = total[i];
+						}
+					}
+
+					if (minValue > 0) {
+						minValue = 0 - minValue;
+					}
+
+					if (minValue > maxValue) {
+						maxValue = minValue;
+					}
+
+					double currGain = gain;
+					if (maxValue > Short.MAX_VALUE) {
+						currGain = (currGain * (double) Short.MAX_VALUE) / (double) maxValue;
+					}
+
+					for (int i = 0; i < total.length; i++) {
+						total[i] = (short) Math.round((double) total[i] * currGain);
+					}
+
+					// get data for each component
+					final Iterator<AudioComponent> outsideSIterator = outsideComponents.valuesIterator();
+					while (outsideSIterator.hasNext()) {
+						AudioComponent component = outsideSIterator.next();
+						component.offer(total);
+					}
+
 				}
+
+				next();
+				mixCount.incrementAndGet();
+
 			}
 
-			if (minValue > 0) {
-				minValue = 0 - minValue;
-			}
-
-			if (minValue > maxValue) {
-				maxValue = minValue;
-			}
-
-			double currGain = gain;
-			if (maxValue > Short.MAX_VALUE) {
-				currGain = (currGain * (double) Short.MAX_VALUE) / (double) maxValue;
-			}
-
-			for (int i = 0; i < total.length; i++) {
-				total[i] = (short) Math.round((double) total[i] * currGain);
-			}
-
-			// get data for each component
-			final Iterator<AudioComponent> outsideSIterator = outsideComponents.valuesIterator();
-			while (outsideSIterator.hasNext()) {
-				AudioComponent component = outsideSIterator.next();
-				component.offer(total);
-			}
-
-			scheduler.submit(this, EventQueueType.RTP_MIXER);
-			mixCount.incrementAndGet();
 			return 0;
 		}
 	}
 
-	private class OutsideMixTask extends Task {
+	private class OutsideMixTask extends MetronomeTask {
 	    
 		private final int[] total = new int[PACKET_SIZE / 2];
 
-		public OutsideMixTask() {
-			super();
+		public OutsideMixTask(PriorityQueueScheduler scheduler, long metronomeDelay) {
+			super(scheduler, metronomeDelay);
 		}
 
-		@Override
-		public EventQueueType getQueueType() {
-			return EventQueueType.RTP_MIXER;
-		}
 
 		@Override
 		public String toString() {
@@ -252,45 +247,45 @@ public class AudioSplitter {
 				}
 			}
 
-			if (first) {
-				scheduler.submit(this, EventQueueType.RTP_MIXER);
-				mixCount.incrementAndGet();
-				return 0;
-			}
+			if (!first) {
 
-			int minValue = 0;
-			int maxValue = 0;
-			for (int i = 0; i < total.length; i++) {
-				if (total[i] > maxValue) {
-					maxValue = total[i];
-				} else if (total[i] < minValue) {
-					minValue = total[i];
+
+				int minValue = 0;
+				int maxValue = 0;
+				for (int i = 0; i < total.length; i++) {
+					if (total[i] > maxValue) {
+						maxValue = total[i];
+					} else if (total[i] < minValue) {
+						minValue = total[i];
+					}
 				}
+
+				minValue = 0 - minValue;
+				if (minValue > maxValue) {
+					maxValue = minValue;
+				}
+
+				double currGain = gain;
+				if (maxValue > Short.MAX_VALUE) {
+					currGain = (currGain * Short.MAX_VALUE) / maxValue;
+				}
+
+				for (int i = 0; i < total.length; i++) {
+					total[i] = (short) Math.round((double) total[i] * currGain);
+				}
+
+				// get data for each component
+				final Iterator<AudioComponent> insideSIterator = insideComponents.valuesIterator();
+				while (insideSIterator.hasNext()) {
+					AudioComponent component = insideSIterator.next();
+					component.offer(total);
+				}
+
 			}
 
-			minValue = 0 - minValue;
-			if (minValue > maxValue) {
-				maxValue = minValue;
-			}
-
-			double currGain = gain;
-			if (maxValue > Short.MAX_VALUE) {
-				currGain = (currGain * Short.MAX_VALUE) / maxValue;
-			}
-
-			for (int i = 0; i < total.length; i++) {
-				total[i] = (short) Math.round((double) total[i] * currGain);
-			}
-
-			// get data for each component
-			final Iterator<AudioComponent> insideSIterator = insideComponents.valuesIterator();
-			while (insideSIterator.hasNext()) {
-				AudioComponent component = insideSIterator.next();
-				component.offer(total);
-			}
-
-			scheduler.submit(this, EventQueueType.RTP_MIXER);
+			next();
 			mixCount.incrementAndGet();
+
 			return 0;
 		}
 	}

@@ -22,6 +22,7 @@
 
 package org.mobicents.media.server.scheduler;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.log4j.Logger;
 
@@ -32,15 +33,13 @@ import org.apache.log4j.Logger;
  */
 public abstract class Task implements Runnable {
 
-    private volatile boolean isActive = true;
+    private AtomicBoolean isActive = new AtomicBoolean(true);
     //error handler instance
-    protected TaskListener listener;
-    
-    private final Object LOCK = new Object();    
-        
-    private AtomicBoolean inQueue=new AtomicBoolean(false);
+    protected volatile TaskListener listener;
 
-    private Logger logger = Logger.getLogger(Task.class);
+    private AtomicBoolean inQueue = new AtomicBoolean(false);
+
+    private static Logger logger = Logger.getLogger(Task.class);
     
     public Task() { }
 
@@ -68,14 +67,7 @@ public abstract class Task implements Runnable {
         this.listener = listener;
     }
     
-    /**
-     * Current queue of this task.
-     * 
-     * @return the value of queue
-     */
-    public abstract EventQueueType getQueueType();
-    
-    
+
     /**
      * Executes task.
      * 
@@ -87,34 +79,31 @@ public abstract class Task implements Runnable {
      * Cancels task execution
      */
     public void cancel() {
-    	synchronized(LOCK) {
-    		this.isActive = false;    		
-    	}
+    	this.isActive.set(false);
     }
 
     //call should not be synchronized since can run only once in queue cycle
     public void run() {
-    		if (this.isActive)  {
-    			try {
-    				perform();                
-                
-    				//notify listener                
-    				if (this.listener != null) {
-    					this.listener.onTerminate();
-    				}
-    				
-    			} catch (Exception e) {
-    			    logger.error("Could not execute task: "+ e.getMessage(), e);
-    				if (this.listener != null) {
-    					listener.handlerError(e);
-    				} 
-    			}
-    		}      		    		    	
+        if (this.isActive.get()) {
+            try {
+                perform();
+
+                //notify listener
+                if (this.listener != null) {
+                    this.listener.onTerminate();
+                }
+
+            } catch (Exception e) {
+                logger.error("Could not execute task: " + e.getMessage(), e);
+                if (this.listener != null) {
+                    listener.handlerError(e);
+                }
+            }
+        }
+
     }
 
     protected void activateTask() {
-    	synchronized(LOCK) {
-    		this.isActive = true;
-    	}
+    	this.isActive.set(true);
     }    
 }

@@ -46,7 +46,7 @@ public class OOBOutput extends AbstractSource {
      * Creates new instance with default name.
      */
     public OOBOutput(PriorityQueueScheduler scheduler,int outputId) {
-        super("compound.output(OOBOutput)", scheduler, EventQueueType.RTP_OUTPUT);
+        super("compound.output(OOBOutput)", scheduler);
         this.outputId=outputId;
     }
 

@@ -22,7 +22,6 @@
 
 package org.mobicents.media.server.scheduler;
 
-import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,17 +47,8 @@ public class PriorityQueueScheduler  {
     //The clock for time measurement
     private Clock clock;
 
-    // Queues for RTP Tasks, real time 20ms timer
-    protected OrderedTaskQueue rtpInputQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue rtpMixerQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue rtpOuputQ = new OrderedTaskQueue();
 
-    // queues for heartbeat, 100ms, nest effort
-    protected OrderedTaskQueue heartbeatQ = new OrderedTaskQueue();
-
-
-
-    private Logger logger = Logger.getLogger(PriorityQueueScheduler.class) ;
+    private static Logger logger = Logger.getLogger(PriorityQueueScheduler.class) ;
 
 
     private class NamedThreadFactory implements ThreadFactory {
@@ -78,55 +68,49 @@ public class PriorityQueueScheduler  {
         }
     }
 
-    private ScheduledExecutorService schedulerV2 = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory("ms-v2-scheduler"));
+    private class NamedForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFactory {
+        private String name;
 
+        private AtomicInteger idx = new AtomicInteger(0);
 
-    private ExecutorService workerExecutorV2 =  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4, new NamedThreadFactory("ms-v2-worker"));
-    private ExecutorService workerExecutorV2RT =  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-v2-rt-worker"));
-
-
-    private RealTimeScheduler rtpScheduler = new RealTimeScheduler(
-            20000000 // 20 ms
-            , new OrderedTaskQueue[] { rtpInputQ, rtpMixerQ, rtpOuputQ }
-            , workerExecutorV2RT
-            , new NamedThreadFactory("ms-rt-rtp")
-    );
-
-    private class DrainQueue implements Runnable {
-        private OrderedTaskQueue queue;
-        private EventQueueType tpe;
-        private ExecutorService es;
-
-        public DrainQueue(OrderedTaskQueue queue, EventQueueType tpe, ExecutorService es) {
-            this.queue = queue;
-            this.tpe = tpe;
-            this.es = es;
+        public NamedForkJoinWorkerThreadFactory(String name) {
+            this.name = name;
         }
 
-        @Override
-        public void run() {
-            int remains = queue.getAvailable();
-            while (remains > 0) {
-                final Task task = queue.poll();
-                if (task != null) {
-                    workerExecutorV2.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                task.run();
-                            } catch (Exception ex) {
-                                logger.error("Failed to execute task: " + task + " " + DrainQueue.this.tpe, ex);
-                            }
-                        }
-                    });
-                } else {
-                    logger.warn("Failed to execute task, task is null. " + this.tpe);
-                }
-                remains --;
-            }
-
+        public final ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+            final ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+            worker.setName(name+ "-" + idx.incrementAndGet());
+            return worker;
         }
     }
+
+
+
+    // Scheduler for heartbeats, that are scheduled each 100 mills
+    private ScheduledExecutorService heartBeatScheduler =
+            Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-heartbeat"));
+
+    // rt scheduler that schedules tasks, that need to be run in 20ms metronome
+    // so the scheduled tasks here are scheduled from 1ns until 20ms
+    private ScheduledExecutorService rtScheduler =
+            Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-rt-scheduler"));
+
+    // where realtime tasks are executed after being in rtScheduler
+    private ExecutorService rtWorkerExecutor =
+              new ForkJoinPool (
+          Runtime.getRuntime().availableProcessors() * 4
+                    , new NamedForkJoinWorkerThreadFactory("ms-rt-worker")
+                    , null, true
+              );
+
+    // scheudler for non realtime tasks. Note that here we expect blocking to occur
+    private ExecutorService workerExecutor =
+            new ForkJoinPool (
+                    Runtime.getRuntime().availableProcessors() * 4
+                    , new NamedForkJoinWorkerThreadFactory("ms-worker")
+                    , null, true
+            );
+
 
 
     /**
@@ -165,44 +149,16 @@ public class PriorityQueueScheduler  {
      *
      * @param task the task to be executed.
      */
-    public void submit(Task task, EventQueueType tpe) {
+    public void submit(Task task) {
         task.activateTask();
-        switch(tpe) {
-            case RTP_INPUT :
-                rtpInputQ.accept(task);
-                break;
-
-            case RTP_OUTPUT :
-                rtpOuputQ.accept(task);
-                break;
-
-            case RTP_MIXER :
-                rtpMixerQ.accept(task);
-                break;
-
-            case HEARTBEAT :
-                heartbeatQ.accept(task);
-                break;
-
-            default:
-                submitNonRT(task);
-                break;
-        }
-
-    }
-
-    /** submits non real-time task. This is executes in worker pool immediately once scheduled here.  **/
-    private void submitNonRT(final Task task) {
-        workerExecutorV2.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    task.run();
-                } catch (Throwable t) {
-                    logger.error("Failed to execute task" + task, t);
-                }
+        workerExecutor.submit(() -> {
+            try {
+                task.run();
+            } catch (Throwable t) {
+                logger.error("Failed to execute task" + task, t);
             }
         });
+
     }
 
 
@@ -212,7 +168,14 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submitHeartbeat(Task task) {
-        submit(task, EventQueueType.HEARTBEAT);
+        task.activateTask();
+        heartBeatScheduler.schedule(() -> {
+            try {
+                task.run();
+            } catch (Throwable t) {
+                logger.error("Failed to execute heartbeat " + task, t);
+            }
+        }, 100, TimeUnit.MILLISECONDS);
     }
     
     /**
@@ -221,7 +184,37 @@ public class PriorityQueueScheduler  {
      */
     public void submit(TaskChain taskChain) {    	
         taskChain.start();
-    }    
+    }
+
+
+    /**
+     * Submits task to be executed in RealTime Q.
+     * If the task is > 0 nanos, the task is delayed for supplied value, otherwise it is executed instantly.
+     * @param task
+     * @param nanoDelay
+     */
+    public void submitRT(Task task, long nanoDelay) {
+        task.activateTask();
+        if (nanoDelay <= 0) {
+            scheduleRTTaskNow(task);
+        } else {
+            rtScheduler.schedule(() -> {
+               scheduleRTTaskNow(task);
+            }, nanoDelay, TimeUnit.NANOSECONDS);
+        }
+
+    }
+
+    /** schedules immediate execution of real-time task **/
+    private void scheduleRTTaskNow(Task task) {
+        rtWorkerExecutor.submit(() -> {
+            try {
+                task.run();
+            } catch (Throwable t) {
+                logger.error("Failed to execute runtime task" + task, t);
+            }
+        });
+    }
     
     /**
      * Starts scheduler.
@@ -231,16 +224,6 @@ public class PriorityQueueScheduler  {
         if (clock == null) {
             throw new IllegalStateException("Clock is not set");
         }
-        logger.info("Starting Priority Queue Scheduler started");
-
-
-        logger.info("Starting HEARTBEAT scheduler");
-        schedulerV2.scheduleAtFixedRate(new DrainQueue(heartbeatQ, EventQueueType.HEARTBEAT, workerExecutorV2), 100, 100, TimeUnit.MILLISECONDS);
-
-        logger.info("Starting RTP Queues");
-
-        rtpScheduler.start();
-
 
         logger.info("Priority Queue Scheduler started");
     }
@@ -250,10 +233,10 @@ public class PriorityQueueScheduler  {
      */
     public void stop() {
         logger.info("Shutting down Priority Queue Scheduler");
-        schedulerV2.shutdown();
-        workerExecutorV2.shutdown();
-        rtpScheduler.shutdown();
-        workerExecutorV2RT.shutdown();
+        heartBeatScheduler.shutdown();
+        rtScheduler.shutdown();
+        workerExecutor.shutdown();
+        rtWorkerExecutor.shutdown();
         logger.info("Shutdown of Priority Queue Scheduler completed");
 
     }

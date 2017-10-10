@@ -64,7 +64,7 @@ public class RTPInput extends AbstractSource implements BufferListener {
      * Creates new receiver.
      */
     protected RTPInput(PriorityQueueScheduler scheduler,JitterBuffer rxBuffer) {
-        super("rtpinput", scheduler, EventQueueType.RTP_INPUT);
+        super("rtpinput", scheduler);
         this.rxBuffer=rxBuffer;        
         input=new AudioInput(1,packetSize);
         this.connect(input);        

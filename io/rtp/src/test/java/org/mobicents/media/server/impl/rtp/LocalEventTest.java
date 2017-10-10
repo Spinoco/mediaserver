@@ -186,7 +186,7 @@ public class LocalEventTest implements DtmfDetectorListener {
         };
         
         public Sender() throws SocketException {
-        	super("oob generator", mediaScheduler, EventQueueType.RTP_INPUT);
+        	super("oob generator", mediaScheduler);
         	
         	index=0;
         	this.oobInput=new OOBInput(ComponentType.DTMF_GENERATOR.getType());

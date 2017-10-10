@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
 import org.mobicents.media.server.scheduler.EventQueueType;
+import org.mobicents.media.server.scheduler.MetronomeTask;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.memory.Frame;
@@ -50,7 +51,7 @@ public class OOBMixer {
 	public OOBMixer(PriorityQueueScheduler scheduler) {
 		this.scheduler = scheduler;
 		this.components = new ConcurrentMap<OOBComponent>();
-		this.mixer = new MixTask();
+		this.mixer = new MixTask(scheduler, 20000000);
 		this.started = new AtomicBoolean(false);
 		this.mixCount = new AtomicLong(0);
 	}
@@ -65,47 +66,39 @@ public class OOBMixer {
 
 	/**
 	 * Releases unused input stream
-	 * 
-	 * @param input
-	 *            the input stream previously created
+	 *
 	 */
 	public void release(OOBComponent component) {
 		components.remove(component.getComponentId());
 	}
 
     public void start() {
-        if (!this.started.get()) {
-            started.set(true);
+        if (!this.started.getAndSet(true)) {
             mixCount.set(0);
-            scheduler.submit(mixer,  EventQueueType.RTP_MIXER);
+            scheduler.submitRT(mixer,  0);
         }
     }
 
     public void stop() {
-        if (this.started.get()) {
-            started.set(false);
+        if (this.started.getAndSet(false)) {
             mixer.cancel();
         }
     }
 
-	private final class MixTask extends Task {
+	private final class MixTask extends MetronomeTask {
 
-		public MixTask() {
-			super();
+		public MixTask(PriorityQueueScheduler scheduler, long metronomeDelay) {
+			super(scheduler, metronomeDelay);
 		}
 
-		@Override
-		public EventQueueType getQueueType() {
-			return  EventQueueType.RTP_MIXER;
-		}
 
 		@Override
 		public long perform() {
-		    int sourceComponent = 0;
-	        Frame current = null;
-		    
+			int sourceComponent = 0;
+			Frame current = null;
+
 			// summarize all
-	        Iterator<OOBComponent> activeComponents = components.valuesIterator();
+			Iterator<OOBComponent> activeComponents = components.valuesIterator();
 			while (activeComponents.hasNext()) {
 				OOBComponent component = activeComponents.next();
 				component.perform();
@@ -116,25 +109,25 @@ public class OOBMixer {
 				}
 			}
 
-			if (current == null) {
-				scheduler.submit(this,  EventQueueType.RTP_MIXER);
-				mixCount.incrementAndGet();
-				return 0;
-			}
+			if (current != null) {
 
-			// get data for each component
-			activeComponents = components.valuesIterator();
-			while (activeComponents.hasNext()) {
-				OOBComponent component = activeComponents.next();
-				if (component.getComponentId() != sourceComponent) {
-					component.offer(current.clone());
+				// get data for each component
+				activeComponents = components.valuesIterator();
+				while (activeComponents.hasNext()) {
+					OOBComponent component = activeComponents.next();
+					if (component.getComponentId() != sourceComponent) {
+						component.offer(current.clone());
+					}
 				}
+
+				current.recycle();
+
 			}
 
-			if (current != null) current.recycle();
-			scheduler.submit(this,  EventQueueType.RTP_MIXER);
+			next();
 			mixCount.incrementAndGet();
 			return 0;
 		}
+
 	}
 }

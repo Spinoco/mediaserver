@@ -57,7 +57,7 @@ public class PhoneSignalGenerator extends AbstractSource implements PooledObject
     private AudioInput input;
     
     public PhoneSignalGenerator(String name,PriorityQueueScheduler scheduler) {
-        super(name,scheduler, EventQueueType.RTP_INPUT);
+        super(name,scheduler);
         init();
         
         this.input=new AudioInput(ComponentType.SIGNAL_GENERATOR.getType(),frameSize);

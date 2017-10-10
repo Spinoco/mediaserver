@@ -88,7 +88,7 @@ public class AbstractComponentTest {
 		private static final long serialVersionUID = 3317111509574993827L;
 
 		public TestSource(String name,PriorityQueueScheduler scheduler) {
-            super(name, scheduler, EventQueueType.RTP_OUTPUT);
+            super(name, scheduler);
         }
 
         @Override

@@ -83,11 +83,6 @@ public class NotificationRequestCmd extends Action {
             super();
         }
 
-        @Override
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
 
         @Override
         public long perform() {
@@ -167,12 +162,7 @@ public class NotificationRequestCmd extends Action {
         public Responder() {
             super();
         }
-        
-        @Override
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
+
 
         @Override
         public long perform() {        	
@@ -199,12 +189,7 @@ public class NotificationRequestCmd extends Action {
         public Executor() {
             super();
         }
-        
-        @Override
-        public EventQueueType getQueueType()
-        {        	
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
+
 
         @Override
         public long perform() {
@@ -219,12 +204,7 @@ public class NotificationRequestCmd extends Action {
         public ErrorHandler() {
             super();
         }
-        
-        @Override
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.MGCP_SIGNALLING;
-        }
+
 
         @Override
         public long perform() {

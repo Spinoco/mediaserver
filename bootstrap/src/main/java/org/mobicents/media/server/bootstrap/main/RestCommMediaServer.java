@@ -145,10 +145,6 @@ public class RestCommMediaServer implements MediaServer {
             super();
         }
 
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.HEARTBEAT;
-        }
 
         public void restart() {
             ttl = heartbeatTime * 600;

@@ -231,12 +231,6 @@ public class Continuity1 extends Signal implements ToneDetectorListener {
             this.signal=signal;
         }
         
-    	@Override
-        public EventQueueType getQueueType()
-        {
-        	return EventQueueType.HEARTBEAT;
-        }     
-        
         public void setTtl(int value)
         {
         	ttl.set(value);        	        

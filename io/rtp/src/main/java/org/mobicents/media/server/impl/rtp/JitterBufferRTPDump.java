@@ -130,12 +130,12 @@ public class JitterBufferRTPDump {
     /** finalizes dump **/
     public void commit() {
         count.set(-1);
-        scheduler.submit(new FinalizeDumpTask(), EventQueueType.RECORDING);
+        scheduler.submit(new FinalizeDumpTask());
     }
 
     /** schedules dump of the packets, called once each 50 samples ~ each 2s **/
     private void scheduleDump() {
-        scheduler.submit(new DumpTask(), EventQueueType.RECORDING);
+        scheduler.submit(new DumpTask());
     }
 
     /** return formatted delta of nanotime since start of the capture **/
@@ -318,10 +318,6 @@ public class JitterBufferRTPDump {
     }
 
     private class DumpTask extends Task {
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.RECORDING;
-        }
 
         @Override
         public long perform() {
@@ -332,10 +328,6 @@ public class JitterBufferRTPDump {
     }
 
     private class FinalizeDumpTask extends Task {
-        @Override
-        public EventQueueType getQueueType() {
-            return EventQueueType.RECORDING;
-        }
 
         @Override
         public long perform() {

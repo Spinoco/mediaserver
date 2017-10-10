@@ -59,7 +59,7 @@ public class Sine extends AbstractSource {
     }
     
     public Sine(PriorityQueueScheduler scheduler) {
-        super("sine.generator", scheduler,  EventQueueType.RTP_MIXER);
+        super("sine.generator", scheduler);
         //number of seconds covered by one sample
         dt = 1. / LINEAR_AUDIO.getSampleRate();
         

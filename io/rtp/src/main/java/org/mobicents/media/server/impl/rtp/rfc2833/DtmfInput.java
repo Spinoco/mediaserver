@@ -69,7 +69,7 @@ public class DtmfInput extends AbstractSource {
 	
     public DtmfInput(PriorityQueueScheduler scheduler,RtpClock clock)
     {
-    	super("dtmfconverter", scheduler, EventQueueType.RTP_INPUT);
+    	super("dtmfconverter", scheduler);
     	
     	this.clock=clock;
     	this.clock.setClockRate(8000);
