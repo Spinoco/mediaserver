@@ -22,8 +22,6 @@
 
 package org.mobicents.media.server.impl.rtp.rfc2833;
 
-import java.util.ArrayList;
-
 import org.mobicents.media.server.component.oob.OOBInput;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.impl.rtp.RtpClock;
@@ -33,6 +31,8 @@ import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.memory.Frame;
 import org.mobicents.media.server.spi.memory.Memory;
+
+import java.util.ArrayList;
 
 /**
  *

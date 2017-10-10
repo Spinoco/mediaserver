@@ -103,7 +103,7 @@ public abstract class Task implements Runnable {
 
     }
 
-    protected void activateTask() {
+    public void activateTask() {
     	this.isActive.set(true);
-    }    
+    }
 }

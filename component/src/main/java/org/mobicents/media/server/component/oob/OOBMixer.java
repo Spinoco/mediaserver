@@ -22,15 +22,15 @@
 
 package org.mobicents.media.server.component.oob;
 
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
+import org.apache.log4j.Logger;
 import org.mobicents.media.server.concurrent.ConcurrentMap;
 import org.mobicents.media.server.scheduler.MetronomeTask;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.memory.Frame;
+
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Implements compound oob mixer , one of core components of mms 3.0
@@ -47,6 +47,7 @@ public class OOBMixer {
 	private final AtomicBoolean started;
 	private final AtomicLong mixCount;
 
+	private static final Logger logger = Logger.getLogger(OOBMixer.class);
 	public OOBMixer(PriorityQueueScheduler scheduler) {
 		this.scheduler = scheduler;
 		this.components = new ConcurrentMap<OOBComponent>();
@@ -74,6 +75,7 @@ public class OOBMixer {
     public void start() {
         if (!this.started.getAndSet(true)) {
             mixCount.set(0);
+            mixer.activateTask();
             scheduler.submitRT(mixer,  0);
         }
     }

@@ -22,15 +22,14 @@
 
 package org.mobicents.media.server.component.audio;
 
-import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.mobicents.media.server.concurrent.ConcurrentMap;
 import org.mobicents.media.server.scheduler.MetronomeTask;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
+
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Implements compound audio mixer , one of core components of mms 3.0
@@ -91,14 +90,17 @@ public class AudioMixer {
 	}
 
 	public void start() {
-		mixCount = 0;
-		started.set(true);
-		scheduler.submitRT(mixer, 0);
+		if (!started.getAndSet(true)) {
+			mixCount = 0;
+			mixer.activateTask();
+			scheduler.submitRT(mixer, 0);
+		}
 	}
 
 	public void stop() {
-		started.set(false);
-		mixer.cancel();
+		if (started.getAndSet(false)) {
+			mixer.cancel();
+		}
 	}
 
 	private class MixTask extends MetronomeTask {

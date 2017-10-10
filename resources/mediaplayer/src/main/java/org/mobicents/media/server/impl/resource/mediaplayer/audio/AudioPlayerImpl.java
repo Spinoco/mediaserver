@@ -22,18 +22,8 @@
 
 package org.mobicents.media.server.impl.resource.mediaplayer.audio;
 
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
-
 import org.apache.log4j.Logger;
 import org.mobicents.media.ComponentType;
-import org.mobicents.media.server.component.Dsp;
 import org.mobicents.media.server.component.audio.AudioInput;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.impl.resource.mediaplayer.Track;
@@ -57,7 +47,12 @@ import org.mobicents.media.server.spi.player.PlayerListener;
 import org.mobicents.media.server.spi.pooling.PooledObject;
 import org.mobicents.media.server.spi.resource.TTSEngine;
 
-import javax.sound.sampled.UnsupportedAudioFileException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author yulian oifa

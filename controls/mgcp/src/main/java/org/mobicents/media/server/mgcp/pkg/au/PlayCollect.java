@@ -22,11 +22,6 @@
 
 package org.mobicents.media.server.mgcp.pkg.au;
 
-import java.net.MalformedURLException;
-import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
@@ -42,6 +37,11 @@ import org.mobicents.media.server.spi.player.Player;
 import org.mobicents.media.server.spi.player.PlayerEvent;
 import org.mobicents.media.server.spi.player.PlayerListener;
 import org.mobicents.media.server.utils.Text;
+
+import java.net.MalformedURLException;
+import java.util.Collection;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implements play announcement signal.

@@ -150,7 +150,6 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submit(Task task) {
-        task.activateTask();
         workerExecutor.submit(() -> {
             try {
                 task.run();
@@ -168,7 +167,6 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submitHeartbeat(Task task) {
-        task.activateTask();
         heartBeatScheduler.schedule(() -> {
             try {
                 task.run();
@@ -194,13 +192,12 @@ public class PriorityQueueScheduler  {
      * @param nanoDelay
      */
     public void submitRT(Task task, long nanoDelay) {
-        task.activateTask();
         if (nanoDelay <= 0) {
             scheduleRTTaskNow(task);
         } else {
             rtScheduler.schedule(() -> {
                scheduleRTTaskNow(task);
-            }, nanoDelay, TimeUnit.NANOSECONDS);
+            }, nanoDelay/1000000L, TimeUnit.MILLISECONDS);
         }
 
     }

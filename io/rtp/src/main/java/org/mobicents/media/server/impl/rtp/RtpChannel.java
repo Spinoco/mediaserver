@@ -279,6 +279,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         if (udpManager.getRtpTimeout() > 0 && this.remotePeer != null && !connectImmediately) {
             if (this.rtpHandler.isReceivable()) {
                 this.statistics.setLastHeartbeat(scheduler.getClock().getTime());
+                heartBeat.activateTask();
                 scheduler.submitHeartbeat(heartBeat);
             } else {
                 heartBeat.cancel();
@@ -376,6 +377,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         if (udpManager.getRtpTimeout() > 0 && !connectImmediately) {
             if (this.rtpHandler.isReceivable()) {
                 this.statistics.setLastHeartbeat(scheduler.getClock().getTime());
+                heartBeat.activateTask();
                 scheduler.submitHeartbeat(heartBeat);
             } else {
                 heartBeat.cancel();
