@@ -53,15 +53,13 @@ public class RealTimeScheduler {
      */
     public void schedule(Task task, long delayNanos) {
         if (delayNanos > 0) {
-            int millis = (int) (delayNanos / 1000000);
+            int millis = (int) (delayNanos / 1000000L);
             int offset = (millis > maxDelayMs) ? maxDelayMs : millis;
             boolean scheduled = false;
 
             while (!scheduled) {
                 scheduled = scheduleToQueue(task, offset);
             }
-
-
         } else {
             this.pool.submit(task);
         }
@@ -70,7 +68,7 @@ public class RealTimeScheduler {
     /** start this scheduler **/
     public void start() {
        if (! this.running.getAndSet(true)) {
-          this.next.set(System.currentTimeMillis());
+          this.next.set(System.nanoTime()/1000000);
 
           Thread t = new Thread(()->{
               while (this.running.get()) {
@@ -112,7 +110,7 @@ public class RealTimeScheduler {
         long current = next.getAndUpdate(time -> time + 1);
         SchedulingQueue queue = queues[(int)(current % queues.length)];
         int count = queue.drain();
-        while (count < 0) {
+        while (count > 0) {
             Task t = queue.poll();
             if (t != null) { pool.submit(t); }
             count --;
