@@ -26,7 +26,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Scheduler;
 import org.mobicents.media.server.scheduler.Task;

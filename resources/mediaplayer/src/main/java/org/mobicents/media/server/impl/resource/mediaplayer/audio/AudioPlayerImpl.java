@@ -42,7 +42,6 @@ import org.mobicents.media.server.impl.resource.mediaplayer.audio.mpeg.AMRTrackI
 import org.mobicents.media.server.impl.resource.mediaplayer.audio.tone.ToneTrackImpl;
 import org.mobicents.media.server.impl.resource.mediaplayer.audio.tts.TtsTrackImpl;
 import org.mobicents.media.server.impl.resource.mediaplayer.audio.wav.WavTrackImpl;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ResourceUnavailableException;

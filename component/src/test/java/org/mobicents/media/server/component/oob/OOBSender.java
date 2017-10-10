@@ -24,7 +24,6 @@ package org.mobicents.media.server.component.oob;
 
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.impl.AbstractSource;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;

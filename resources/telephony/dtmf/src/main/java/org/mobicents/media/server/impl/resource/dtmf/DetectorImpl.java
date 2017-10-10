@@ -34,7 +34,6 @@ import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.audio.GoertzelFilter;
 import org.mobicents.media.server.component.oob.OOBOutput;
 import org.mobicents.media.server.impl.AbstractSink;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.dtmf.DtmfDetector;

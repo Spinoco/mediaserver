@@ -25,7 +25,6 @@ package org.mobicents.media.server.impl;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.MediaSource;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.MetronomeTask;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;

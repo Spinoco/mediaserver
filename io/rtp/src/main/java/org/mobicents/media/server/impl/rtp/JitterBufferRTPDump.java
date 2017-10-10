@@ -4,9 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
 import org.apache.log4j.Logger;
 import org.bouncycastle.util.encoders.BufferedEncoder;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.RealTimeScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.memory.Frame;
 

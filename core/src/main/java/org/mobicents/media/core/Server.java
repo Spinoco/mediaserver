@@ -28,7 +28,6 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.scheduler.Clock;
-import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ControlProtocol;
@@ -37,7 +36,7 @@ import org.mobicents.media.server.spi.ServerManager;
 
 /**
  * Implementation of a Media Server.
- * 
+ *
  * @author Oifa Yulian
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  * @deprecated Use RestCommMediaServer instead
@@ -146,7 +145,7 @@ public class Server implements MediaServer {
     public boolean isRunning() {
         return this.started;
     }
-    
+
     @Override
     public void addManager(ServerManager manager) {
         managers.put(manager.getControlProtocol(), manager);
