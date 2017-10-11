@@ -171,7 +171,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
                         mediaSink.start();
 
                     //scheduler worker
-                    worker.activateTask();
+                    worker.resetMetronome();
                     scheduler.submitRT(worker, initialDelay);
 
                     //started!
@@ -210,9 +210,6 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     public void stop() {
         if (started.getAndSet(false)) {
             stopped();
-            if (worker != null) {
-                worker.cancel();
-            }
 
             if (mediaSink != null) {
                 mediaSink.stop();
@@ -358,62 +355,56 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
 
 
 
-        /**
-         * (Non Java-doc.)
-         *
-         */
-        public long perform() {
 
-            frame = evolve(timestamp);
-            if (frame == null) {
-                // there was no frame generated. Try next cycle in at max 20 ms delay
-                next();
-                return 0;
+        @Override
+        public void perform() {
+            if (started.get()) {
+                frame = evolve(timestamp);
+                if (frame == null) {
+                    // there was no frame generated. Try next cycle in at max 20 ms delay
+                    next();
+                } else {
 
-            } else {
+                    //mark frame with media time and sequence number
+                    frame.setTimestamp(timestamp);
+                    frame.setSequenceNumber(sn);
 
-                //mark frame with media time and sequence number
-                frame.setTimestamp(timestamp);
-                frame.setSequenceNumber(sn);
+                    //update media time and sequence number for the next frame
+                    timestamp += frame.getDuration();
+                    sn = (sn == Long.MAX_VALUE) ? 0 : sn + 1;
 
-                //update media time and sequence number for the next frame
-                timestamp += frame.getDuration();
-                sn= (sn==Long.MAX_VALUE) ? 0: sn+1;
+                    //set end_of_media flag if stream has reached the end
+                    if (duration > 0 && timestamp >= duration) {
+                        frame.setEOM(true);
+                    }
 
-                //set end_of_media flag if stream has reached the end
-                if (duration > 0 && timestamp >= duration) {
-                    frame.setEOM(true);
-                }
+                    frameDuration = frame.getDuration();
+                    isEOM = frame.isEOM();
+                    length = frame.getLength();
 
-                frameDuration = frame.getDuration();
-                isEOM = frame.isEOM();
-                length = frame.getLength();
+                    //delivering data to the other party.
+                    if (mediaSink != null) {
+                        long start = System.nanoTime();
+                        mediaSink.perform(frame);
+                        long diff = System.nanoTime() - start;
+                        if (diff > 1000000) {
+                            logger.warn("Perform took too long: " + diff + " , sink: " + mediaSink + ", source: " + AbstractSource.this);
+                        }
+                    }
 
-                //delivering data to the other party.
-                if (mediaSink != null) {
-                    long start = System.nanoTime();
-                    mediaSink.perform(frame);
-                    long diff = System.nanoTime() - start;
-                    if (diff > 1000000) {
-                        logger.warn("Perform took too long: " + diff + " , sink: " + mediaSink + ", source: " + AbstractSource.this);
+                    //update transmission statistics
+                    txPackets++;
+                    txBytes += length;
+
+                    //send notifications about media termination
+                    //and do not resubmit this task again if stream has bee ended
+                    if (isEOM) {
+                        completed();
+                    } else {
+                        // reschedule for the next invocation
+                        next();
                     }
                 }
-
-                //update transmission statistics
-                txPackets++;
-                txBytes += length;
-
-                //send notifications about media termination
-                //and do not resubmit this task again if stream has bee ended
-                if (isEOM) {
-                    completed();
-                    return -1;
-                } else {
-                    // reschedule for the next invocation
-                    next();
-                    return 0;
-                }
-
 
             }
 

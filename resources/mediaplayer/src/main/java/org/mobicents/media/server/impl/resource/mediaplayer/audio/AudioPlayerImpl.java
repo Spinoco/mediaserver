@@ -322,9 +322,8 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
 
 
         @Override
-        public long perform() {
+        public void perform() {
             this.track.close();
-            return 0;
         }
     }
 
@@ -345,7 +344,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
 
 
         @Override
-        public long perform() {
+        public void perform() {
             if (lock.tryLock()) {
                 try {
                     int min = track.minSampleTreshold();
@@ -386,9 +385,6 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
                     lock.unlock();
                 }
             }
-
-
-            return 0;
         }
     }
 }

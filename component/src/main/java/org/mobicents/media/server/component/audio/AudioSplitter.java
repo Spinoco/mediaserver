@@ -113,18 +113,15 @@ public class AudioSplitter {
 	public void start() {
 	    if(!this.started.getAndSet(true)) {
 	        mixCount.set(0);
-	        insideMixer.activateTask();
-	        outsideMixer.activateTask();
+	        insideMixer.resetMetronome();
+	        outsideMixer.resetMetronome();
 	        scheduler.submitRT(insideMixer, 0);
 	        scheduler.submitRT(outsideMixer, 0);
 	    }
 	}
 
 	public void stop() {
-	    if(this.started.getAndSet(false)) {
-	        insideMixer.cancel();
-	        outsideMixer.cancel();
-	    }
+		started.set(false);
 	}
 
 	private class InsideMixTask extends MetronomeTask {
@@ -137,7 +134,7 @@ public class AudioSplitter {
 
 
 		@Override
-		public long perform() {
+		public void perform() {
 			if (started.get()) {
 				// summarize all
 				boolean first = true;
@@ -202,8 +199,6 @@ public class AudioSplitter {
 				mixCount.incrementAndGet();
 
 			}
-
-			return 0;
 		}
 	}
 
@@ -225,67 +220,68 @@ public class AudioSplitter {
 		}
 
 		@Override
-		public long perform() {
-			// summarize all
-			boolean first = true;
+		public void perform() {
+			if (started.get()) {
+				// summarize all
+				boolean first = true;
 
-			final Iterator<AudioComponent> outsideRIterator = outsideComponents.valuesIterator();
-			while (outsideRIterator.hasNext()) {
-				AudioComponent component = outsideRIterator.next();
-				component.perform();
-				int[] current = component.getData();
-				if (current != null) {
-					if (first) {
-						System.arraycopy(current, 0, total, 0, total.length);
-						first = false;
-					} else {
-						for (int i = 0; i < total.length; i++) {
-							total[i] += current[i];
+				final Iterator<AudioComponent> outsideRIterator = outsideComponents.valuesIterator();
+				while (outsideRIterator.hasNext()) {
+					AudioComponent component = outsideRIterator.next();
+					component.perform();
+					int[] current = component.getData();
+					if (current != null) {
+						if (first) {
+							System.arraycopy(current, 0, total, 0, total.length);
+							first = false;
+						} else {
+							for (int i = 0; i < total.length; i++) {
+								total[i] += current[i];
+							}
 						}
 					}
 				}
-			}
 
-			if (!first) {
+				if (!first) {
 
 
-				int minValue = 0;
-				int maxValue = 0;
-				for (int i = 0; i < total.length; i++) {
-					if (total[i] > maxValue) {
-						maxValue = total[i];
-					} else if (total[i] < minValue) {
-						minValue = total[i];
+					int minValue = 0;
+					int maxValue = 0;
+					for (int i = 0; i < total.length; i++) {
+						if (total[i] > maxValue) {
+							maxValue = total[i];
+						} else if (total[i] < minValue) {
+							minValue = total[i];
+						}
 					}
+
+					minValue = 0 - minValue;
+					if (minValue > maxValue) {
+						maxValue = minValue;
+					}
+
+					double currGain = gain;
+					if (maxValue > Short.MAX_VALUE) {
+						currGain = (currGain * Short.MAX_VALUE) / maxValue;
+					}
+
+					for (int i = 0; i < total.length; i++) {
+						total[i] = (short) Math.round((double) total[i] * currGain);
+					}
+
+					// get data for each component
+					final Iterator<AudioComponent> insideSIterator = insideComponents.valuesIterator();
+					while (insideSIterator.hasNext()) {
+						AudioComponent component = insideSIterator.next();
+						component.offer(total);
+					}
+
 				}
 
-				minValue = 0 - minValue;
-				if (minValue > maxValue) {
-					maxValue = minValue;
-				}
-
-				double currGain = gain;
-				if (maxValue > Short.MAX_VALUE) {
-					currGain = (currGain * Short.MAX_VALUE) / maxValue;
-				}
-
-				for (int i = 0; i < total.length; i++) {
-					total[i] = (short) Math.round((double) total[i] * currGain);
-				}
-
-				// get data for each component
-				final Iterator<AudioComponent> insideSIterator = insideComponents.valuesIterator();
-				while (insideSIterator.hasNext()) {
-					AudioComponent component = insideSIterator.next();
-					component.offer(total);
-				}
+				next();
+				mixCount.incrementAndGet();
 
 			}
-
-			next();
-			mixCount.incrementAndGet();
-
-			return 0;
 		}
 	}
 }

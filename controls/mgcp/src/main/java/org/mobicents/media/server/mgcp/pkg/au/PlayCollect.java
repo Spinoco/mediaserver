@@ -216,8 +216,7 @@ public class PlayCollect extends Signal {
 
     /**
      * Starts the prompt phase.
-     * 
-     * @param options requested options.
+     *
      */
     private void startPromptPhase(Collection<Text> promptList) {
         synchronized (this.LOCK) {
@@ -878,98 +877,95 @@ public class PlayCollect extends Signal {
         }
 
         @Override
-        public long perform() {
-            if (!active.get()) {
-                return 0;
-            }
+        public void perform() {
+            if (active.get()) {
+                int ttlValue = ttl.get();
+                int overallTtlValue = overallTtl.get();
+                if (ttlValue != 0 && overallTtlValue != 0) {
+                    if (ttlValue > 0) {
+                        ttl.set(ttlValue - 1);
+                    }
 
-            int ttlValue = ttl.get();
-            int overallTtlValue = overallTtl.get();
-            if (ttlValue != 0 && overallTtlValue != 0) {
-                if (ttlValue > 0) {
-                    ttl.set(ttlValue - 1);
+                    if (overallTtlValue > 0) {
+                        overallTtl.set(overallTtlValue - 1);
+                    }
+
+                    scheduler.submitHeartbeat(this);
+                    return;
                 }
 
-                if (overallTtlValue > 0) {
-                    overallTtl.set(overallTtlValue - 1);
+                if (logger.isInfoEnabled()) {
+                    logger.info(String.format("(%s) Timeout expired waiting for dtmf", getEndpoint().getLocalName()));
                 }
 
-                scheduler.submitHeartbeat(this);
-                return 0;
-            }
+                if (numberOfAttempts == 1) {
+                    String naContent = "";
+                    if (options.getNumberOfAttempts() > 1) {
+                        naContent = " na=" + options.getNumberOfAttempts();
+                    }
 
-            if (logger.isInfoEnabled()) {
-                logger.info(String.format("(%s) Timeout expired waiting for dtmf", getEndpoint().getLocalName()));
-            }
-
-            if (numberOfAttempts == 1) {
-                String naContent = "";
-                if (options.getNumberOfAttempts() > 1) {
-                    naContent = " na=" + options.getNumberOfAttempts();
-                }
-
-                if (ttlValue == 0) {
-                    int length = buffer.getSequence().length();
-                    if (options.getDigitsNumber() > 0 && length >= options.getDigitsNumber()) {
-                        if (options.hasSuccessAnnouncement()) {
-                            eventContent = new Text("rc=100 dc=" + buffer.getSequence() + naContent);
-                            playerMode = PlayerMode.SUCCESS;
-                            startPromptPhase(options.getSuccessAnnouncement());
+                    if (ttlValue == 0) {
+                        int length = buffer.getSequence().length();
+                        if (options.getDigitsNumber() > 0 && length >= options.getDigitsNumber()) {
+                            if (options.hasSuccessAnnouncement()) {
+                                eventContent = new Text("rc=100 dc=" + buffer.getSequence() + naContent);
+                                playerMode = PlayerMode.SUCCESS;
+                                startPromptPhase(options.getSuccessAnnouncement());
+                            } else {
+                                oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + naContent));
+                                reset();
+                                complete();
+                            }
+                        } else if (length > 0) {
+                            if (options.hasNoDigitsReprompt()) {
+                                eventContent = new Text("rc=326 dc=" + buffer.getSequence() + naContent);
+                                playerMode = PlayerMode.FAILURE;
+                                startPromptPhase(options.getNoDigitsReprompt());
+                            } else if (options.hasFailureAnnouncement()) {
+                                eventContent = new Text("rc=326 dc=" + buffer.getSequence() + naContent);
+                                playerMode = PlayerMode.FAILURE;
+                                startPromptPhase(options.getFailureAnnouncement());
+                            } else {
+                                oc.fire(signal, new Text("rc=326 dc=" + buffer.getSequence() + naContent));
+                                reset();
+                                complete();
+                            }
                         } else {
-                            oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + naContent));
-                            reset();
-                            complete();
-                        }
-                    } else if (length > 0) {
-                        if (options.hasNoDigitsReprompt()) {
-                            eventContent = new Text("rc=326 dc=" + buffer.getSequence() + naContent);
-                            playerMode = PlayerMode.FAILURE;
-                            startPromptPhase(options.getNoDigitsReprompt());
-                        } else if (options.hasFailureAnnouncement()) {
-                            eventContent = new Text("rc=326 dc=" + buffer.getSequence() + naContent);
-                            playerMode = PlayerMode.FAILURE;
-                            startPromptPhase(options.getFailureAnnouncement());
-                        } else {
-                            oc.fire(signal, new Text("rc=326 dc=" + buffer.getSequence() + naContent));
-                            reset();
-                            complete();
+                            if (options.hasNoDigitsReprompt()) {
+                                eventContent = new Text("rc=326" + naContent);
+                                playerMode = PlayerMode.FAILURE;
+                                startPromptPhase(options.getNoDigitsReprompt());
+                            } else if (options.hasFailureAnnouncement()) {
+                                eventContent = new Text("rc=326" + naContent);
+                                playerMode = PlayerMode.FAILURE;
+                                startPromptPhase(options.getFailureAnnouncement());
+                            } else {
+                                oc.fire(signal, new Text("rc=326" + naContent));
+                                reset();
+                                complete();
+                            }
                         }
                     } else {
                         if (options.hasNoDigitsReprompt()) {
-                            eventContent = new Text("rc=326" + naContent);
+                            eventContent = new Text("rc=330" + naContent);
                             playerMode = PlayerMode.FAILURE;
                             startPromptPhase(options.getNoDigitsReprompt());
                         } else if (options.hasFailureAnnouncement()) {
-                            eventContent = new Text("rc=326" + naContent);
+                            eventContent = new Text("rc=330" + naContent);
                             playerMode = PlayerMode.FAILURE;
                             startPromptPhase(options.getFailureAnnouncement());
                         } else {
-                            oc.fire(signal, new Text("rc=326" + naContent));
+                            oc.fire(signal, new Text("rc=330" + naContent));
                             reset();
                             complete();
                         }
                     }
                 } else {
-                    if (options.hasNoDigitsReprompt()) {
-                        eventContent = new Text("rc=330" + naContent);
-                        playerMode = PlayerMode.FAILURE;
-                        startPromptPhase(options.getNoDigitsReprompt());
-                    } else if (options.hasFailureAnnouncement()) {
-                        eventContent = new Text("rc=330" + naContent);
-                        playerMode = PlayerMode.FAILURE;
-                        startPromptPhase(options.getFailureAnnouncement());
-                    } else {
-                        oc.fire(signal, new Text("rc=330" + naContent));
-                        reset();
-                        complete();
-                    }
+                    buffer.reset();
+                    decreaseNa();
                 }
-            } else {
-                buffer.reset();
-                decreaseNa();
-            }
 
-            return 0;
+            }
         }
     }
 }

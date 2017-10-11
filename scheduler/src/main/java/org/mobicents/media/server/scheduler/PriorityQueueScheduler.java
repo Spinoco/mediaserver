@@ -84,21 +84,25 @@ public class PriorityQueueScheduler  {
         }
     }
 
+    // basic value for system parallelism, eq to (processor_count max 4)
+    public final static int SYSTEM_PARALLELISM =
+            Runtime.getRuntime().availableProcessors() > 4 ? Runtime.getRuntime().availableProcessors() : 4;
+
 
 
     // Scheduler for heartbeats, that are scheduled each 100 mills
     private ScheduledExecutorService heartBeatScheduler =
-            Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-heartbeat"));
+            Executors.newScheduledThreadPool(SYSTEM_PARALLELISM, new NamedThreadFactory("ms-heartbeat"));
 
     // rt scheduler that schedules tasks, that need to be run in 20ms metronome
     // so the scheduled tasks here are scheduled from 1ns until 20ms
     private ScheduledExecutorService rtScheduler =
-            Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-rt-scheduler"));
+            Executors.newScheduledThreadPool(SYSTEM_PARALLELISM, new NamedThreadFactory("ms-rt-scheduler"));
 
     // where realtime tasks are executed after being in rtScheduler
     private ExecutorService rtWorkerExecutor =
               new ForkJoinPool (
-          Runtime.getRuntime().availableProcessors() * 4
+                      SYSTEM_PARALLELISM * 2
                     , new NamedForkJoinWorkerThreadFactory("ms-rt-worker")
                     , null, true
               );
@@ -106,7 +110,7 @@ public class PriorityQueueScheduler  {
     // scheudler for non realtime tasks. Note that here we expect blocking to occur
     private ExecutorService workerExecutor =
             new ForkJoinPool (
-                    Runtime.getRuntime().availableProcessors() * 4
+                    SYSTEM_PARALLELISM * 4 // we may have long-blocking (i.e. recording file...) tasks here as such we need more threads
                     , new NamedForkJoinWorkerThreadFactory("ms-worker")
                     , null, true
             );
@@ -150,14 +154,7 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submit(Task task) {
-        workerExecutor.submit(() -> {
-            try {
-                task.run();
-            } catch (Throwable t) {
-                logger.error("Failed to execute task" + task, t);
-            }
-        });
-
+        workerExecutor.submit(task);
     }
 
 
@@ -167,13 +164,7 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submitHeartbeat(Task task) {
-        heartBeatScheduler.schedule(() -> {
-            try {
-                task.run();
-            } catch (Throwable t) {
-                logger.error("Failed to execute heartbeat " + task, t);
-            }
-        }, 100, TimeUnit.MILLISECONDS);
+        heartBeatScheduler.schedule(task, 100, TimeUnit.MILLISECONDS);
     }
     
     /**
@@ -193,25 +184,16 @@ public class PriorityQueueScheduler  {
      */
     public void submitRT(Task task, long nanoDelay) {
         if (nanoDelay <= 0) {
-            scheduleRTTaskNow(task);
+            rtWorkerExecutor.submit(task);
         } else {
             rtScheduler.schedule(() -> {
-               scheduleRTTaskNow(task);
+                rtWorkerExecutor.submit(task);
             }, nanoDelay/1000000L, TimeUnit.MILLISECONDS);
         }
 
     }
 
-    /** schedules immediate execution of real-time task **/
-    private void scheduleRTTaskNow(Task task) {
-        rtWorkerExecutor.submit(() -> {
-            try {
-                task.run();
-            } catch (Throwable t) {
-                logger.error("Failed to execute runtime task" + task, t);
-            }
-        });
-    }
+
     
     /**
      * Starts scheduler.

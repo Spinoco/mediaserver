@@ -85,7 +85,7 @@ public class NotificationRequestCmd extends Action {
 
 
         @Override
-        public long perform() {
+        public void perform() {
             request = (MgcpRequest) getEvent().getMessage();
             //getting the endpoint name
             Text localName = new Text();
@@ -151,8 +151,7 @@ public class NotificationRequestCmd extends Action {
                     throw new MgcpCommandException(MgcpResponseCode.TRANSIENT_ERROR, new Text(e.getMessage()));
                 }
                 
-            }            
-            return 0;
+            }
         }
         
     }
@@ -165,7 +164,7 @@ public class NotificationRequestCmd extends Action {
 
 
         @Override
-        public long perform() {        	
+        public void perform() {
         	MgcpEvent evt = transaction().getProvider().createEvent(MgcpEvent.RESPONSE, getEvent().getAddress());
         	MgcpResponse response = (MgcpResponse) evt.getMessage();
         	response.setResponseCode(MgcpResponseCode.TRANSACTION_WAS_EXECUTED);
@@ -178,8 +177,7 @@ public class NotificationRequestCmd extends Action {
         	} finally {
         		evt.recycle();
         	}        	
-        	
-        	return 0;
+
         }
         
     }
@@ -192,9 +190,8 @@ public class NotificationRequestCmd extends Action {
 
 
         @Override
-        public long perform() {
-        	endpoint.getRequest().execute();        	
-        	return 0;
+        public void perform() {
+        	endpoint.getRequest().execute();
         }
         
     }
@@ -207,7 +204,7 @@ public class NotificationRequestCmd extends Action {
 
 
         @Override
-        public long perform() {
+        public void perform() {
             MgcpEvent evt = null;
             try {                
                 code = ((MgcpCommandException) transaction().getLastError()).getCode();
@@ -226,7 +223,6 @@ public class NotificationRequestCmd extends Action {
                 evt.recycle();
             }
 
-            return 0;
         }
         
     }

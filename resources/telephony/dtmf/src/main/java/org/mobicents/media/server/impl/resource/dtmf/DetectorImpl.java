@@ -237,7 +237,7 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
     /**
      * Searches maximum value in the specified array.
      * 
-     * @param data[] input data.
+     * @param data input data.
      * @return the index of the maximum value in the data array.
      */
     private int getMax(double data[]) {
@@ -378,7 +378,7 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
 
 
         @Override
-        public long perform() {
+        public void perform() {
             final Iterator<DtmfEventImpl> iterator = this.events.iterator();
             while (iterator.hasNext()) {
                 DtmfEventImpl evt = iterator.next();
@@ -398,7 +398,6 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
                 // Remove event from collection
                 iterator.remove();
             }
-            return 0;
         }
 
     }

@@ -310,19 +310,16 @@ public class JitterBufferRTPDump {
     private class DumpTask extends Task {
 
         @Override
-        public long perform() {
+        public void perform() {
             writeSamples();
-
-            return 0;
         }
     }
 
     private class FinalizeDumpTask extends Task {
 
         @Override
-        public long perform() {
+        public void perform() {
             flush();
-            return 0;
         }
     }
 

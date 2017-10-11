@@ -20,9 +20,7 @@ public abstract class MetronomeTask extends Task {
     /**
      * Some scenarios requires reinitialization of metronome, for this purpose this can be used.
      */
-    @Override
-    public void activateTask() {
-        super.activateTask();
+    public void resetMetronome() {
         this.metronome.set(System.nanoTime());
     }
 

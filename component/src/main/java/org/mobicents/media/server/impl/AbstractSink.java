@@ -23,6 +23,7 @@
 package org.mobicents.media.server.impl;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.MediaSink;
@@ -41,7 +42,7 @@ public abstract class AbstractSink extends BaseComponent implements MediaSink {
 	private static final long serialVersionUID = -2119158462149998609L;
 
 	//shows if component is started or not.
-    private volatile boolean started = false;
+    private final AtomicBoolean started = new AtomicBoolean(false);
     
     //transmission statisctics
     private volatile long rxPackets;
@@ -60,44 +61,35 @@ public abstract class AbstractSink extends BaseComponent implements MediaSink {
 
     @Override
     public boolean isStarted() {
-        return this.started;
+        return this.started.get();
     }
 
     /**
      * This methos is called when new portion of media arrives.
-     * 
-     * @param buffer the new portion of media data.
+     *
      */
     public abstract void onMediaTransfer(Frame frame) throws IOException;
 
     /**
      * (Non Java-doc).
-     * 
-     * @see org.mobicents.media.MediaSink#start().
+     *
      */
     protected void start() {
-    	if (started) {
-			return;
-		}
-
-		//change state flag
-		started = true;
-		
-		this.rxBytes = 0;
-		this.rxPackets = 0;
-
-		//send notification to component's listener
-		started();		    	
+        if (!started.getAndSet(true)) {
+            this.rxBytes = 0;
+            this.rxPackets = 0;
+            started();
+        }
     }    
     
     /**
      * (Non Java-doc).
-     * 
-     * @see org.mobicents.media.MediaSink#stop().
+     *
      */
     protected void stop() {
-    	started = false;
-		stopped();    	
+        if (started.getAndSet(false)) {
+            stopped();
+        }
     }
 
     @Override
@@ -108,8 +100,7 @@ public abstract class AbstractSink extends BaseComponent implements MediaSink {
     
     /**
      * Sends failure notification.
-     * 
-     * @param eventID failure event identifier.
+     *
      * @param e the exception caused failure.
      */
     protected void failed(Exception e) {
@@ -149,24 +140,23 @@ public abstract class AbstractSink extends BaseComponent implements MediaSink {
     
     @Override
     public void perform(Frame frame) {
-    	if(!started) {
-    		return;
-    	}
-    	
-    	if(frame==null) {
-    		return;
-    	}
-    	
-    	rxPackets++;
-    	rxBytes += frame.getLength();
+        if (isStarted()) {
 
-    	//frame is not null, let's handle it
-    	try {
-    		onMediaTransfer(frame);
-    	} catch (IOException e) {  
-    		logger.error(e);
-    		started = false;
-        	failed(e);
-    	}
+            if (frame == null) {
+                return;
+            }
+
+            rxPackets++;
+            rxBytes += frame.getLength();
+
+            //frame is not null, let's handle it
+            try {
+                onMediaTransfer(frame);
+            } catch (IOException e) {
+                logger.error(e);
+                started.set(false);
+                failed(e);
+            }
+        }
     }    
 }

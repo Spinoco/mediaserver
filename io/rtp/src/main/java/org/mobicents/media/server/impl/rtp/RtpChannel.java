@@ -25,6 +25,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.log4j.Logger;
 import org.mobicents.media.io.ice.IceAuthenticator;
@@ -114,6 +115,8 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
 
     // Listeners
     private RtpListener rtpListener;
+
+    private AtomicBoolean active = new AtomicBoolean(false);
 
     protected RtpChannel(int channelId, int jitterBufferSize, RtpStatistics statistics, RtpClock clock, RtpClock oobClock,
             PriorityQueueScheduler scheduler, UdpManager udpManager, Path dumpDir) {
@@ -279,25 +282,14 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         if (udpManager.getRtpTimeout() > 0 && this.remotePeer != null && !connectImmediately) {
             if (this.rtpHandler.isReceivable()) {
                 this.statistics.setLastHeartbeat(scheduler.getClock().getTime());
-                heartBeat.activateTask();
                 scheduler.submitHeartbeat(heartBeat);
             } else {
-                heartBeat.cancel();
+                active.set(true);
             }
         }
     }
 
     private void onBinding(boolean useJitterBuffer) {
-//        // Set protocol handler priorities
-//        this.rtpHandler.setPipelinePriority(RTP_PRIORITY);
-//        if (this.rtcpMux) {
-//            this.rtcpHandler.setPipelinePriority(RTCP_PRIORITY);
-//        }
-//        if (this.secure) {
-//            this.stunHandler.setPipelinePriority(STUN_PRIORITY);
-//        }
-//
-//        // Configure protocol handlers
         this.transmitter.setChannel(this.dataChannel);
         this.rtpHandler.useJitterBuffer(useJitterBuffer);
         this.handlers.addHandler(this.rtpHandler);
@@ -306,16 +298,6 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
             this.rtcpHandler.setChannel(this.dataChannel);
             this.handlers.addHandler(this.rtcpHandler);
         }
-//
-//        if (this.secure) {
-//            this.dtlsHandler.setPipelinePriority(DTLS_PRIORITY);
-//            this.dtlsHandler.setChannel(this.dataChannel);
-//            this.dtlsHandler.addListener(this);
-//            this.handlers.addHandler(this.stunHandler);
-//
-//            // Start DTLS handshake
-//            this.dtlsHandler.handshake();
-//        }
     }
 
     public void bind(boolean isLocal, boolean rtcpMux) throws IOException {
@@ -377,10 +359,10 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         if (udpManager.getRtpTimeout() > 0 && !connectImmediately) {
             if (this.rtpHandler.isReceivable()) {
                 this.statistics.setLastHeartbeat(scheduler.getClock().getTime());
-                heartBeat.activateTask();
+                active.set(true);
                 scheduler.submitHeartbeat(heartBeat);
             } else {
-                heartBeat.cancel();
+                active.set(false);
             }
         }
     }
@@ -499,8 +481,8 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     }
 
     private void reset() {
-        // Heartbeat reset
-        heartBeat.cancel();
+        // cancel HB
+        active.set(false);
 
         // RTP reset
         this.handlers.removeHandler(this.rtpHandler);
@@ -541,18 +523,18 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
 
     private class HeartBeat extends Task {
 
-
         @Override
-        public long perform() {
-            long elapsedTime = scheduler.getClock().getTime() - statistics.getLastHeartbeat();
-            if (elapsedTime > udpManager.getRtpTimeout() * 1000000000L) {
-                if (rtpListener != null) {
-                    rtpListener.onRtpFailure("RTP timeout! Elapsed time since last heartbeat: " + elapsedTime);
+        public void perform() {
+            if (active.get()) {
+                long elapsedTime = scheduler.getClock().getTime() - statistics.getLastHeartbeat();
+                if (elapsedTime > udpManager.getRtpTimeout() * 1000000000L) {
+                    if (rtpListener != null) {
+                        rtpListener.onRtpFailure("RTP timeout! Elapsed time since last heartbeat: " + elapsedTime);
+                    }
+                } else {
+                    scheduler.submitHeartbeat(this);
                 }
-            } else {
-                scheduler.submitHeartbeat(this);
             }
-            return 0;
         }
     }
     

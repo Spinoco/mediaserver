@@ -161,7 +161,6 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
         output.start();
         oobOutput.start();
         if (this.postSpeechTimer > 0 || this.preSpeechTimer > 0 || this.maxRecordTime > 0) {
-            this.heartbeat.activateTask();
             scheduler.submitHeartbeat(this.heartbeat);
         }
 
@@ -182,7 +181,6 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             this.lastPacketData = 0;
             this.startTime = 0;
 
-            this.heartbeat.cancel();
 
             // deactivate can be concurrently invoked from  multiple threads (MediaGroup, KillRecording for example).
             // to make sure the sink is closed only once, we set the sink ref to null and proceed to commit only if obtained reference is not null.
@@ -345,9 +343,8 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
         }
 
         @Override
-        public long perform() {
+        public void perform() {
             deactivate();
-            return 0;
         }
 
     }
@@ -364,9 +361,8 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
         }
 
         @Override
-        public long perform() {
+        public void perform() {
             listeners.dispatch(event);
-            return 0;
         }
     }
 
@@ -380,31 +376,32 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
         }
 
         @Override
-        public long perform() {
-            long currTime = scheduler.getClock().getTime();
+        public void perform() {
+            if (isStarted()) {
+                long currTime = scheduler.getClock().getTime();
 
-            if (preSpeechTimer > 0 && !speechDetected && currTime - lastPacketData > preSpeechTimer) {
-                qualifier = RecorderEvent.NO_SPEECH;
-                scheduler.submit(killRecording);
-                return 0;
+                if (preSpeechTimer > 0 && !speechDetected && currTime - lastPacketData > preSpeechTimer) {
+                    qualifier = RecorderEvent.NO_SPEECH;
+                    scheduler.submit(killRecording);
+                    return;
+                }
+
+                if (postSpeechTimer > 0 && speechDetected && currTime - lastPacketData > postSpeechTimer) {
+                    qualifier = RecorderEvent.NO_SPEECH;
+                    scheduler.submit(killRecording);
+                    return;
+                }
+
+                // check max time and stop recording if exeeds limit
+                if (maxRecordTime > 0 && currTime - startTime >= maxRecordTime) {
+                    // set qualifier
+                    qualifier = RecorderEvent.MAX_DURATION_EXCEEDED;
+                    scheduler.submit(killRecording);
+                    return;
+                }
+
+                scheduler.submitHeartbeat(this);
             }
-
-            if (postSpeechTimer > 0 && speechDetected && currTime - lastPacketData > postSpeechTimer) {
-                qualifier = RecorderEvent.NO_SPEECH;
-                scheduler.submit(killRecording);
-                return 0;
-            }
-
-            // check max time and stop recording if exeeds limit
-            if (maxRecordTime > 0 && currTime - startTime >= maxRecordTime) {
-                // set qualifier
-                qualifier = RecorderEvent.MAX_DURATION_EXCEEDED;
-                scheduler.submit(killRecording);
-                return 0;
-            }
-
-            scheduler.submitHeartbeat(this);
-            return 0;
         }
 
 
@@ -523,7 +520,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
 
         @Override
-        public long perform() {
+        public void perform() {
             if (lock.tryLock()) {
                 try {
                     writeSamples(this.snk, this.writeBuff);
@@ -531,7 +528,6 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
                     lock.unlock();
                 }
             }
-            return 0;
         }
     }
 
@@ -549,7 +545,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
 
         @Override
-        public long perform() {
+        public void perform() {
             lock.lock(); // unfortunately here we must block as we don't get multiple guaranteed invocations of this
             try {
                 writeSamples(this.snk, this.writeBuff);
@@ -561,7 +557,6 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
             } finally {
                 lock.unlock();
             }
-            return 0;
         }
     }
 

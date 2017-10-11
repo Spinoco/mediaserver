@@ -142,21 +142,17 @@ public class SS7Output extends AbstractSink {
         return this.dsp;
     }
 
-    public void start() {    	
-    	super.start();
-    	sender.submit();    	    	
-    }
-    
-    public void stop() {
-    	super.stop();
-    	sender.cancel();
-    }
+
+	@Override
+	protected void started() {
+		sender.submit();
+	}
+
     
     /**
      * (Non Java-doc.)
      *
      *
-     * @see org.mobicents.media.MediaSink#setFormats(org.mobicents.media.server.spi.format.Formats)
      */
     public void setFormats(Formats formats) throws FormatNotSupportedException {
     		
@@ -204,59 +200,49 @@ public class SS7Output extends AbstractSink {
         
         public void submit()
         {
-        	this.activateTask();
         	scheduler.submit(this);
         }
         
         @Override
-        public long perform() {
-        	if(currFrame==null)
-        	{
-        		if(oobQueue.size()>0)
-        		{
-        			currFrame=oobQueue.remove(0);
-        			framePosition=0;
-        		}
-        		else if(queue.size()>0)
-        		{
-        			currFrame=queue.remove(0);
-        			framePosition=0;
-        		}
-        	}
-        	
-        	readCount=0;
-        	if(currFrame!=null)
-        	{
-        		byte[] data=currFrame.getData(); 
-        		if(framePosition+SEND_SIZE<data.length)
-        		{
-        			System.arraycopy(data, framePosition, smallBuffer, 0, 32);
-        			readCount=SEND_SIZE;
-        			framePosition+=SEND_SIZE;        			
-        		}
-        		else if(framePosition<data.length-1)
-        		{
-        			System.arraycopy(data, framePosition, smallBuffer, 0, data.length-framePosition);
-        			readCount=data.length-framePosition;
-        			currFrame=null;
-        			framePosition=0;
-        		}    		
-        	}
-        	
-            while(readCount<smallBuffer.length)
-            	smallBuffer[readCount++]=(byte)0;
-            
-            try
-            {
-            	channel.write(smallBuffer,readCount);            	            
-            }
-            catch(IOException e)
-            {            	            
-            }
-            
-            scheduler.submit(this);
-            return 0;
-        }                
+        public void perform() {
+			if (isStarted()) {
+				if (currFrame == null) {
+					if (oobQueue.size() > 0) {
+						currFrame = oobQueue.remove(0);
+						framePosition = 0;
+					} else if (queue.size() > 0) {
+						currFrame = queue.remove(0);
+						framePosition = 0;
+					}
+				}
+
+				readCount = 0;
+				if (currFrame != null) {
+					byte[] data = currFrame.getData();
+					if (framePosition + SEND_SIZE < data.length) {
+						System.arraycopy(data, framePosition, smallBuffer, 0, 32);
+						readCount = SEND_SIZE;
+						framePosition += SEND_SIZE;
+					} else if (framePosition < data.length - 1) {
+						System.arraycopy(data, framePosition, smallBuffer, 0, data.length - framePosition);
+						readCount = data.length - framePosition;
+						currFrame = null;
+						framePosition = 0;
+					}
+				}
+
+				while (readCount < smallBuffer.length)
+					smallBuffer[readCount++] = (byte) 0;
+
+				try {
+					channel.write(smallBuffer, readCount);
+				} catch (IOException e) {
+				}
+
+				scheduler.submit(this);
+
+			}
+		}
     }
     
     private class OOBTranslator extends AbstractSink

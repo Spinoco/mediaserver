@@ -130,11 +130,9 @@ public abstract class BaseConnection implements Connection {
 
 		switch (state) {
 		case HALF_OPEN:
-			heartBeat.activateTask();
 			scheduler.submitHeartbeat(heartBeat);
 			break;
 		case NULL:
-			heartBeat.cancel();
 			break;
 		default:
 			break;
@@ -367,16 +365,18 @@ public abstract class BaseConnection implements Connection {
 		}
 
 		@Override
-		public long perform() {
+		public void perform() {
 			synchronized (stateMonitor) {
-				ttl--;
-				if (ttl == 0) {
-					fail();
-				} else {
-					scheduler.submitHeartbeat(this);
+				if (state != ConnectionState.NULL) {
+					ttl--;
+					if (ttl == 0) {
+						fail();
+					} else {
+						scheduler.submitHeartbeat(this);
+					}
 				}
 			}
-			return 0;
+			return;
 		}
 	}
 

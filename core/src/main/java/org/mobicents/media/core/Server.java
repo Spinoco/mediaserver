@@ -33,6 +33,7 @@ import org.mobicents.media.server.spi.ServerManager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Implementation of a Media Server.
@@ -58,11 +59,10 @@ public class Server implements MediaServer {
 
     // Media Server State
     private final Map<ControlProtocol, ServerManager> managers;
-    private boolean started;
+    private final AtomicBoolean started = new AtomicBoolean(false);
 
     public Server() {
         this.managers = new HashMap<>(2);
-        this.started = false;
         this.heartbeatTime = 0;
     }
 
@@ -81,7 +81,6 @@ public class Server implements MediaServer {
     /**
      * Assigns the heart beat time in minutes
      *
-     * @param minutes
      */
     public void setHeartBeatTime(int heartbeatTime) {
         this.heartbeatTime = heartbeatTime;
@@ -89,61 +88,60 @@ public class Server implements MediaServer {
 
     @Override
     public void start() throws IllegalStateException {
-        if (this.started) {
+        if (!this.started.getAndSet(true)) {
+
+            // Validate mandatory dependencies
+            if (clock == null) {
+                log.error("Timing clock is not defined");
+                return;
+            }
+
+            for (ServerManager controller : managers.values()) {
+                log.info("Activating controller " + controller.getControlProtocol().name());
+                controller.activate();
+            }
+
+            if (heartbeatTime > 0) {
+                heartbeat = new HeartBeat();
+                ttl = heartbeatTime * 600;
+                scheduler.submitHeartbeat(heartbeat);
+            }
+        } else {
             throw new IllegalStateException("Media Server already started");
-        }
-
-        // Validate mandatory dependencies
-        if (clock == null) {
-            log.error("Timing clock is not defined");
-            return;
-        }
-
-        // Start Media Server
-        this.started = true;
-        for (ServerManager controller : managers.values()) {
-            log.info("Activating controller " + controller.getControlProtocol().name());
-            controller.activate();
-        }
-
-        if (heartbeatTime > 0) {
-            heartbeat = new HeartBeat();
-            heartbeat.restart();
         }
     }
 
     @Override
     public void stop() throws IllegalStateException {
-        if (!this.started) {
+        if (this.started.getAndSet(false)) {
+
+
+            if (log.isInfoEnabled()) {
+                log.info("Stopping UDP Manager");
+            }
+            udpManager.stop();
+
+
+            for (ServerManager controller : managers.values()) {
+                log.info("Deactivating controller " + controller.getControlProtocol().name());
+                controller.deactivate();
+            }
+
+            if (log.isInfoEnabled()) {
+                log.info("Stopping scheduler");
+            }
+            scheduler.stop();
+            if (log.isInfoEnabled()) {
+                log.info("Stopped media server instance ");
+            }
+        } else {
             throw new IllegalStateException("Media Server already stopped");
-        }
-
-        if (log.isInfoEnabled()) {
-            log.info("Stopping UDP Manager");
-        }
-        udpManager.stop();
-
-        if (heartbeat != null) {
-            heartbeat.cancel();
-        }
-
-        for (ServerManager controller : managers.values()) {
-            log.info("Deactivating controller " + controller.getControlProtocol().name());
-            controller.deactivate();
-        }
-
-        if (log.isInfoEnabled()) {
-            log.info("Stopping scheduler");
-        }
-        scheduler.stop();
-        if (log.isInfoEnabled()) {
-            log.info("Stopped media server instance ");
         }
     }
 
     @Override
     public boolean isRunning() {
-        return this.started;
+        return this.started.get();
     }
 
     @Override
@@ -163,22 +161,20 @@ public class Server implements MediaServer {
         }
 
 
-        public void restart() {
-            ttl = heartbeatTime * 600;
-            this.activateTask();
-            scheduler.submitHeartbeat(this);
-        }
+
 
         @Override
-        public long perform() {
-            ttl--;
-            if (ttl == 0) {
-                log.info("Global hearbeat is still alive");
-                restart();
-            } else {
-                scheduler.submitHeartbeat(this);
+        public void perform() {
+            if (started.get()) {
+                ttl--;
+                if (ttl == 0) {
+                    log.info("Global hearbeat is still alive");
+                    ttl = heartbeatTime * 600;
+                    scheduler.submitHeartbeat(this);
+                } else {
+                    scheduler.submitHeartbeat(this);
+                }
             }
-            return 0;
         }
     }
 }

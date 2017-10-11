@@ -133,7 +133,7 @@ public class DeleteConnectionCmd extends Action {
 		}
 
 		@Override
-		public long perform() {
+		public void perform() {
 			request = (MgcpRequest) getEvent().getMessage();
 
 			Parameter callID = request.getParameter(Parameter.CALL_ID);
@@ -141,12 +141,12 @@ public class DeleteConnectionCmd extends Action {
 
 			if (callID == null && connectionID == null) {
 				this.deleteForEndpoint(request);
-				return 0;
+				return ;
 			}
 
 			if (callID != null && connectionID == null) {
 				this.deleteForCall(callID, request);
-				return 0;
+				return ;
 			}
 
 			if (callID == null) {
@@ -197,7 +197,7 @@ public class DeleteConnectionCmd extends Action {
 						.hexToInteger());
 			}
 
-			return 0;
+			return ;
 		}
 
 	}
@@ -215,7 +215,7 @@ public class DeleteConnectionCmd extends Action {
 
 
 		@Override
-		public long perform() {
+		public void perform() {
 			try {
 				// searching endpoint
 				int n = transaction().find(localName, endpoints);
@@ -234,7 +234,7 @@ public class DeleteConnectionCmd extends Action {
 			} catch (Exception e) {
 				throw new MgcpCommandException(MgcpResponseCode.ENDPOINT_NOT_AVAILABLE, new Text("Endpoint not available"));
 			}
-			return 0;
+			return ;
 		}
 
 	}
@@ -247,7 +247,7 @@ public class DeleteConnectionCmd extends Action {
 
 
 		@Override
-		public long perform() {
+		public void perform() {
 			MgcpEvent evt = transaction().getProvider().createEvent(MgcpEvent.RESPONSE, getEvent().getAddress());
 			MgcpResponse response = (MgcpResponse) evt.getMessage();
 			response.setResponseCode(MgcpResponseCode.TRANSACTION_WAS_EXECUTED);
@@ -267,7 +267,7 @@ public class DeleteConnectionCmd extends Action {
 				evt.recycle();
 			}
 
-			return 0;
+			return;
 		}
 
 	}
@@ -280,7 +280,7 @@ public class DeleteConnectionCmd extends Action {
 
 
 		@Override
-		public long perform() {
+		public void perform() {
 			code = ((MgcpCommandException) transaction().getLastError()).getCode();
 			message = ((MgcpCommandException) transaction().getLastError()).getErrorMessage();
 
@@ -302,7 +302,7 @@ public class DeleteConnectionCmd extends Action {
 				evt.recycle();
 			}
 
-			return 0;
+			return;
 		}
 
 	}

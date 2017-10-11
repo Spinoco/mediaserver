@@ -192,7 +192,7 @@ public class SignalRequest extends Signal implements DtmfGeneratorListener
             }
             
             @Override
-            public long perform() 
+            public void perform()
             {      
             	generator.deactivate();
             	currentSignal = signals.poll();
@@ -207,8 +207,7 @@ public class SignalRequest extends Signal implements DtmfGeneratorListener
                 	terminate();
                 	oc.fire(signal, new Text("rc=100"));
                 }
-                
-                return 0;     
+
             }
         }
 }

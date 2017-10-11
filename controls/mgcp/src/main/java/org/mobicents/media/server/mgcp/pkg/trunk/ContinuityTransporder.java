@@ -257,9 +257,9 @@ public class ContinuityTransporder extends Signal implements ToneDetectorListene
         }
         
         @Override
-        public long perform() {        	
+        public void perform() {
         	if(!active.get())
-        		return 0;
+        		return ;
         	
         	int ttlValue=ttl.get();
         	
@@ -269,7 +269,7 @@ public class ContinuityTransporder extends Signal implements ToneDetectorListene
         			ttl.set(ttlValue-1);
         		
         		scheduler.submitHeartbeat(this);
-        		return 0;
+        		return;
         	}
         	
         	logger.info(String.format("(%s) Timeout expired waiting for tone", getEndpoint().getLocalName()));
@@ -277,7 +277,7 @@ public class ContinuityTransporder extends Signal implements ToneDetectorListene
         	oc.fire(signal, options.getInTone());  
         	complete();
         	this.disable();
-        	return 0;
+        	return;
         }
     }
 }

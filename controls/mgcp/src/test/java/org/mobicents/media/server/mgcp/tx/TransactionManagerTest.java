@@ -132,14 +132,14 @@ public class TransactionManagerTest {
 		}
 
 		@Override
-		public long perform() {
+		public void perform() {
 			boolean flag = rnd.nextBoolean();
 			System.out.println("TXID=" + action.transaction().getId());
 			if (flag) {
 				throw new IllegalStateException();
 			}
 
-			return 0;
+			return ;
 		}
 
 	}

@@ -92,15 +92,13 @@ public class AudioMixer {
 	public void start() {
 		if (!started.getAndSet(true)) {
 			mixCount = 0;
-			mixer.activateTask();
+			mixer.resetMetronome();
 			scheduler.submitRT(mixer, 0);
 		}
 	}
 
 	public void stop() {
-		if (started.getAndSet(false)) {
-			mixer.cancel();
-		}
+		 started.set(false);
 	}
 
 	private class MixTask extends MetronomeTask {
@@ -126,7 +124,7 @@ public class AudioMixer {
 		}
 
 		@Override
-		public long perform() {
+		public void perform() {
 			if (started.get()) {
 				// summarize all
 				sourcesCount = 0;
@@ -190,8 +188,6 @@ public class AudioMixer {
 				mixCount++;
 
 			}
-
-			return 0;
 		}
 	}
 }

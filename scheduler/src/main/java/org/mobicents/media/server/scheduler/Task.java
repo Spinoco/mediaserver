@@ -33,30 +33,13 @@ import org.apache.log4j.Logger;
  */
 public abstract class Task implements Runnable {
 
-    private AtomicBoolean isActive = new AtomicBoolean(true);
     //error handler instance
     protected volatile TaskListener listener;
-
-    private AtomicBoolean inQueue = new AtomicBoolean(false);
 
     private static Logger logger = Logger.getLogger(Task.class);
     
     public Task() { }
 
-    public void storedInQueue()
-    {
-    	inQueue.set(true);
-    }
-
-    public void removeFromQueue()
-    {
-    	inQueue.set(false);
-    }
-
-    public Boolean isInQueue()
-    {
-    	return inQueue.get();
-    }
     
     /**
      * Modifies task listener.
@@ -69,41 +52,29 @@ public abstract class Task implements Runnable {
     
 
     /**
-     * Executes task.
-     * 
-     * @return dead line of next execution
+     * Executes task. Shall be overridden by Task implementations.
      */
-    public abstract long perform();
+    public abstract void perform();
 
-    /**
-     * Cancels task execution
-     */
-    public void cancel() {
-    	this.isActive.set(false);
-    }
+
 
     //call should not be synchronized since can run only once in queue cycle
     public void run() {
-        if (this.isActive.get()) {
-            try {
-                perform();
+        try {
+            perform();
 
-                //notify listener
-                if (this.listener != null) {
-                    this.listener.onTerminate();
-                }
+            //notify listener
+            if (this.listener != null) {
+                this.listener.onTerminate();
+            }
 
-            } catch (Exception e) {
-                logger.error("Could not execute task: " + e.getMessage(), e);
-                if (this.listener != null) {
-                    listener.handlerError(e);
-                }
+        } catch (Exception e) {
+            logger.error("Could not execute task " + this + " :" + e.getMessage(), e);
+            if (this.listener != null) {
+                listener.handlerError(e);
             }
         }
 
     }
 
-    public void activateTask() {
-    	this.isActive.set(true);
-    }
 }

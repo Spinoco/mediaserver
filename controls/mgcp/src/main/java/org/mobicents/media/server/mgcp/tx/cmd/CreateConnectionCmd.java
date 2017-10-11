@@ -147,7 +147,7 @@ public class CreateConnectionCmd extends Action {
         }
 
         @Override
-        public long perform() {
+        public void perform() {
         	endpoint = null;
             endpoint2 = null;
                         
@@ -298,7 +298,6 @@ public class CreateConnectionCmd extends Action {
                 
                 connections[0].setDtmfClamp(lcOptions.getDtmfClamp());                
             }
-            return 0;
         }        
     }
         
@@ -309,7 +308,7 @@ public class CreateConnectionCmd extends Action {
         }
 
         @Override
-        public long perform() {     
+        public void perform() {
             MgcpEvent evt = transaction().getProvider().createEvent(MgcpEvent.RESPONSE, getEvent().getAddress());
             try {
                 MgcpResponse response = (MgcpResponse) evt.getMessage();
@@ -342,7 +341,6 @@ public class CreateConnectionCmd extends Action {
             }
 
 
-            return 0;
         }
         
     }
@@ -353,7 +351,7 @@ public class CreateConnectionCmd extends Action {
         }
 
         @Override
-        public long perform() {
+        public void perform() {
             if (endpoint != null) {
                 endpoint.share();
                 if (connections[0] != null) {
@@ -384,8 +382,7 @@ public class CreateConnectionCmd extends Action {
             } finally {            	
                 evt.recycle();
             }
-            
-            return 0;
+
         }
         
     }

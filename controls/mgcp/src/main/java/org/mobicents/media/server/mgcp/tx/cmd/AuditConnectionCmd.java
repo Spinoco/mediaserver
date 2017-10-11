@@ -121,7 +121,7 @@ public class AuditConnectionCmd extends Action {
 
 
 		@Override
-		public long perform() {
+		public void perform() {
 			// Get parameters from the MGCP request
 			request = (MgcpRequest) getEvent().getMessage();
 			connectionId = request.getParameter(Parameter.CONNECTION_ID);
@@ -157,8 +157,7 @@ public class AuditConnectionCmd extends Action {
 				Collection<Text> requestedParams = requestedInfo.getValue().split(',');
 				auditRequestedInfo(requestedParams, connection);
 			}
-			
-			return 0;
+
 		}
 		
 		private int findMgcpEndpoints(final Text localName, final MgcpEndpoint[] endpoints) {
@@ -219,7 +218,7 @@ public class AuditConnectionCmd extends Action {
 
 
 		@Override
-		public long perform() {
+		public void perform() {
             MgcpEvent evt = transaction().getProvider().createEvent(MgcpEvent.RESPONSE, getEvent().getAddress());
             MgcpResponse response = (MgcpResponse) evt.getMessage();
             
@@ -281,8 +280,7 @@ public class AuditConnectionCmd extends Action {
             } finally {
                 evt.recycle();
             }
-			
-			return 0;
+
 		}
 		
 	}
@@ -291,7 +289,7 @@ public class AuditConnectionCmd extends Action {
 
 
 		@Override
-		public long perform() {
+		public void perform() {
 			int code = ((MgcpCommandException)transaction().getLastError()).getCode();
             Text message = ((MgcpCommandException)transaction().getLastError()).getErrorMessage();
             
@@ -307,8 +305,7 @@ public class AuditConnectionCmd extends Action {
             	logger.error(e);
             } finally {
                 evt.recycle();
-            } 
-			return 0;
+            }
 		}
 		
 	}

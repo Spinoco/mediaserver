@@ -23,6 +23,7 @@
 package org.mobicents.media.server.io.ss7;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.mobicents.protocols.stream.api.SelectorKey;
 import org.mobicents.media.hardware.dahdi.Channel;
@@ -49,7 +50,7 @@ public class SS7Manager {
     private PollTask pollTask;
 
     //state flag
-    private volatile boolean isActive;
+    private AtomicBoolean isActive = new AtomicBoolean();
 
     private volatile int count;
 
@@ -81,8 +82,6 @@ public class SS7Manager {
     /**
      * Opens and binds new datagram channel.
      *
-     * @param handler the packet handler implementation
-     * @param  port the port to bind to
      * @return datagram channel
      * @throws IOException
      */
@@ -96,8 +95,6 @@ public class SS7Manager {
      * Binds socket to global bind address and specified port.
      *
      * @param channel the channel
-     * @param port the port to bind to
-     * @throws SocketException
      */
     public SelectorKeyImpl bind(Channel channel,ProtocolHandler protocolHandler) {
     	channel.open();
@@ -114,27 +111,19 @@ public class SS7Manager {
      * Starts polling the network.
      */
     public void start() {
-    	synchronized(LOCK) {
-    		if (this.isActive) return;
-
-    		this.isActive = true;
-    		this.pollTask.startNow();
-        
-    		logger.info(String.format("Initialized SS7 interface[%s]", name));
-    	}
+        if (! this.isActive.getAndSet(true)) {
+            scheduler.submit(this.pollTask);
+            logger.info(String.format("Initialized SS7 interface[%s]", name));
+        }
     }
 
     /**
      * Stops polling the network.
      */
     public void stop() {
-    	synchronized(LOCK) {
-    		if (!this.isActive) return;
-
-    		this.isActive = false;        
-    		this.pollTask.cancel();
-    		logger.info("Stopped");
-    	}
+        if (this.isActive.getAndSet(false)) {
+            logger.info(String.format("Stopped SS7 interface [%s]", name));
+        }
     }
 
     /**
@@ -152,34 +141,26 @@ public class SS7Manager {
 
 
         @Override
-        public long perform() {
-            //force stop
-            if (!isActive) return 0;
+        public void perform() {
+            if (isActive.get()) {
 
-            //select channels ready for IO and ignore error
-            try {
-            	FastList<SelectorKey> it=selector.selectNow(Selector.READ,1);
-            	for (FastList.Node<SelectorKey> n = it.head(), end = it
-                        .tail(); (n = n.getNext()) != end;) {
-            		SelectorKeyImpl key = (SelectorKeyImpl) n.getValue();
-            		((ProtocolHandler)key.attachment()).receive((Channel)key.getStream());
-                }            	            	
-                
-            } catch (IOException e) {              	
-                return 0;
-            } finally {
-                scheduler.submit(this);
+                //select channels ready for IO and ignore error
+                try {
+                    FastList<SelectorKey> it = selector.selectNow(Selector.READ, 1);
+                    for (FastList.Node<SelectorKey> n = it.head(), end = it
+                            .tail(); (n = n.getNext()) != end; ) {
+                        SelectorKeyImpl key = (SelectorKeyImpl) n.getValue();
+                        ((ProtocolHandler) key.attachment()).receive((Channel) key.getStream());
+                    }
+
+                } catch (IOException e) {
+                    return;
+                } finally {
+                    scheduler.submit(this);
+                }
+
             }
-
-            return 0;
         }
 
-        /**
-         * Immediately start current task
-         */
-        public void startNow() {
-            this.activateTask();
-            scheduler.submit(this);
-        }
     }
 }

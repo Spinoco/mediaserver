@@ -51,13 +51,13 @@ public class NotifyCmd extends Action {
 
 
         @Override
-        public long perform() {
+        public void perform() {
             try {
                 transaction().getProvider().send(getEvent());
             } catch (IOException e) {
             	logger.error(e);
             } 
-            return 0;
+            return;
         }
         
     }

@@ -75,15 +75,13 @@ public class OOBMixer {
     public void start() {
         if (!this.started.getAndSet(true)) {
             mixCount.set(0);
-            mixer.activateTask();
+            mixer.resetMetronome();
             scheduler.submitRT(mixer,  0);
         }
     }
 
     public void stop() {
-        if (this.started.getAndSet(false)) {
-            mixer.cancel();
-        }
+		started.set(false);
     }
 
 	private final class MixTask extends MetronomeTask {
@@ -94,37 +92,38 @@ public class OOBMixer {
 
 
 		@Override
-		public long perform() {
-			int sourceComponent = 0;
-			Frame current = null;
+		public void perform() {
+			if (started.get()) {
+				int sourceComponent = 0;
+				Frame current = null;
 
-			// summarize all
-			Iterator<OOBComponent> activeComponents = components.valuesIterator();
-			while (activeComponents.hasNext()) {
-				OOBComponent component = activeComponents.next();
-				component.perform();
-				current = component.getData();
-				if (current != null) {
-					sourceComponent = component.getComponentId();
-					break;
-				}
-			}
-
-			if (current != null) {
-
-				// get data for each component
-				activeComponents = components.valuesIterator();
+				// summarize all
+				Iterator<OOBComponent> activeComponents = components.valuesIterator();
 				while (activeComponents.hasNext()) {
 					OOBComponent component = activeComponents.next();
-					if (component.getComponentId() != sourceComponent) {
-						component.offer(current.clone());
+					component.perform();
+					current = component.getData();
+					if (current != null) {
+						sourceComponent = component.getComponentId();
+						break;
 					}
 				}
-			}
 
-			next();
-			mixCount.incrementAndGet();
-			return 0;
+				if (current != null) {
+
+					// get data for each component
+					activeComponents = components.valuesIterator();
+					while (activeComponents.hasNext()) {
+						OOBComponent component = activeComponents.next();
+						if (component.getComponentId() != sourceComponent) {
+							component.offer(current.clone());
+						}
+					}
+				}
+
+				next();
+				mixCount.incrementAndGet();
+			}
 		}
 
 	}

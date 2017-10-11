@@ -92,18 +92,15 @@ public class OOBSplitter {
 	public void start() {
 		if (! started.getAndSet(true)) {
 			mixCount = 0;
-			insideMixer.activateTask();
-			outsideMixer.activateTask();
+			insideMixer.resetMetronome();
+			outsideMixer.resetMetronome();
 			scheduler.submitRT(insideMixer, 0);
 			scheduler.submitRT(outsideMixer, 0);
 		}
 	}
 
 	public void stop() {
-		if (started.getAndSet(false)) {
-			insideMixer.cancel();
-			outsideMixer.cancel();
-		}
+		started.set(false);
 	}
 
 	private class InsideMixTask extends MetronomeTask {
@@ -115,40 +112,40 @@ public class OOBSplitter {
 
 
 		@Override
-		public long perform() {
-			Frame current = null;
+		public void perform() {
+			if (started.get()) {
+				Frame current = null;
 
-			// summarize all
-			final Iterator<OOBComponent> insideRIterator = insideComponents.valuesIterator();
-			while (insideRIterator.hasNext()) {
-				OOBComponent component = insideRIterator.next();
-				component.perform();
-				current = component.getData();
-				if (current != null) {
-					break;
-				}
-			}
-
-			if (current != null) {
-				// frame is available, lets split it
-				// get data for each component
-				final Iterator<OOBComponent> outsideSIterator = outsideComponents.valuesIterator();
-				while (outsideSIterator.hasNext()) {
-					OOBComponent component = outsideSIterator.next();
-					if (!outsideSIterator.hasNext()) {
-						component.offer(current);
-					} else {
-						component.offer(current.clone());
+				// summarize all
+				final Iterator<OOBComponent> insideRIterator = insideComponents.valuesIterator();
+				while (insideRIterator.hasNext()) {
+					OOBComponent component = insideRIterator.next();
+					component.perform();
+					current = component.getData();
+					if (current != null) {
+						break;
 					}
 				}
+
+				if (current != null) {
+					// frame is available, lets split it
+					// get data for each component
+					final Iterator<OOBComponent> outsideSIterator = outsideComponents.valuesIterator();
+					while (outsideSIterator.hasNext()) {
+						OOBComponent component = outsideSIterator.next();
+						if (!outsideSIterator.hasNext()) {
+							component.offer(current);
+						} else {
+							component.offer(current.clone());
+						}
+					}
+				}
+
+
+				next();
+				mixCount++;
+
 			}
-
-
-			next();
-			mixCount++;
-
-
-			return 0;
 		}
 	}
 
@@ -159,7 +156,7 @@ public class OOBSplitter {
 		}
 
 		@Override
-		public long perform() {
+		public void perform() {
 			if (started.get()) {
 				Frame current = null;
 
@@ -193,8 +190,6 @@ public class OOBSplitter {
 				mixCount++;
 
 			}
-
-			return 0;
 		}
 	}
 }

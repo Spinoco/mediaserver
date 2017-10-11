@@ -90,7 +90,7 @@ public class EndpointConfigurationCmd extends Action {
 
 
         @Override
-        public long perform() {
+        public void perform() {
             request = (MgcpRequest) getEvent().getMessage();                        
             
             Parameter bearerInformation = request.getParameter(Parameter.BARER_INFORMATION);
@@ -124,7 +124,7 @@ public class EndpointConfigurationCmd extends Action {
             endpoint = endpoints[0];
             
             endpoint.configure(isALaw);
-            return 0;
+            return ;
         }
         
     }        
@@ -136,7 +136,7 @@ public class EndpointConfigurationCmd extends Action {
         }
 
         @Override
-        public long perform() {
+        public void perform() {
             MgcpEvent evt = transaction().getProvider().createEvent(MgcpEvent.RESPONSE, getEvent().getAddress());
             MgcpResponse response = (MgcpResponse) evt.getMessage();
             response.setResponseCode(MgcpResponseCode.TRANSACTION_WAS_EXECUTED);
@@ -151,7 +151,7 @@ public class EndpointConfigurationCmd extends Action {
                 evt.recycle();
             }
             
-            return 0;
+            return;
         }
         
     }
@@ -163,7 +163,7 @@ public class EndpointConfigurationCmd extends Action {
         }
 
         @Override
-        public long perform() {
+        public void perform() {
             code = ((MgcpCommandException)transaction().getLastError()).getCode();
             message = ((MgcpCommandException)transaction().getLastError()).getErrorMessage();
             
@@ -181,7 +181,7 @@ public class EndpointConfigurationCmd extends Action {
                 evt.recycle();
             } 
             
-            return 0;
+            return;
         }
         
     }

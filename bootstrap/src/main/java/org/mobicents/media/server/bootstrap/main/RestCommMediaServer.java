@@ -33,6 +33,7 @@ import org.mobicents.media.server.spi.ServerManager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Henrique Rosa (henrique.rosa@telestax.com)
@@ -43,7 +44,7 @@ public class RestCommMediaServer implements MediaServer {
     private static final Logger log = Logger.getLogger(RestCommMediaServer.class);
 
     // Media Server State
-    private boolean started;
+    private AtomicBoolean started = new AtomicBoolean(false);
     private Map<ControlProtocol, ServerManager> controllers;
 
     // Core Components
@@ -65,7 +66,6 @@ public class RestCommMediaServer implements MediaServer {
         this.udpManager = udpManager;
 
         // Media Server State
-        this.started = false;
         this.controllers = new HashMap<>(2);
         addManager(controller);
 
@@ -95,46 +95,45 @@ public class RestCommMediaServer implements MediaServer {
 
     @Override
     public void start() throws IllegalStateException {
-        if (this.started) {
+        if (!this.started.getAndSet(true)) {
+
+            ttl = heartbeatTime * 600;
+            mediaScheduler.submitHeartbeat(this.heartbeat);
+            this.mediaScheduler.start();
+            this.taskScheduler.start();
+            this.udpManager.start();
+            for (ServerManager controller : this.controllers.values()) {
+                controller.activate();
+            }
+
+            if (log.isInfoEnabled()) {
+                log.info("Media Server started");
+            }
+        } else {
             throw new IllegalStateException("Media Server already started.");
-        }
-
-        this.started = true;
-        this.heartbeat.restart();
-        this.mediaScheduler.start();
-        this.taskScheduler.start();
-        this.udpManager.start();
-        for (ServerManager controller : this.controllers.values()) {
-            controller.activate();
-        }
-
-        if (log.isInfoEnabled()) {
-            log.info("Media Server started");
         }
     }
 
     @Override
     public void stop() throws IllegalStateException {
-        if (!this.started) {
+        if (this.started.getAndSet(false)) {
+            this.udpManager.stop();
+            this.taskScheduler.stop();
+            this.mediaScheduler.stop();
+            for (ServerManager controller : this.controllers.values()) {
+                controller.deactivate();
+            }
+            if (log.isInfoEnabled()) {
+                log.info("Media Server stopped");
+            }
+        } else {
             throw new IllegalStateException("Media Server already stopped.");
-        }
-
-        this.started = false;
-        this.udpManager.stop();
-        this.taskScheduler.stop();
-        this.mediaScheduler.stop();
-        this.heartbeat.cancel();
-        for (ServerManager controller : this.controllers.values()) {
-            controller.deactivate();
-        }
-        if (log.isInfoEnabled()) {
-            log.info("Media Server stopped");
         }
     }
     
     @Override
     public boolean isRunning() {
-        return this.started;
+        return this.started.get();
     }
 
     private final class HeartBeat extends Task {
@@ -144,22 +143,20 @@ public class RestCommMediaServer implements MediaServer {
         }
 
 
-        public void restart() {
-            ttl = heartbeatTime * 600;
-            this.activateTask();
-            mediaScheduler.submitHeartbeat(this);
-        }
+
 
         @Override
-        public long perform() {
-            ttl--;
-            if (ttl == 0) {
-                log.info("Global hearbeat is still alive");
-                restart();
-            } else {
-                mediaScheduler.submitHeartbeat(this);
+        public void perform() {
+            if (started.get()) {
+                ttl--;
+                if (ttl == 0) {
+                    log.info("Global hearbeat is still alive");
+                    ttl = heartbeatTime * 600;
+                    mediaScheduler.submitHeartbeat(this);
+                } else {
+                    mediaScheduler.submitHeartbeat(this);
+                }
             }
-            return 0;
         }
     }
 

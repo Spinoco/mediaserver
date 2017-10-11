@@ -84,7 +84,7 @@ public class ModifyConnectionCmd extends Action {
         }
 
         @Override
-        public long perform() {
+        public void perform() {
         	request = (MgcpRequest) getEvent().getMessage();
             
             Parameter callID = request.getParameter(Parameter.CALL_ID);
@@ -164,8 +164,7 @@ public class ModifyConnectionCmd extends Action {
             } finally {
                 evt.recycle();
             }
-            
-            return 0;
+
         }
     }    
 
@@ -177,7 +176,7 @@ public class ModifyConnectionCmd extends Action {
 
 
         @Override
-        public long perform() {
+        public void perform() {
             code = ((MgcpCommandException)transaction().getLastError()).getCode();
             message = ((MgcpCommandException)transaction().getLastError()).getErrorMessage();
             
@@ -198,8 +197,7 @@ public class ModifyConnectionCmd extends Action {
             } finally {
                 evt.recycle();
             } 
-            
-            return 0;
+
         }
         
     }

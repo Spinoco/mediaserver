@@ -243,27 +243,25 @@ public class Continuity2 extends Signal implements ToneDetectorListener {
         }
         
         @Override
-        public long perform() {        	
-        	if(!active.get())
-        		return 0;
-        	
-        	int ttlValue=ttl.get();
-        	
-        	if(ttlValue!=0)
-        	{
-        		if(ttlValue>0)
-        			ttl.set(ttlValue-1);
-        		
-        		scheduler.submitHeartbeat(this);
-        		return 0;
-        	}
-        	
-        	logger.info(String.format("(%s) Timeout expired waiting for tone", getEndpoint().getLocalName()));
-        	endToneReceiving();
-        	oc.fire(signal, new Text("t/co1"));  
-        	complete();
-        	this.disable();
-        	return 0;
+        public void perform() {
+            if (active.get()) {
+
+                int ttlValue = ttl.get();
+
+                if (ttlValue != 0) {
+                    if (ttlValue > 0)
+                        ttl.set(ttlValue - 1);
+
+                    scheduler.submitHeartbeat(this);
+                    return;
+                }
+
+                logger.info(String.format("(%s) Timeout expired waiting for tone", getEndpoint().getLocalName()));
+                endToneReceiving();
+                oc.fire(signal, new Text("t/co1"));
+                complete();
+                this.disable();
+            }
         }
     }
 }
