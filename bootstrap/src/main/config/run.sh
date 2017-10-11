@@ -133,7 +133,7 @@ if [ "x$SERVER_SET" = "x" ]; then
 fi
 
 # Setup MMS specific properties
-JAVA_OPTS="-Dprogram.name=$PROGNAME -XX:+UseG1GC -XX:MaxGCPauseMillis=40 -XX:+ParallelRefProcEnabled -XX:G1HeapRegionSize=1m  -XX:+UnlockExperimentalVMOptions  -XX:+AlwaysPreTouch -XX:+UseCompressedOops -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true -Dsun.rmi.dgc.client.gcInterval=3600000 -Dsun.rmi.dgc.server.gcInterval=3600000 -Dhttp.keepAlive=false $JAVA_OPTS"
+JAVA_OPTS="-Dprogram.name=$PROGNAME $JAVA_OPTS"
 #JAVA_OPTS="$JAVA_OPTS -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=n"
 
 # Setup the java endorsed dirs
