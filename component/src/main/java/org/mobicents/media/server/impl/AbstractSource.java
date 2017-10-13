@@ -51,7 +51,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     private AtomicBoolean started = new AtomicBoolean(false);
 
     //stream synchronization flag
-    private volatile boolean isSynchronized;
+    private AtomicBoolean isSynchronized = new AtomicBoolean(true);
 
     //local media time
     private volatile long timestamp = 0;
@@ -165,7 +165,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
 
 
                     //just started component always synchronized as well
-                    this.isSynchronized = true;
+                    this.isSynchronized.set(true);
 
                     if (mediaSink != null)
                         mediaSink.start();
@@ -189,17 +189,10 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
      * Restores synchronization
      */
     public void wakeup() {
-
-//        synchronized(worker) {
-//            if (!started) {
-//                return;
-//            }
-//
-//            if (!this.isSynchronized) {
-//                this.isSynchronized = true;
-//                scheduler.submitRT(worker, initialDelay);
-//            }
-//        }
+        if (this.started.get() && !this.isSynchronized.getAndSet(true)) {
+            worker.resetMetronome();
+            scheduler.submitRT(worker, initialDelay);
+        }
     }
     
     /**
@@ -296,7 +289,8 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
      * 
      */
     protected void completed() {
-        this.stop();
+//        this.stop();
+        this.started.set(false);
     }
 
     /**
@@ -362,7 +356,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
                 frame = evolve(timestamp);
                 if (frame == null) {
                     // there was no frame generated. Try next cycle in at max 20 ms delay
-                    next();
+                    isSynchronized.set(false);
                 } else {
 
                     //mark frame with media time and sequence number
