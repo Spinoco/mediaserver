@@ -26,7 +26,7 @@ import java.net.PortUnreachableException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.impl.rtp.rfc2833.DtmfOutput;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
 import org.mobicents.media.server.impl.srtp.DtlsHandler;
@@ -45,7 +45,7 @@ import org.mobicents.media.server.spi.memory.Frame;
  */
 public class RtpTransmitter {
 	
-	private static final Logger LOGGER = Logger.getLogger(RtpTransmitter.class);
+	private static final Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger(RtpTransmitter.class);
 	
 	// Channel properties
 	private DatagramChannel channel;

@@ -54,8 +54,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
 
 import org.mobicents.protocols.mgcp.handlers.TransactionHandler;
 
@@ -73,7 +73,7 @@ import org.mobicents.protocols.mgcp.parser.commands.RespUnknownHandler;
 
 public class JainMgcpStackProviderImpl implements ExtendedJainMgcpProvider {
 
-	private static Logger logger = Logger.getLogger(JainMgcpStackProviderImpl.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(JainMgcpStackProviderImpl.class);
 	private final JainMgcpStackImpl runningStack;
 
 	// a tx handle id must be between 1 and 999999999
@@ -444,7 +444,7 @@ public class JainMgcpStackProviderImpl implements ExtendedJainMgcpProvider {
     			catch(Exception e)
     			{
     				//catch everything, so worker wont die.
-    				if(logger.isEnabledFor(Level.ERROR))
+    				if(logger.isErrorEnabled())
     					logger.error("Unexpected exception occured:", e);    				    		
     			}
     		}

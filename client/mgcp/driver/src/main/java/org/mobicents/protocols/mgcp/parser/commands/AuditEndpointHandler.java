@@ -46,7 +46,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import org.mobicents.protocols.mgcp.handlers.MgcpContentHandler;
 import org.mobicents.protocols.mgcp.handlers.TransactionHandler;
@@ -83,7 +83,7 @@ public class AuditEndpointHandler extends TransactionHandler
 		StringFunctions.HIGH_E_BYTE,StringFunctions.HIGH_P_BYTE
 	};
 	
-	private static final Logger logger = Logger.getLogger(AuditEndpointHandler.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(AuditEndpointHandler.class);
 
 	private AuditEndpoint command;
 	private AuditEndpointResponse response;

@@ -24,7 +24,7 @@ package org.mobicents.media.server.mgcp.connection;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.component.audio.AudioComponent;
 import org.mobicents.media.server.component.oob.OOBComponent;
 import org.mobicents.media.server.scheduler.EventQueueType;
@@ -75,7 +75,7 @@ public abstract class BaseConnection implements Connection {
 	private Endpoint activeEndpoint;
 
 	private ConnectionMode connectionMode = ConnectionMode.INACTIVE;
-	private static final Logger logger = Logger.getLogger(BaseConnection.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(BaseConnection.class);
 
 	/**
 	 * Creates basic connection implementation.

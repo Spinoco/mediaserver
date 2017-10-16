@@ -24,7 +24,7 @@ package org.mobicents.media.server.impl;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.MediaSink;
 import org.mobicents.media.server.spi.memory.Frame;
 /**
@@ -47,7 +47,7 @@ public abstract class AbstractSink extends BaseComponent implements MediaSink {
     private volatile long rxPackets;
     private volatile long rxBytes;    
     
-    private static final Logger logger = Logger.getLogger(AbstractSink.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(AbstractSink.class);
     
     /**
      * Creates new instance of sink with specified name.

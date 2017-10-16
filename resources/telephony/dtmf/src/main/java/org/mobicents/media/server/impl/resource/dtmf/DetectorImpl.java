@@ -28,7 +28,7 @@ import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.audio.GoertzelFilter;
@@ -115,7 +115,7 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
     private OOBOutput oobOutput;
     private OOBDetector oobDetector;
 
-    private static final Logger logger = Logger.getLogger(DetectorImpl.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(DetectorImpl.class);
 
     // indication that only rfc2833 are detected
     private boolean rfc2833EventsOnly;

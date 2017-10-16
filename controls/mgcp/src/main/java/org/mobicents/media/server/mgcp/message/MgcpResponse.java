@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import org.mobicents.media.server.utils.Text;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * MGCP response message.
@@ -48,7 +48,7 @@ public class MgcpResponse extends MgcpMessage {
     
     private Text msg = new Text();
     
-    private static final Logger logger = Logger.getLogger(MgcpResponse.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(MgcpResponse.class);
     
     public MgcpResponse() {
         for (int i = 0; i < 15; i++) {

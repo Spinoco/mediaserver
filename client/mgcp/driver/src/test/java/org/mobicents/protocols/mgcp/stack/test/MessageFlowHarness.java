@@ -24,13 +24,13 @@ package org.mobicents.protocols.mgcp.stack.test;
 
 import java.net.InetAddress;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackImpl;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackProviderImpl;
 
 public abstract class MessageFlowHarness extends TestHarness {
 
-	private static Logger logger = Logger.getLogger("mgcp.test");
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger("mgcp.test");
 
 	protected static long TRANSACTION_TIMES_OUT_FOR = 31000;
 

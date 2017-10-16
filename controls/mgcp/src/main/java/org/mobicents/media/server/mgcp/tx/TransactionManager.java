@@ -28,7 +28,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.concurrent.ConcurrentMap;
 import org.mobicents.media.server.mgcp.MgcpProvider;
 import org.mobicents.media.server.mgcp.controller.CallManager;
@@ -44,7 +44,7 @@ import org.mobicents.media.server.scheduler.Scheduler;
  */
 public class TransactionManager {
     
-    private static final Logger log = Logger.getLogger(TransactionManager.class);
+    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(TransactionManager.class);
     
     private static final AtomicInteger ID_GENERATOR = new AtomicInteger(1);
     private static final int CACHE_SIZE = 5;

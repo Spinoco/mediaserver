@@ -32,9 +32,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.xml.DOMConfigurator;
+import org.apache.logging.log4j.Logger;
 import org.jboss.dependency.spi.Controller;
 import org.jboss.dependency.spi.ControllerContext;
 import org.jboss.kernel.Kernel;
@@ -60,7 +58,7 @@ public class Main {
     private Kernel kernel;
     private BasicXMLDeployer kernelDeployer;
     private Controller controller;
-    private static Logger logger = Logger.getLogger(Main.class);
+    private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(Main.class);
 
     public static void main(String[] args) throws Throwable {
         String homeDir = getHomeDir(args);
@@ -76,14 +74,8 @@ public class Main {
         
         //This is for SS7 configuration file persistence
         System.setProperty(LINKSET_PERSIST_DIR_KEY, homeDir + File.separator + "ss7" );
-        
-        if (!(initLOG4JProperties(homeDir) || initLOG4JXml(homeDir))) {
-        	System.err.println("Could not find configuration file for log4j. Defaults will be used.");
-        }
-        else {
-        	logger.info("log4j initialized from a configuration file.");        
-        }
-        
+
+
         logger.info("Home directory: " + homeDir);
 
         URL bootURL = getBootURL(args);
@@ -150,36 +142,6 @@ public class Main {
 
     }
 
-    private static boolean initLOG4JProperties(String homeDir) {
-        final String Log4jURL = homeDir + LOG4J_URL;
-        System.out.println("Searching for Log4J properties file at " + Log4jURL);
-        if (fileExists(Log4jURL)) {
-            try {
-                PropertyConfigurator.configureAndWatch(Log4jURL);
-                logger.info("Configured (and watching) logging from properties file : " + Log4jURL);
-            } catch (Exception e) {
-                e.printStackTrace(System.err);
-                return false;
-            }
-
-            return true;
-        } else return false;
-    }
-
-    private static boolean initLOG4JXml(String homeDir) {
-        String Log4jURL = homeDir + LOG4J_URL_XML;
-        System.out.println("Searching for Log4J XML file at " + Log4jURL);
-        if (fileExists(Log4jURL)) {
-            try {
-                DOMConfigurator.configureAndWatch(Log4jURL);
-                logger.info("Configured (and watching) logging from XML file : " + Log4jURL);
-            } catch (Exception e) {
-                e.printStackTrace(System.err);
-                return false;
-            }
-            return true;
-        } else  return false;
-    }
 
 
     /**

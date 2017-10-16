@@ -23,7 +23,7 @@ package org.mobicents.media.server.mgcp.tx.cmd;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.mgcp.MgcpEvent;
 import org.mobicents.media.server.mgcp.controller.MgcpCall;
 import org.mobicents.media.server.mgcp.controller.MgcpConnection;
@@ -104,7 +104,7 @@ public class CreateConnectionCmd extends Action {
     //local connection options
     private LocalConnectionOptions lcOptions = new LocalConnectionOptions();
     
-    private final static Logger logger = Logger.getLogger(CreateConnectionCmd.class);
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(CreateConnectionCmd.class);
     
     /**
      * Creates new instance of this action executor.

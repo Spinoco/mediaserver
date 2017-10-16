@@ -24,7 +24,7 @@ package org.mobicents.media.server.bootstrap.main;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
@@ -42,7 +42,7 @@ import com.google.inject.Inject;
  */
 public class RestCommMediaServer implements MediaServer {
 
-    private static final Logger log = Logger.getLogger(RestCommMediaServer.class);
+    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(RestCommMediaServer.class);
 
     // Media Server State
     private boolean started;

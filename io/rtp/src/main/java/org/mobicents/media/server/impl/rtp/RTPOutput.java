@@ -24,7 +24,7 @@ package org.mobicents.media.server.impl.rtp;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.impl.AbstractSink;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
@@ -44,7 +44,7 @@ public class RTPOutput extends AbstractSink {
 
 	private static final long serialVersionUID = 3227885808614338323L;
 
-	private static final Logger logger = Logger.getLogger(RTPOutput.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RTPOutput.class);
 
 	private AudioFormat format = FormatFactory.createAudioFormat("LINEAR", 8000, 16, 1);
 

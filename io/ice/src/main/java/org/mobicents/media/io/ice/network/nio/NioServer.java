@@ -33,7 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.ice.network.ProtocolHandler;
 
 /**
@@ -45,7 +45,7 @@ import org.mobicents.media.io.ice.network.ProtocolHandler;
  */
 public class NioServer implements Runnable {
 	
-	private Logger logger = Logger.getLogger(NioServer.class);
+	private Logger logger = org.apache.logging.log4j.LogManager.getLogger(NioServer.class);
 
 	private static final int BUFFER_SIZE = 8192;
 

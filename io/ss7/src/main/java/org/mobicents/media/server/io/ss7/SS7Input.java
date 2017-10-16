@@ -45,7 +45,7 @@ import org.mobicents.media.server.spi.memory.Memory;
 import org.mobicents.media.server.spi.memory.Frame;
 import org.mobicents.media.server.spi.dsp.Codec;
 import org.mobicents.media.server.spi.dsp.Processor;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 /**
  *
  * @author Oifa Yulian

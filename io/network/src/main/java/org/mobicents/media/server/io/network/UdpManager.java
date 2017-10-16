@@ -36,7 +36,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.network.channel.Channel;
 import org.mobicents.media.server.scheduler.Scheduler;
 import org.mobicents.media.server.scheduler.ServiceScheduler;
@@ -51,7 +51,7 @@ import org.mobicents.media.server.scheduler.ServiceScheduler;
  */
 public class UdpManager {
 
-    private final static Logger logger = Logger.getLogger(UdpManager.class);
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(UdpManager.class);
 
     // Core elements
     private final Scheduler scheduler;

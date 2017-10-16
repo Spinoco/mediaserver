@@ -25,7 +25,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.ice.IceAuthenticatorImpl;
 import org.mobicents.media.server.impl.rtcp.RtcpChannel;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
@@ -54,7 +54,7 @@ import org.mobicents.media.server.spi.format.Formats;
  */
 public abstract class MediaChannel {
 
-	private static final Logger logger = Logger.getLogger(MediaChannel.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(MediaChannel.class);
 	
 	// Media Formats
 	private final static AudioFormat DTMF_FORMAT = FormatFactory.createAudioFormat("telephone-event", 8000);

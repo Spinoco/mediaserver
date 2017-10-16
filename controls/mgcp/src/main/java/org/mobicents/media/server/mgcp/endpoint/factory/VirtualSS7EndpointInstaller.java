@@ -24,7 +24,7 @@ package org.mobicents.media.server.mgcp.endpoint.factory;
 
 import java.lang.reflect.Constructor;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.core.Server;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.mgcp.endpoint.BaseSS7EndpointImpl;
@@ -38,7 +38,7 @@ import org.mobicents.media.server.spi.dsp.DspFactory;
  */
 public class VirtualSS7EndpointInstaller extends VirtualEndpointInstaller {
     
-    private static final Logger logger = Logger.getLogger(VirtualSS7EndpointInstaller.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(VirtualSS7EndpointInstaller.class);
 
     private ChannelsManager channelsManager;
     private DspFactory dsp;

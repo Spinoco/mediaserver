@@ -22,7 +22,7 @@
 
 package org.mobicents.media.server.mgcp.tx;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.mgcp.MgcpEvent;
 import org.mobicents.media.server.mgcp.MgcpProvider;
 import org.mobicents.media.server.mgcp.controller.MgcpCall;
@@ -57,7 +57,7 @@ public class Transaction implements ActionListener {
     private Exception lastError;
         
     //Logger instance
-    private final static Logger logger = Logger.getLogger(Transaction.class);
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(Transaction.class);
     
     /**
      * Create new transaction executor.

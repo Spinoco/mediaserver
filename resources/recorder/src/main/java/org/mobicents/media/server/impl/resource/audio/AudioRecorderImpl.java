@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.oob.OOBOutput;
@@ -112,7 +112,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
     private OOBOutput oobOutput;
     private OOBRecorder oobRecorder;
 
-    private static final Logger logger = Logger.getLogger(AudioRecorderImpl.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(AudioRecorderImpl.class);
 
     // Hence the recorded runs in OUTPUT task queue, then this shall assure we won't
     // touch any IO in the OUTPUT Queue and instead shift it to recording cycle

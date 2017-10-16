@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.component.Dsp;
 import org.mobicents.media.server.component.audio.AudioInput;
@@ -68,7 +68,7 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
 
     private static final long serialVersionUID = 8321615909592642344L;
 
-    private final static Logger log = Logger.getLogger(AudioPlayerImpl.class);
+    private final static Logger log = org.apache.logging.log4j.LogManager.getLogger(AudioPlayerImpl.class);
 
     // define natively supported formats
     private final static AudioFormat LINEAR = FormatFactory.createAudioFormat("linear", 8000, 16, 1);

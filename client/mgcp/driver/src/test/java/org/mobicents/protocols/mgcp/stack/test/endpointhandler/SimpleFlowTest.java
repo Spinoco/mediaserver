@@ -22,13 +22,13 @@
 
 package org.mobicents.protocols.mgcp.stack.test.endpointhandler;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.stack.test.MessageFlowHarness;
 
 
 public class SimpleFlowTest extends MessageFlowHarness {
 
-	private static Logger logger = Logger.getLogger("mgcp.test");
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger("mgcp.test");
 
 	private CA ca;
 	private MGW mgw;

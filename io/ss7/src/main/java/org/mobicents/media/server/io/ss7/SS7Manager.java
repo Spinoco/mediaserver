@@ -30,7 +30,7 @@ import org.mobicents.media.hardware.dahdi.Channel;
 import org.mobicents.media.hardware.dahdi.SelectorKeyImpl;
 import org.mobicents.media.hardware.dahdi.Selector;
 import javolution.util.FastList;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
 
@@ -58,7 +58,7 @@ public class SS7Manager {
     private String name = "unknown";
     
     //logger instance
-    private final static Logger logger = Logger.getLogger(SS7Manager.class);
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(SS7Manager.class);
     private final Object LOCK = new Object();
     
     protected PriorityQueueScheduler scheduler;

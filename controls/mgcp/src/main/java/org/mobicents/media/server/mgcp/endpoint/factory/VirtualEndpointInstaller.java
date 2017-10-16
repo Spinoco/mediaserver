@@ -25,7 +25,7 @@ package org.mobicents.media.server.mgcp.endpoint.factory;
 import java.lang.reflect.Constructor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.core.Server;
 import org.mobicents.media.server.mgcp.controller.Controller;
 import org.mobicents.media.server.mgcp.endpoint.naming.EndpointNameGenerator;
@@ -42,7 +42,7 @@ import org.mobicents.media.server.spi.EndpointInstaller;
  */
 public class VirtualEndpointInstaller implements EndpointInstaller {
     
-    private static final Logger logger = Logger.getLogger(VirtualEndpointInstaller.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(VirtualEndpointInstaller.class);
 
 	private String namePattern;
 	private String endpointClass;

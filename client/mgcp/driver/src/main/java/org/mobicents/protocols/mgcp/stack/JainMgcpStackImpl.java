@@ -58,8 +58,8 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
 
 import org.mobicents.protocols.mgcp.handlers.MessageHandler;
 import org.mobicents.protocols.mgcp.handlers.TransactionHandler;
@@ -86,7 +86,7 @@ public class JainMgcpStackImpl extends Thread implements JainMgcpStack, OAM_IF {
 	 */
 	public static final String _EXECUTOR_QUEUE_SIZE = "executorQueueSize";
 
-	private static final Logger logger = Logger.getLogger(JainMgcpStackImpl.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(JainMgcpStackImpl.class);
 	private static final String propertiesFileName = "mgcp-stack.properties";
 	private String protocolVersion = "1.0";
 	protected int port = 2727;
@@ -235,7 +235,7 @@ public class JainMgcpStackImpl extends Thread implements JainMgcpStack, OAM_IF {
 			}
 
 		} catch (Exception e) {
-			if(logger.isEnabledFor(Level.ERROR))
+			if(logger.isErrorEnabled())
 			{
 				logger.error("Could not gracefully close socket", e);
 			}
@@ -250,7 +250,7 @@ public class JainMgcpStackImpl extends Thread implements JainMgcpStack, OAM_IF {
 		try {
 			init();
 		} catch (IOException e) {
-			if(logger.isEnabledFor(Level.ERROR))
+			if(logger.isErrorEnabled())
 			{
 				logger.error("Failed to open Socket ", e);
 			}
@@ -309,7 +309,7 @@ public class JainMgcpStackImpl extends Thread implements JainMgcpStack, OAM_IF {
 		try {						
 			this.channel.send(pr.getBuffer(), pr.getInetAddress());											
 		} catch (IOException e) {
-			if(logger.isEnabledFor(Level.ERROR))
+			if(logger.isErrorEnabled())
 			{							
 				logger.error("I/O Exception occured, caused by", e);
 			}
@@ -376,7 +376,7 @@ public class JainMgcpStackImpl extends Thread implements JainMgcpStack, OAM_IF {
 				if (stopped) {
 					break;
 				}
-				if(logger.isEnabledFor(Level.ERROR))
+				if(logger.isErrorEnabled())
 				{
 					logger.error("I/O exception occured:", e);
 				}
@@ -387,7 +387,7 @@ public class JainMgcpStackImpl extends Thread implements JainMgcpStack, OAM_IF {
 				if (stopped) {
 					break;
 				}
-				if(logger.isEnabledFor(Level.ERROR))
+				if(logger.isErrorEnabled())
 				{
 					logger.error("Unexpected exception occured:", e);
 				}
@@ -452,7 +452,7 @@ public class JainMgcpStackImpl extends Thread implements JainMgcpStack, OAM_IF {
     			catch(Exception e)
     			{
     				//catch everything, so worker wont die.
-    				if(logger.isEnabledFor(Level.ERROR))
+    				if(logger.isErrorEnabled())
     					logger.error("Unexpected exception occured:", e);    				    		
     			}
     		}

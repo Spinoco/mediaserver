@@ -14,7 +14,7 @@ import javax.media.mscontrol.join.Joinable;
 import javax.media.mscontrol.vxml.VxmlDialog;
 import javax.media.mscontrol.vxml.VxmlDialogEvent;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.javax.media.mscontrol.container.ContainerImpl;
 import org.mobicents.javax.media.mscontrol.MediaSessionImpl;
 
@@ -24,7 +24,7 @@ import org.mobicents.javax.media.mscontrol.MediaSessionImpl;
  * 
  */
 public class VxmlDialogImpl extends ContainerImpl implements VxmlDialog {
-	public static Logger logger = Logger.getLogger(VxmlDialogImpl.class);
+	public static Logger logger = org.apache.logging.log4j.LogManager.getLogger(VxmlDialogImpl.class);
 
 	private URI uri = null;
 	private Parameters parameters = null;

@@ -39,14 +39,14 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.TooManyListenersException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.stack.JainMgcpExtendedListener;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackImpl;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackProviderImpl;
 
 public class CRCXMGW implements JainMgcpExtendedListener {
 
-	private static Logger logger = Logger.getLogger(CRCXMGW.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(CRCXMGW.class);
 
 	private boolean sendFailedResponse = false;
 

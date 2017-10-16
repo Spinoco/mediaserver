@@ -23,7 +23,7 @@ package org.mobicents.media.server.bootstrap.ioc.provider;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.core.configuration.MediaServerConfiguration;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.mgcp.controller.Controller;
@@ -41,7 +41,7 @@ import com.google.inject.Provider;
  */
 public class MgcpControllerProvider implements Provider<Controller> {
     
-    private static final Logger log = Logger.getLogger(MgcpControllerProvider.class);
+    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(MgcpControllerProvider.class);
 
     private final MediaServerConfiguration config;
     private final UdpManager udpManager;

@@ -22,7 +22,7 @@
 
 package org.mobicents.media.server.impl.rtp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.impl.srtp.DtlsHandler;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
 import org.mobicents.media.server.spi.memory.Frame;
@@ -48,7 +48,7 @@ import java.nio.channels.DatagramChannel;
  */
 public class RtpPacket implements Serializable {
 
-    private static final Logger logger = Logger.getLogger(RtpPacket.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RtpPacket.class);
 
     public static final int RTP_PACKET_MAX_SIZE = 8192;
 

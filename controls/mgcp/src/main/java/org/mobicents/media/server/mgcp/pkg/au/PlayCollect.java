@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
@@ -59,7 +59,7 @@ import org.mobicents.media.server.utils.Text;
  */
 public class PlayCollect extends Signal {
 
-    private final static Logger logger = Logger.getLogger(PlayCollect.class);
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(PlayCollect.class);
 
     // MGCP Responses
     private static final Text RC_300 = new Text("rc=300");

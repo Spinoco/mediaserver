@@ -25,7 +25,7 @@ package org.mobicents.media.server.mgcp.pkg.au;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.spi.dtmf.DtmfDetectorListener;
 import org.mobicents.media.server.spi.dtmf.DtmfEvent;
 import org.mobicents.media.server.utils.Text;
@@ -50,7 +50,7 @@ public class EventBuffer implements DtmfDetectorListener {
     private volatile boolean isActive = false;
     private ConcurrentLinkedQueue<DtmfEvent> queue = new ConcurrentLinkedQueue<DtmfEvent>();
     
-    private Logger logger = Logger.getLogger(EventBuffer.class);
+    private Logger logger = org.apache.logging.log4j.LogManager.getLogger(EventBuffer.class);
     
     public void activate() {
     	this.isActive = true;

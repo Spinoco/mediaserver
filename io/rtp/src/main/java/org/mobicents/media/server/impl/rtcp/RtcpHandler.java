@@ -28,7 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.impl.rtp.RtpPacket;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
 import org.mobicents.media.server.impl.srtp.DtlsHandler;
@@ -43,7 +43,7 @@ import org.mobicents.media.server.scheduler.Scheduler;
  */
 public class RtcpHandler implements PacketHandler {
 
-    private static final Logger logger = Logger.getLogger(RtcpHandler.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RtcpHandler.class);
 
     /** Time (in ms) between SSRC Task executions */
     private static final long SSRC_TASK_DELAY = 7000;

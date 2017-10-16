@@ -32,7 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.ice.events.IceEventListener;
 import org.mobicents.media.io.ice.events.SelectedCandidatesEvent;
 import org.mobicents.media.io.ice.harvest.ExternalCandidateHarvester;
@@ -49,7 +49,7 @@ import org.mobicents.media.server.io.network.PortManager;
  */
 public abstract class IceAgent implements IceAuthenticator {
 
-	private static final Logger logger = Logger.getLogger(IceAgent.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(IceAgent.class);
 
 	private final Map<String, IceMediaStream> mediaStreams;
 	private final HarvestManager harvestManager;

@@ -29,7 +29,7 @@ package org.mobicents.media.server.io.network.server;
 //import java.nio.channels.Selector;
 //import java.util.Iterator;
 //
-//import org.apache.log4j.Logger;
+//import org.apache.logging.log4j.Logger;
 //import org.mobicents.media.server.io.network.channel.PacketHandler;
 //import org.mobicents.media.server.io.network.channel.PacketHandlerException;
 //import org.mobicents.media.server.io.network.channel.PacketHandlerPipeline;
@@ -43,7 +43,7 @@ package org.mobicents.media.server.io.network.server;
 // */
 //public class NioServer {
 //
-//	private static final Logger logger = Logger.getLogger(NioServer.class);
+//	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(NioServer.class);
 //
 //	private static final int MAX_BUFFER_SIZE = 8192;
 //

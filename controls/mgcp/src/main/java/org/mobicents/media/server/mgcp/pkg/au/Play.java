@@ -27,7 +27,7 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
@@ -48,7 +48,7 @@ import org.mobicents.media.server.utils.Text;
  */
 public class Play extends Signal implements PlayerListener {
 
-    private final static Logger log = Logger.getLogger(Play.class);
+    private final static Logger log = org.apache.logging.log4j.LogManager.getLogger(Play.class);
 
     // Response Messages
     private static final Text MSG_NO_PLAYER = new Text("Endpoint has no player");

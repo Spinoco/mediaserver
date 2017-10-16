@@ -42,7 +42,7 @@ import java.io.StringReader;
 import java.net.InetAddress;
 import java.text.ParseException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import org.mobicents.protocols.mgcp.handlers.MgcpContentHandler;
 import org.mobicents.protocols.mgcp.handlers.TransactionHandler;
@@ -72,7 +72,7 @@ public class AuditConnectionHandler extends TransactionHandler
 		StringFunctions.HIGH_C_BYTE,StringFunctions.HIGH_X_BYTE
 	};
 	
-	private static final Logger logger = Logger.getLogger(AuditConnectionHandler.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(AuditConnectionHandler.class);
 
 	private AuditConnection command;
 	private AuditConnectionResponse response;

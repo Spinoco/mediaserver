@@ -25,7 +25,7 @@ package org.mobicents.media.server.mgcp.connection;
 import java.io.IOException;
 import java.net.SocketException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.component.audio.AudioComponent;
 import org.mobicents.media.server.component.oob.OOBComponent;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
@@ -58,7 +58,7 @@ import org.mobicents.media.server.utils.Text;
  */
 public class RtpConnectionImpl extends BaseConnection implements RtpListener, PooledObject {
 
-	private static final Logger logger = Logger.getLogger(RtpConnectionImpl.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RtpConnectionImpl.class);
 
 	// Core elements
 	private final ChannelsManager channelsManager;

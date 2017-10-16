@@ -36,7 +36,7 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +50,7 @@ import org.mobicents.media.server.scheduler.ServiceScheduler;
  */
 public class UdpPeripheryTest {
     
-    private static final Logger LOGGER = Logger.getLogger(UdpPeripheryTest.class);
+    private static final Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger(UdpPeripheryTest.class);
 
     private UdpManager udpPeriphery;
     private Scheduler scheduler = new ServiceScheduler(); 

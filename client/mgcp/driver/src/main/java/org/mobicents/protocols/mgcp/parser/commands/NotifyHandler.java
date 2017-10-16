@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.text.ParseException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import org.mobicents.protocols.mgcp.handlers.MgcpContentHandler;
 import org.mobicents.protocols.mgcp.handlers.TransactionHandler;
@@ -67,7 +67,7 @@ public class NotifyHandler extends TransactionHandler
 	private Notify command;
 	private NotifyResponse response;
 
-	private static final Logger logger = Logger.getLogger(NotifyHandler.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(NotifyHandler.class);
 
 	public NotifyHandler(JainMgcpStackImpl stack) 
 	{

@@ -24,7 +24,7 @@ package org.mobicents.media.server.mgcp.controller.naming;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.mgcp.controller.MgcpEndpoint;
 import org.mobicents.media.server.mgcp.controller.MgcpEndpointStateListener;
 import org.mobicents.media.server.spi.EndpointInstaller;
@@ -56,7 +56,7 @@ public class EndpointQueue implements MgcpEndpointStateListener {
     
     private EndpointInstaller installer;
     
-    public  Logger logger = Logger.getLogger(EndpointQueue.class);
+    public  Logger logger = org.apache.logging.log4j.LogManager.getLogger(EndpointQueue.class);
     
     public void setInstaller(EndpointInstaller installer)
     {

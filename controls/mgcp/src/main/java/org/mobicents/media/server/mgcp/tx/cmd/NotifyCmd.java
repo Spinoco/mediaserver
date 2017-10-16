@@ -25,7 +25,7 @@ import java.io.IOException;
 
 import org.mobicents.media.server.mgcp.tx.Action;
 import org.mobicents.media.server.scheduler.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -35,7 +35,7 @@ public class NotifyCmd extends Action {
     
     private TaskChain handler;
     
-    private final static Logger logger = Logger.getLogger(NotifyCmd.class);    
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(NotifyCmd.class);
     
     public NotifyCmd(Scheduler scheduler) {
         handler = new TaskChain(1,scheduler);

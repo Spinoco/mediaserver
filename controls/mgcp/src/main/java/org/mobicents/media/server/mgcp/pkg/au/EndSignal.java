@@ -22,7 +22,7 @@
 
 package org.mobicents.media.server.mgcp.pkg.au;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.mgcp.controller.signal.Signal;
 import org.mobicents.media.server.spi.Endpoint;
@@ -41,7 +41,7 @@ public class EndSignal extends Signal {
     private volatile Options options;
     
     private DtmfDetector dtmfDetector;
-    private final static Logger logger = Logger.getLogger(EndSignal.class);
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(EndSignal.class);
     
     public EndSignal(String name) {
         super(name);

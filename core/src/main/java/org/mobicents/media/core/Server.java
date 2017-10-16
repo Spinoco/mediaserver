@@ -25,7 +25,7 @@ package org.mobicents.media.core;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.scheduler.Clock;
 import org.mobicents.media.server.scheduler.EventQueueType;
@@ -45,7 +45,7 @@ import org.mobicents.media.server.spi.ServerManager;
 @Deprecated
 public class Server implements MediaServer {
 
-    private static final Logger log = Logger.getLogger(Server.class);
+    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(Server.class);
 
     // Core components
     private Clock clock;

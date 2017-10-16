@@ -27,7 +27,7 @@ import javax.media.mscontrol.spi.Driver;
 import javax.media.mscontrol.spi.DriverManager;
 import javax.media.mscontrol.spi.PropertyInfo;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.javax.media.mscontrol.MsControlFactoryImpl;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackImpl;
 
@@ -55,7 +55,7 @@ public class DriverImpl implements Driver, JainMgcpListener {
     private ScheduledExecutorService scheduler;
     
     private MsControlFactoryImpl factory;
-    private Logger logger = Logger.getLogger(DriverImpl.class);
+    private Logger logger = org.apache.logging.log4j.LogManager.getLogger(DriverImpl.class);
     
     private int txID;
     

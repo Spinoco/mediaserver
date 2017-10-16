@@ -40,7 +40,7 @@ import jain.protocol.ip.mgcp.message.parms.EventName;
 import jain.protocol.ip.mgcp.message.parms.NotifiedEntity;
 import jain.protocol.ip.mgcp.message.parms.ReturnCode;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.stack.JainMgcpExtendedListener;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackProviderImpl;
 import org.mobicents.protocols.mgcp.stack.test.createconnection.CreateConnectionTest;
@@ -50,7 +50,7 @@ import org.mobicents.protocols.mgcp.stack.test.notify.NotifyTest;
 
 public class CA implements JainMgcpExtendedListener {
 
-	private static Logger logger = Logger.getLogger(CA.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(CA.class);
 
 	private JainMgcpStackProviderImpl caProvider;
 	private int mgStack = 0;

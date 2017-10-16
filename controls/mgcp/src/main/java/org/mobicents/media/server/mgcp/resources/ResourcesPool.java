@@ -22,7 +22,7 @@
 
 package org.mobicents.media.server.mgcp.resources;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.Component;
 import org.mobicents.media.ComponentFactory;
 import org.mobicents.media.ComponentType;
@@ -45,7 +45,7 @@ import org.mobicents.media.server.spi.pooling.ResourcePool;
  */
 public class ResourcesPool implements ComponentFactory {
 	
-	private static final Logger logger = Logger.getLogger(ResourcesPool.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(ResourcesPool.class);
 
 	// Media resources
 	private final ResourcePool<AudioPlayerImpl> players;

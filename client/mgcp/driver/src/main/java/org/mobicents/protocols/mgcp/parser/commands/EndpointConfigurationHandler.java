@@ -49,7 +49,7 @@ import jain.protocol.ip.mgcp.message.parms.ReturnCode;
 import java.net.InetAddress;
 import java.text.ParseException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import org.mobicents.protocols.mgcp.handlers.MgcpContentHandler;
 import org.mobicents.protocols.mgcp.handlers.TransactionHandler;
@@ -78,7 +78,7 @@ public class EndpointConfigurationHandler extends TransactionHandler {
 	private EndpointConfiguration command;
 	private EndpointConfigurationResponse response;
 
-	private static final Logger logger = Logger.getLogger(EndpointConfigurationHandler.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(EndpointConfigurationHandler.class);
 
 	/** Creates a new instance of EndpointConfigurationHandle */
 	public EndpointConfigurationHandler(JainMgcpStackImpl stack) {

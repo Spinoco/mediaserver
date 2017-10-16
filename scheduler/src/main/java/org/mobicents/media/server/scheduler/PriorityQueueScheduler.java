@@ -27,7 +27,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Implements scheduler with multi-level priority queue.
@@ -58,7 +58,7 @@ public class PriorityQueueScheduler  {
 
 
 
-    private Logger logger = Logger.getLogger(PriorityQueueScheduler.class) ;
+    private Logger logger = org.apache.logging.log4j.LogManager.getLogger(PriorityQueueScheduler.class) ;
 
 
     private class NamedThreadFactory implements ThreadFactory {

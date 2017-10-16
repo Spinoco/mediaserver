@@ -24,7 +24,7 @@ package org.mobicents.media.server.mgcp.pkg.ann;
 
 import java.net.MalformedURLException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.mgcp.controller.signal.Signal;
 import org.mobicents.media.server.spi.MediaType;
@@ -48,7 +48,7 @@ public class Play extends Signal implements PlayerListener {
 	private Player player;
 	private String uri;
 
-	private final static Logger logger = Logger.getLogger(Play.class);
+	private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(Play.class);
 
 	public Play(String name) {
 		super(name);

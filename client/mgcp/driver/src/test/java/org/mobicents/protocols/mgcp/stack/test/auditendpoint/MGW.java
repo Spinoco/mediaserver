@@ -33,13 +33,13 @@ import jain.protocol.ip.mgcp.message.parms.ReturnCode;
 
 import java.util.TooManyListenersException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.stack.JainMgcpExtendedListener;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackProviderImpl;
 
 public class MGW implements JainMgcpExtendedListener {
 
-	private static Logger logger = Logger.getLogger(MGW.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(MGW.class);
 	private boolean responseSent = false;
 
 	JainMgcpStackProviderImpl mgwProvider;

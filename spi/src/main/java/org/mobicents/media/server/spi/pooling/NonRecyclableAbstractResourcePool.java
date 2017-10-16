@@ -1,6 +1,6 @@
 package org.mobicents.media.server.spi.pooling;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * ResourcePool, that turns off any recycling of the resources. We always create fresh new resource on every acquisition

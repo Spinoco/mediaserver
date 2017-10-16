@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * 
@@ -40,7 +40,7 @@ import org.apache.log4j.Logger;
  */
 public abstract class RTPTrack {
 
-    private final Logger logger = Logger.getLogger(this.getClass());
+    private final Logger logger = org.apache.logging.log4j.LogManager.getLogger(this.getClass());
     
     private List<RTPLocalPacket> rtPktList = new ArrayList<RTPLocalPacket>();
     

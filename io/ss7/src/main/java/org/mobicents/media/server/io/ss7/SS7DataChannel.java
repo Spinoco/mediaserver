@@ -45,7 +45,7 @@ import org.mobicents.media.server.spi.format.Formats;
 import org.mobicents.media.server.spi.memory.Frame;
 import org.mobicents.media.server.spi.dsp.Codec;
 import org.mobicents.media.server.spi.dsp.Processor;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 /**
  *
  * @author Oifa Yulian
@@ -75,7 +75,7 @@ public class SS7DataChannel {
     
     private Formats formats = new Formats();
     
-    private Logger logger = Logger.getLogger(SS7DataChannel.class) ;
+    private Logger logger = org.apache.logging.log4j.LogManager.getLogger(SS7DataChannel.class) ;
     
     private boolean isALaw=false;
     private boolean shouldLoop=false;

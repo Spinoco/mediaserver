@@ -31,14 +31,14 @@ import jain.protocol.ip.mgcp.message.parms.BearerInformation;
 import jain.protocol.ip.mgcp.message.parms.CallIdentifier;
 import jain.protocol.ip.mgcp.message.parms.EndpointIdentifier;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.stack.JainMgcpExtendedListener;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackProviderImpl;
 import org.mobicents.protocols.mgcp.stack.test.createconnection.CreateConnectionTest;
 
 public class CA implements JainMgcpExtendedListener {
 
-	private static Logger logger = Logger.getLogger(CA.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(CA.class);
 
 	private JainMgcpStackProviderImpl caProvider;
 	private int mgStack = 0;

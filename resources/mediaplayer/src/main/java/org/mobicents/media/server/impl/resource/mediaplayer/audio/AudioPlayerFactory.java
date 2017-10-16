@@ -23,7 +23,7 @@ package org.mobicents.media.server.impl.resource.mediaplayer.audio;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.dsp.DspFactory;
 import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
@@ -35,7 +35,7 @@ import org.mobicents.media.server.spi.pooling.PooledObjectFactory;
  */
 public class AudioPlayerFactory implements PooledObjectFactory<AudioPlayerImpl> {
     
-    private static final Logger log = Logger.getLogger(AudioPlayerImpl.class);
+    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(AudioPlayerImpl.class);
 
     /** Global ID generator for audio players **/
     private final static AtomicInteger ID = new AtomicInteger(1);

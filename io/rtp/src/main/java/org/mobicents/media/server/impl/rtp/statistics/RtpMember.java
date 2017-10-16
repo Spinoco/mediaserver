@@ -21,7 +21,7 @@
 package org.mobicents.media.server.impl.rtp.statistics;
 
 import org.apache.commons.net.ntp.TimeStamp;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.impl.rtcp.RtcpSenderReport;
 import org.mobicents.media.server.impl.rtcp.ntp.NtpUtils;
 import org.mobicents.media.server.impl.rtp.RtpClock;
@@ -36,7 +36,7 @@ import org.mobicents.media.server.scheduler.Clock;
  */
 public class RtpMember {
 
-	private static final Logger logger = Logger.getLogger(RtpMember.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RtpMember.class);
 
 	public static final int RTP_SEQ_MOD = 65536;
 	public static final int MAX_DROPOUT = 100;

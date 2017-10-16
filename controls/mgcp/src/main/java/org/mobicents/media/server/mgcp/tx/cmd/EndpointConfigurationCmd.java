@@ -23,7 +23,7 @@ package org.mobicents.media.server.mgcp.tx.cmd;
 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.mgcp.MgcpEvent;
 import org.mobicents.media.server.mgcp.controller.MgcpEndpoint;
 import org.mobicents.media.server.mgcp.controller.naming.UnknownEndpointException;
@@ -65,7 +65,7 @@ public class EndpointConfigurationCmd extends Action {
     private int code;
     private Text message;
     
-    private final static Logger logger = Logger.getLogger(EndpointConfigurationCmd.class);    
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(EndpointConfigurationCmd.class);
     
     public EndpointConfigurationCmd(Scheduler scheduler) {
         handler = new TaskChain(2,scheduler);

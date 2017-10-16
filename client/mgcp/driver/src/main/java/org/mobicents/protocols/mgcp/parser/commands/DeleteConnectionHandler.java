@@ -52,7 +52,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.text.ParseException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import org.mobicents.protocols.mgcp.handlers.MgcpContentHandler;
 import org.mobicents.protocols.mgcp.handlers.TransactionHandler;
@@ -87,7 +87,7 @@ public class DeleteConnectionHandler extends TransactionHandler
 	private DeleteConnection command;
 	private DeleteConnectionResponse response;
 
-	private static final Logger logger = Logger.getLogger(DeleteConnectionHandler.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(DeleteConnectionHandler.class);
 
 	/** Creates a new instance of CreateConnectionHandle */
 	public DeleteConnectionHandler(JainMgcpStackImpl stack) 

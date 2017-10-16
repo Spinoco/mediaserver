@@ -22,7 +22,7 @@
 
 package org.mobicents.media.server.component.audio;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /*******************************************************************************
  * Compilation: javac FFT.java Execution: java FFT N Dependencies: Complex.java
@@ -40,7 +40,7 @@ import org.apache.log4j.Logger;
 
 public class FFT {
 	
-	private static Logger logger = Logger.getLogger(FFT.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(FFT.class);
 
 	// compute the FFT of x[], assuming its length is a power of 2
 	public Complex[] fft(Complex[] x) {

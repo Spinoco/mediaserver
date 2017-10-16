@@ -12,7 +12,7 @@ import java.util.Hashtable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * SRTPTransformer implements PacketTransformer and provides implementations for
@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
  */
 public class SRTPTransformer implements PacketTransformer {
 	
-	private static final Logger logger = Logger.getLogger(SRTPTransformer.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(SRTPTransformer.class);
 
 	
 	private SRTPTransformEngine forwardEngine;

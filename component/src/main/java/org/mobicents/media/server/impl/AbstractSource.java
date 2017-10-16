@@ -23,7 +23,7 @@
 package org.mobicents.media.server.impl;
 
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.MediaSource;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
@@ -76,7 +76,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
     //media transmission pipe
     protected AbstractSink mediaSink;        
 
-    private static final Logger logger = Logger.getLogger(AbstractSource.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(AbstractSource.class);
     /**
      * Creates new instance of source with specified name.
      * 

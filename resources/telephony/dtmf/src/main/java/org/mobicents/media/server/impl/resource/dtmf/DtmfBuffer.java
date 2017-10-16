@@ -25,7 +25,7 @@ package org.mobicents.media.server.impl.resource.dtmf;
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Implements digit buffer.
@@ -53,7 +53,7 @@ public class DtmfBuffer implements Serializable {
 
     //Owner of this buffer
     private DetectorImpl detector;
-    private final static Logger logger = Logger.getLogger(DtmfBuffer.class);
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(DtmfBuffer.class);
     
     
     /**

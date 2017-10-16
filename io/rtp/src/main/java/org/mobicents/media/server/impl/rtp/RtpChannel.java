@@ -26,7 +26,7 @@ import java.net.SocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.ice.IceAuthenticator;
 import org.mobicents.media.io.ice.IceComponent;
 import org.mobicents.media.io.ice.IceHandler;
@@ -60,7 +60,7 @@ import org.mobicents.media.server.utils.Text;
  */
 public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceEventListener {
 
-    private static final Logger logger = Logger.getLogger(RtpChannel.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RtpChannel.class);
 
     /** Tells UDP manager to choose port to bind this channel to */
     private final static int PORT_ANY = -1;

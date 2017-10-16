@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.impl.rtcp.RtcpIntervalCalculator;
 import org.mobicents.media.server.impl.rtcp.RtcpPacket;
 import org.mobicents.media.server.impl.rtcp.RtcpPacketType;
@@ -47,7 +47,7 @@ import org.mobicents.media.server.scheduler.Clock;
  */
 public class RtpStatistics {
 	
-	private static final Logger logger = Logger.getLogger(RtpStatistics.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RtpStatistics.class);
 
 	/** Default session bandwidth (in octets per second). Matches g.711: 64kbps */
 	public static final int RTP_DEFAULT_BW = 8000;

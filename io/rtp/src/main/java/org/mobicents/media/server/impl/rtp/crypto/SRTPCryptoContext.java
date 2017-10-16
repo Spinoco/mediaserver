@@ -10,8 +10,7 @@ package org.mobicents.media.server.impl.rtp.crypto;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.net.SyslogAppender;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.Mac;
 import org.bouncycastle.crypto.digests.SHA1Digest;
@@ -49,7 +48,7 @@ import javax.xml.bind.DatatypeConverter;
  */
 public class SRTPCryptoContext {
 
-	private static final Logger logger = Logger.getLogger(SRTPCryptoContext.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(SRTPCryptoContext.class);
 
 	/**
 	 * The replay check windows size

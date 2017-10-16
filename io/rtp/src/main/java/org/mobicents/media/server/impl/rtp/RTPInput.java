@@ -22,7 +22,7 @@
 
 package org.mobicents.media.server.impl.rtp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.component.audio.AudioInput;
 import org.mobicents.media.server.impl.AbstractSource;
 import org.mobicents.media.server.scheduler.EventQueueType;
@@ -57,7 +57,7 @@ public class RTPInput extends AbstractSource implements BufferListener {
     protected Integer preEvolveCount=0;
     protected Integer evolveCount=0;
     
-    private static final Logger logger = Logger.getLogger(RTPInput.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RTPInput.class);
     
     private AudioInput input;
 	/**

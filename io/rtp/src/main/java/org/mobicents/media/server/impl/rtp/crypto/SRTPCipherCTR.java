@@ -9,7 +9,7 @@ package org.mobicents.media.server.impl.rtp.crypto;
 
 import java.nio.ByteBuffer;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.BlockCipher;
 import org.mobicents.media.server.impl.rtp.RtpHandler;
 
@@ -48,7 +48,7 @@ public class SRTPCipherCTR {
     private final byte[] tmpCipherBlock = new byte[BLKLEN];
     private byte[] streamBuf = new byte[1024];
 
-    private static final Logger logger = Logger.getLogger(SRTPCipherCTR.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(SRTPCipherCTR.class);
 
     public SRTPCipherCTR() {
     }

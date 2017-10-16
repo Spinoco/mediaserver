@@ -22,13 +22,13 @@
 
 package org.mobicents.protocols.mgcp.utils;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class PacketRepresentationFactory {
 
-	private static final Logger logger = Logger.getLogger(PacketRepresentationFactory.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(PacketRepresentationFactory.class);
 
 	private LinkedBlockingQueue<PacketRepresentation> list = new LinkedBlockingQueue<PacketRepresentation>();
 	private int size = 0;

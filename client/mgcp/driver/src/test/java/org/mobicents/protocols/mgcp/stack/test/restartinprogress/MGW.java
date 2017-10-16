@@ -32,14 +32,14 @@ import jain.protocol.ip.mgcp.message.parms.EndpointIdentifier;
 import jain.protocol.ip.mgcp.message.parms.NotifiedEntity;
 import jain.protocol.ip.mgcp.message.parms.RestartMethod;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.stack.JainMgcpExtendedListener;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackProviderImpl;
 import org.mobicents.protocols.mgcp.stack.test.auditendpoint.AuditEndpointTest;
 
 public class MGW implements JainMgcpExtendedListener {
 
-	private static Logger logger = Logger.getLogger(MGW.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(MGW.class);
 	private boolean responseReceived = false;
 	int caPort = 0;
 

@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.ice.CandidateType;
 import org.mobicents.media.io.ice.FoundationsRegistry;
 import org.mobicents.media.io.ice.HostCandidate;
@@ -51,7 +51,7 @@ import org.mobicents.media.server.io.network.PortManager;
  */
 public class HostCandidateHarvester implements CandidateHarvester {
 	
-	Logger logger = Logger.getLogger(HostCandidateHarvester.class);
+	Logger logger = org.apache.logging.log4j.LogManager.getLogger(HostCandidateHarvester.class);
 
 	private final FoundationsRegistry foundations;
 

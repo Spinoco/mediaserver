@@ -25,7 +25,7 @@ package org.mobicents.media.server.mgcp.pkg.trunk;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetector;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalGenerator;
@@ -55,7 +55,7 @@ public class Continuity1 extends Signal implements ToneDetectorListener {
     private PhoneSignalGenerator phoneGenerator;
     private PhoneSignalDetector phoneDetector;
     
-    private final static Logger logger = Logger.getLogger(Continuity1.class);    
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(Continuity1.class);
     private Heartbeat heartbeat;
     
     private PriorityQueueScheduler scheduler;

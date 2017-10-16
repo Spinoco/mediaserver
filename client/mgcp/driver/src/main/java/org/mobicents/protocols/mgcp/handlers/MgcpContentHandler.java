@@ -44,7 +44,7 @@ import java.io.IOException;
 import org.mobicents.protocols.mgcp.parser.StringFunctions;
 import org.mobicents.protocols.mgcp.parser.SplitDetails;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Receive notification of the logical content of a message. 
@@ -55,7 +55,7 @@ import org.apache.log4j.Logger;
  */
 public abstract class MgcpContentHandler 
 {
-	private static final Logger logger = Logger.getLogger(MgcpContentHandler.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(MgcpContentHandler.class);
     
 	/**
      * Receive notification of the parameter of a message.

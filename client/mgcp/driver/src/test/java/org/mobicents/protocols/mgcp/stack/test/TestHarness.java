@@ -31,11 +31,7 @@ import java.util.Properties;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.SimpleLayout;
+import org.apache.logging.log4j.Logger;
 
 public class TestHarness extends TestCase {
 
@@ -57,7 +53,7 @@ public class TestHarness extends TestCase {
 
 	protected static int testCounter;
 
-	private static Logger logger = Logger.getLogger("mgcp.test");
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger("mgcp.test");
 
 	private static String currentMethodName;
 
@@ -93,27 +89,7 @@ public class TestHarness extends TestCase {
 			// JvB: init log4j
 			// PropertyConfigurator.configure("log4j.properties");
 
-			InputStream inStreamLog4j = getClass().getResourceAsStream("/log4j.properties");
-			Properties propertiesLog4j = new Properties();
-			try {
-				propertiesLog4j.load(inStreamLog4j);
-				PropertyConfigurator.configure(propertiesLog4j);
-			} catch (IOException e) {
-				e.printStackTrace();
-				BasicConfigurator.configure();
-			}
 
-			logger.debug("log4j configured");
-
-			// If already created a print writer then just use it.
-			try{
-			if (lf != null)
-				logger.addAppender(new FileAppender(new SimpleLayout(), logFileName));
-			else
-				logger.addAppender(new FileAppender(new SimpleLayout(), "testoutput.txt"));
-			} catch(FileNotFoundException fnfe){
-				
-			}
 		} catch (Exception ex) {
 			throw new RuntimeException(ex);
 		}

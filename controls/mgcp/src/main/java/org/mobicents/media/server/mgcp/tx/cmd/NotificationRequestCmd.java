@@ -24,7 +24,7 @@ package org.mobicents.media.server.mgcp.tx.cmd;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.mgcp.MgcpEvent;
 import org.mobicents.media.server.mgcp.controller.MgcpEndpoint;
 import org.mobicents.media.server.mgcp.controller.UnknownEventException;
@@ -58,7 +58,7 @@ public class NotificationRequestCmd extends Action {
     private int code;
     private Text message;
     
-    private final static Logger logger = Logger.getLogger(NotificationRequestCmd.class);    
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(NotificationRequestCmd.class);
           
     public NotificationRequestCmd(Scheduler scheduler) {
         handler = new TaskChain(3,scheduler);

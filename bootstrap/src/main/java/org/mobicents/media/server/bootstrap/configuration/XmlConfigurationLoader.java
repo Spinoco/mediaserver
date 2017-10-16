@@ -28,7 +28,7 @@ import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.core.configuration.MediaConfiguration;
 import org.mobicents.media.core.configuration.MediaServerConfiguration;
 import org.mobicents.media.core.configuration.MgcpControllerConfiguration;
@@ -44,7 +44,7 @@ import org.mobicents.media.core.configuration.ResourcesConfiguration;
  */
 public class XmlConfigurationLoader implements ConfigurationLoader {
     
-    private static final Logger log = Logger.getLogger(XmlConfigurationLoader.class);
+    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(XmlConfigurationLoader.class);
     private static final String MMS_HOME = "mms.home.dir";
     private static final String DEFAULT_PATH = "/conf/mediaserver.xml";
 

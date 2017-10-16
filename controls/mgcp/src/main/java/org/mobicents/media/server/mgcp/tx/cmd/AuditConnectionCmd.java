@@ -23,7 +23,7 @@ package org.mobicents.media.server.mgcp.tx.cmd;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.mgcp.MgcpEvent;
 import org.mobicents.media.server.mgcp.controller.MgcpConnection;
 import org.mobicents.media.server.mgcp.controller.MgcpEndpoint;
@@ -46,7 +46,7 @@ import org.mobicents.media.server.utils.Text;
  * @see <a href="http://tools.ietf.org/html/rfc3435#section-2.3.11">RFC3435</a>
  */
 public class AuditConnectionCmd extends Action {
-	private final static Logger logger = Logger.getLogger(AuditConnectionCmd.class);
+	private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(AuditConnectionCmd.class);
 	
 	// Response messages
     private final static Text ENDPOINT_ID_MISSING = new Text("Missing endpoint identifier");

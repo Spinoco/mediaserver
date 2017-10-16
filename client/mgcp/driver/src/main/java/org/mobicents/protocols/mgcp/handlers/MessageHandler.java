@@ -44,7 +44,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.text.ParseException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.utils.PacketRepresentation;
 
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackImpl;
@@ -74,7 +74,7 @@ public class MessageHandler
 {
 
 	private JainMgcpStackImpl stack;
-	private static Logger logger = Logger.getLogger(MessageHandler.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(MessageHandler.class);
 
 	public MessageHandler(JainMgcpStackImpl jainMgcpStackImpl) 
 	{

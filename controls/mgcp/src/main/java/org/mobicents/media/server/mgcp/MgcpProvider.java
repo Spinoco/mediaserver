@@ -30,7 +30,7 @@ import java.nio.channels.DatagramChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.network.channel.MultiplexedChannel;
 import org.mobicents.media.server.io.network.channel.PacketHandler;
@@ -48,7 +48,7 @@ import org.mobicents.media.server.spi.listener.TooManyListenersException;
  */
 public class MgcpProvider extends MultiplexedChannel {
 
-    private final static Logger log = Logger.getLogger(MgcpProvider.class);
+    private final static Logger log = org.apache.logging.log4j.LogManager.getLogger(MgcpProvider.class);
 
     private final UdpManager transport;
     private final MGCPHandler mgcpHandler;

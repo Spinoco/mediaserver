@@ -23,7 +23,7 @@
 package org.mobicents.media.server.scheduler;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Scheduling task.
@@ -40,7 +40,7 @@ public abstract class Task implements Runnable {
         
     private AtomicBoolean inQueue=new AtomicBoolean(false);
 
-    private static  Logger logger = Logger.getLogger(Task.class);
+    private static  Logger logger = org.apache.logging.log4j.LogManager.getLogger(Task.class);
     
     public Task() { }
 

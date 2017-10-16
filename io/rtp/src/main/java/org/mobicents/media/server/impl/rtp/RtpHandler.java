@@ -23,7 +23,7 @@ package org.mobicents.media.server.impl.rtp;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.impl.rtcp.RtcpHeader;
 import org.mobicents.media.server.impl.rtp.rfc2833.DtmfInput;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
@@ -45,7 +45,7 @@ import javax.xml.bind.DatatypeConverter;
  */
 public class RtpHandler implements PacketHandler {
 	
-	private static final Logger logger = Logger.getLogger(RtpHandler.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RtpHandler.class);
 
 	private int pipelinePriority;
 	

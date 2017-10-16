@@ -2,7 +2,7 @@ package org.mobicents.media.server.impl.rtp;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.BaseEncoding;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.BufferedEncoder;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
@@ -58,7 +58,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class JitterBufferRTPDump {
 
-    private static Logger logger =  Logger.getLogger(JitterBufferRTPDump.class) ;
+    private static Logger logger =  org.apache.logging.log4j.LogManager.getLogger(JitterBufferRTPDump.class) ;
 
     private PriorityQueueScheduler scheduler;
     private long index;

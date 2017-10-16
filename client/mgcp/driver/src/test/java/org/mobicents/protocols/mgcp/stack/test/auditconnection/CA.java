@@ -38,14 +38,14 @@ import jain.protocol.ip.mgcp.message.parms.LocalOptionValue;
 import jain.protocol.ip.mgcp.message.parms.PacketizationPeriod;
 import jain.protocol.ip.mgcp.message.parms.RegularConnectionParm;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.stack.JainMgcpExtendedListener;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackProviderImpl;
 import org.mobicents.protocols.mgcp.stack.test.auditendpoint.AuditEndpointTest;
 
 public class CA implements JainMgcpExtendedListener {
 
-	private static Logger logger = Logger.getLogger(CA.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(CA.class);
 
 	private JainMgcpStackProviderImpl caProvider;
 	private int mgStack = 0;

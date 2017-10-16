@@ -35,7 +35,7 @@ import org.mobicents.media.server.mgcp.message.Parameter;
 import org.mobicents.media.server.mgcp.tx.Action;
 import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.utils.Text;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Modify connection command.
@@ -74,7 +74,7 @@ public class DeleteConnectionCmd extends Action {
 
 	private int tx, rx;
 
-	private final static Logger logger = Logger.getLogger(DeleteConnectionCmd.class);
+	private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(DeleteConnectionCmd.class);
 
 	public DeleteConnectionCmd(Scheduler scheduler) {
 		handler = new TaskChain(2, scheduler);

@@ -26,7 +26,7 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.tls.DatagramTransport;
 
 /**
@@ -37,7 +37,7 @@ import org.bouncycastle.crypto.tls.DatagramTransport;
  */
 public class NioUdpTransport implements DatagramTransport {
 	
-	private static final Logger logger = Logger.getLogger(NioUdpTransport.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(NioUdpTransport.class);
 	
 	public static final int DEFAULT_MTU = 1500;
 

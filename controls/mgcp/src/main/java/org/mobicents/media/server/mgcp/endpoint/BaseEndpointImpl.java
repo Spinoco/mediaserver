@@ -24,7 +24,7 @@ package org.mobicents.media.server.mgcp.endpoint;
 
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.Component;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.concurrent.ConcurrentMap;
@@ -47,7 +47,7 @@ import org.mobicents.media.server.spi.ResourceUnavailableException;
  */
 public abstract class BaseEndpointImpl implements Endpoint {
 
-    private static final Logger logger = Logger.getLogger(BaseEndpointImpl.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(BaseEndpointImpl.class);
 
     // Core Components
     private PriorityQueueScheduler scheduler;

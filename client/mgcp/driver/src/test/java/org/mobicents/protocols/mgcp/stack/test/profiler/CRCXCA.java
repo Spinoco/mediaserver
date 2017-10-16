@@ -40,7 +40,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.TooManyListenersException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.protocols.mgcp.stack.JainMgcpExtendedListener;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackImpl;
 import org.mobicents.protocols.mgcp.stack.JainMgcpStackProviderImpl;
@@ -53,7 +53,7 @@ import org.mobicents.protocols.mgcp.stack.JainMgcpStackProviderImpl;
  */
 public class CRCXCA implements JainMgcpExtendedListener {
 
-	private static Logger logger = Logger.getLogger(CRCXCA.class);
+	private static Logger logger = org.apache.logging.log4j.LogManager.getLogger(CRCXCA.class);
 
 	private JainMgcpStackProviderImpl caProvider;
 

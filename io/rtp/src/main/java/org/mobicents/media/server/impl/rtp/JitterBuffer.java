@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
@@ -115,7 +115,7 @@ public class JitterBuffer implements Serializable {
     
     private Boolean useBuffer=true;
     
-    private final static Logger logger = Logger.getLogger(JitterBuffer.class);
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(JitterBuffer.class);
 
     private long clockOffset = 0;
     private int adaptJittCompTimestamp = 0;

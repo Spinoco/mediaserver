@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.stun.StunException;
 import org.mobicents.media.io.stun.messages.attributes.StunAttribute;
 import org.mobicents.media.io.stun.messages.attributes.StunAttributeDecoder;
@@ -28,7 +28,7 @@ import org.mobicents.media.io.stun.messages.attributes.general.FingerprintAttrib
 // TODO Implement STUN Properties. See StackProperties from ice4j - hrosa
 public class StunMessage {
 
-	private static final Logger logger = Logger.getLogger(StunMessage.class.getName());
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(StunMessage.class.getName());
 
 	/* general declaration */
 	public static final char STUN_REQUEST = 0x0000;
@@ -507,9 +507,7 @@ public class StunMessage {
 			msgIndex = DATA_INDICATION_PRESENTITY_INDEX;
 			break;
 		default:
-			if (logger.isLoggable(Level.FINE)) {
-				logger.log(Level.FINE, "Attribute presentity not defined for STUN " + "message type: " + ((int) messageType) + ". Will assume optional.");
-			}
+			logger.debug("Attribute presentity not defined for STUN " + "message type: " + ((int) messageType) + ". Will assume optional.");
 			return O;
 		}
 
@@ -961,12 +959,12 @@ public class StunMessage {
 
 		// CRC validation.
 		if (!Arrays.equals(incomingCrcBytes, realCrcBytes)) {
-			if (logger.isLoggable(Level.FINE)) {
-				logger.fine("An incoming message arrived with a wrong FINGERPRINT attribute value. "
-						+ "CRC Was:" + Arrays.toString(incomingCrcBytes)
-						+ ". Should have been:" + Arrays.toString(realCrcBytes)
-						+ ". Will ignore.");
-			}
+
+			logger.debug("An incoming message arrived with a wrong FINGERPRINT attribute value. "
+					+ "CRC Was:" + Arrays.toString(incomingCrcBytes)
+					+ ". Should have been:" + Arrays.toString(realCrcBytes)
+					+ ". Will ignore.");
+
 			return false;
 		}
 		return true;

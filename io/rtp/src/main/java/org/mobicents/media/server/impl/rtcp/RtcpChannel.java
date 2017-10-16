@@ -26,7 +26,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.channels.DatagramChannel;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.ice.IceAuthenticator;
 import org.mobicents.media.io.ice.IceComponent;
 import org.mobicents.media.io.ice.IceHandler;
@@ -48,7 +48,7 @@ import org.mobicents.media.server.utils.Text;
  */
 public class RtcpChannel extends MultiplexedChannel implements DtlsListener, IceEventListener {
 
-	private static final Logger logger = Logger.getLogger(RtcpChannel.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RtcpChannel.class);
 
 	// Core elements
 	private final UdpManager udpManager;

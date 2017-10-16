@@ -21,7 +21,7 @@
  */
 package org.mobicents.media.server.mgcp.pkg.sl;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
@@ -47,7 +47,7 @@ import org.mobicents.media.server.scheduler.Task;
  */
 public class SignalRequest extends Signal implements DtmfGeneratorListener 
 {
-        private static final Logger logger = Logger.getLogger(SignalRequest.class);
+        private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(SignalRequest.class);
         
         private DtmfGenerator generator;
         

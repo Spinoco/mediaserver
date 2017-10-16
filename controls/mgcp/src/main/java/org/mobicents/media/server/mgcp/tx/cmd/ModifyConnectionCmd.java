@@ -34,7 +34,7 @@ import org.mobicents.media.server.mgcp.tx.Action;
 import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.ModeNotSupportedException;
 import org.mobicents.media.server.utils.Text;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 /**
  * Modify connection command.
  * 
@@ -62,7 +62,7 @@ public class ModifyConnectionCmd extends Action {
     //local connection options
     private LocalConnectionOptions lcOptions = new LocalConnectionOptions();
     
-    private final static Logger logger = Logger.getLogger(ModifyConnectionCmd.class);    
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(ModifyConnectionCmd.class);
     
     public ModifyConnectionCmd(Scheduler scheduler) {
     	handler = new TaskChain(1,scheduler);

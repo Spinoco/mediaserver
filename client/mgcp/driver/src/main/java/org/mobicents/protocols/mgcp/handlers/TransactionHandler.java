@@ -59,7 +59,7 @@ import org.mobicents.protocols.mgcp.utils.PacketRepresentation;
 import org.mobicents.protocols.mgcp.parser.StringFunctions;
 import org.mobicents.protocols.mgcp.parser.SplitDetails;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Implements the base gateway control interface.
@@ -95,7 +95,7 @@ import org.apache.log4j.Logger;
 
 public abstract class TransactionHandler {
 	/** Logger instance */
-	private static final Logger logger = Logger.getLogger(TransactionHandler.class);
+	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(TransactionHandler.class);
 
 	private static long MAX_TRANSACTION_HANDLE_ID = 999999999L;
 	private static AtomicInteger GENERATOR = new AtomicInteger(1);			

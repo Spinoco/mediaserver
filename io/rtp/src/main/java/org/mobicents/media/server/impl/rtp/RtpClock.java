@@ -24,7 +24,7 @@ package org.mobicents.media.server.impl.rtp;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.scheduler.Clock;
 
 /**
@@ -34,7 +34,7 @@ import org.mobicents.media.server.scheduler.Clock;
  */
 public class RtpClock {
 	
-	public static final Logger logger = Logger.getLogger(RtpClock.class);
+	public static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RtpClock.class);
 	
     //absolute time clock
     private Clock wallClock;

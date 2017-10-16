@@ -30,7 +30,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Scheduler implementation that relies on a {@link ScheduledExecutorService} to manage the thread pool as well as the scheduled
@@ -44,7 +44,7 @@ import org.apache.log4j.Logger;
  */
 public class ServiceScheduler implements Scheduler {
     
-    private static final Logger LOGGER = Logger.getLogger(ServiceScheduler.class);
+    private static final Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger(ServiceScheduler.class);
 
     public static final int POOL_SIZE = Runtime.getRuntime().availableProcessors() * 2;
 

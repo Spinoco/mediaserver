@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.mgcp.MgcpEvent;
 import org.mobicents.media.server.mgcp.MgcpListener;
@@ -60,7 +60,7 @@ public class Controller implements MgcpListener, ServerManager {
 
 	private final static String HOME_DIR = "MMS_HOME";
 	
-    private static final Logger logger = Logger.getLogger(Controller.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(Controller.class);
     
     // Core elements
     private UdpManager udpInterface;

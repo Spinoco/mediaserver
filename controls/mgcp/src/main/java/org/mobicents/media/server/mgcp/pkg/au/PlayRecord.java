@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Collection;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
@@ -59,7 +59,7 @@ import org.mobicents.media.server.utils.Text;
  */
 public class PlayRecord extends Signal {
 
-    private final static Logger logger = Logger.getLogger(PlayRecord.class);
+    private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(PlayRecord.class);
 
     // MGCP Responses
     private static final Text RC_300 = new Text("rc=300");

@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.ice.events.IceEventListener;
 import org.mobicents.media.io.ice.events.SelectedCandidatesEvent;
 import org.mobicents.media.io.stun.StunException;
@@ -48,7 +48,7 @@ import org.mobicents.media.server.io.network.channel.PacketHandlerException;
  */
 public class IceHandler implements PacketHandler {
     
-    private static final Logger logger = Logger.getLogger(IceHandler.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(IceHandler.class);
 
     // Packet Handler properties
     private int pipelinePriority;

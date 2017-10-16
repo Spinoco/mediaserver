@@ -1,6 +1,6 @@
 package org.mobicents.media.server.scheduler;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class RealTimeScheduler {
 
-    private static Logger logger =  Logger.getLogger(RealTimeScheduler.class) ;
+    private static Logger logger =  org.apache.logging.log4j.LogManager.getLogger(RealTimeScheduler.class) ;
 
     private long cycleDelay;                    // delay between cycles, computed since start of each cycle, in nanos
     private OrderedTaskQueue[] queues;          // available queues to process in each cycle

@@ -24,8 +24,8 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x509.Certificate;
 import org.bouncycastle.crypto.tls.*;
 import org.bouncycastle.util.Arrays;
@@ -44,7 +44,7 @@ import org.bouncycastle.util.Arrays;
  */
 public class DtlsSrtpServer extends DefaultTlsServer {
 	
-    private static final Logger LOGGER = Logger.getLogger(DtlsSrtpServer.class);
+    private static final Logger LOGGER = org.apache.logging.log4j.LogManager.getLogger(DtlsSrtpServer.class);
 
     // Certificate resources
 //	private static final String[] CERT_RESOURCES = new String[] { "x509-server.pem", "x509-ca.pem" };

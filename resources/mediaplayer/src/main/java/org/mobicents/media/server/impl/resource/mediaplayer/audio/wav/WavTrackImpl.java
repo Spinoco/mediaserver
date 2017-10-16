@@ -29,7 +29,7 @@ import java.util.Arrays;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.impl.resource.mediaplayer.Track;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.Format;
@@ -55,7 +55,7 @@ public class WavTrackImpl implements Track {
 
     private boolean first = true;
 
-    private static final Logger logger = Logger.getLogger(WavTrackImpl.class);
+    private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(WavTrackImpl.class);
 
     // Padding for different stream types.
     private final static byte PCM_PADDING_BYTE = 0;
