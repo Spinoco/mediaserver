@@ -40,7 +40,7 @@ public abstract class Task implements Runnable {
         
     private AtomicBoolean inQueue=new AtomicBoolean(false);
 
-    private Logger logger = Logger.getLogger(Task.class);
+    private static  Logger logger = Logger.getLogger(Task.class);
     
     public Task() { }
 

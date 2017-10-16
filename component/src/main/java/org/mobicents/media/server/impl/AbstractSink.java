@@ -162,7 +162,12 @@ public abstract class AbstractSink extends BaseComponent implements MediaSink {
 
     	//frame is not null, let's handle it
     	try {
+    	    long start = System.nanoTime();
     		onMediaTransfer(frame);
+    		long delta = System.nanoTime() - start;
+    		if (delta > 1000000) {
+                logger.warn("Sink onMedia transfer took too long: " + this + " " + delta/1000000 + "ms");
+            }
     	} catch (IOException e) {  
     		logger.error(e);
     		started = false;

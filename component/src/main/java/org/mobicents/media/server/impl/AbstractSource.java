@@ -392,6 +392,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         	overallDelay=0;
         	while(overallDelay<20000000L)
         	{
+        	    if (readCount > 2) logger.warn("Multiple cycles in Worker#perfrom " + readCount);
         		readCount++;
         		frame = evolve(timestamp);
         		if (frame == null) {
@@ -463,7 +464,13 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
 
         @Override
         public String toString() {
-            return AbstractSource.this.toString();
+            return (
+                "AbstractSource#Worker: {"
+                + " name = " + AbstractSource.this.toString()
+                + ", sink=" +  AbstractSource.this.mediaSink == null ? "null" : AbstractSource.this.mediaSink.toString()
+                + "}"
+            );
+
         }
 
     }
