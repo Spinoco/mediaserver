@@ -467,7 +467,7 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
             return (
                 "AbstractSource#Worker: {"
                 + " name = " + AbstractSource.this.toString()
-                + ", sink=" +  AbstractSource.this.mediaSink == null ? "null" : AbstractSource.this.mediaSink.toString()
+                + ", sink=" +  (AbstractSource.this.mediaSink == null ? "null" : AbstractSource.this.mediaSink.toString())
                 + "}"
             );
 

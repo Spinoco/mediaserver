@@ -78,11 +78,44 @@ public class PriorityQueueScheduler  {
         }
     }
 
-    private ScheduledExecutorService schedulerV2 = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), new NamedThreadFactory("ms-v2-scheduler"));
+     private class NamedForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFactory {
+         private String name;
+
+         private AtomicInteger idx = new AtomicInteger(0);
+
+         public NamedForkJoinWorkerThreadFactory(String name) {
+             this.name = name;
+         }
+
+         public final ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+             final ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+             worker.setName(name + "-" + idx.incrementAndGet());
+             return worker;
+         }
+     }
 
 
-    private ExecutorService workerExecutorV2 =  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 4, new NamedThreadFactory("ms-v2-worker"));
-    private ExecutorService workerExecutorV2RT =  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2, new NamedThreadFactory("ms-v2-rt-worker"));
+    // basic value for system parallelism, eq to (processor_count max 4)
+    public final static int SYSTEM_PARALLELISM =
+            Runtime.getRuntime().availableProcessors() > 4 ? Runtime.getRuntime().availableProcessors() : 4;
+
+    private ScheduledExecutorService schedulerV2 = Executors.newScheduledThreadPool(SYSTEM_PARALLELISM, new NamedThreadFactory("ms-v2-scheduler"));
+
+    // scheudler for non realtime tasks. Note that here we expect blocking to occur
+    private ExecutorService workerExecutorV2 =
+              new ForkJoinPool (
+                      SYSTEM_PARALLELISM * 4 // we may have long-blocking (i.e. recording file...) tasks here as such we need more threads
+                    , new NamedForkJoinWorkerThreadFactory("ms-worker")
+                    , null, true
+              );
+
+    // where realtime tasks are executed after being in rtScheduler
+    private ExecutorService workerExecutorV2RT =
+            new ForkJoinPool (
+                    SYSTEM_PARALLELISM * 2
+                    , new NamedForkJoinWorkerThreadFactory("ms-rt-worker")
+                    , null, true
+            );
 
 
     private RealTimeScheduler rtpScheduler = new RealTimeScheduler(
