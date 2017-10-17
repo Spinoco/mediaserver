@@ -21,9 +21,8 @@
  */
 package org.mobicents.media.server.mgcp.controller.naming;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.logging.log4j.Logger;
@@ -47,7 +46,7 @@ public class EndpointQueue implements MgcpEndpointStateListener {
     private final static Text ALL = new Text("*");
     
     //queue of endpoints
-    private Map<Integer, MgcpEndpoint> completeList= new HashMap<>(SIZE);
+    private Map<Integer, MgcpEndpoint> completeList = new ConcurrentHashMap<>(SIZE);
     private ConcurrentLinkedQueue<MgcpEndpoint> queue = new ConcurrentLinkedQueue<MgcpEndpoint>();
 
     //reference for just found endpoind
@@ -151,16 +150,5 @@ public class EndpointQueue implements MgcpEndpointStateListener {
     	{
     	    logger.debug("Endpoint " + endpoint.getName() + " released (free="+queue.size()+")");
     	}
-    }
-    
-    private class Holder {
-        protected MgcpEndpoint endpoint;
-        protected Text name;
-        
-        protected Holder(MgcpEndpoint endpoint) {
-            this.endpoint = endpoint;
-            String[] tokens = endpoint.getName().split("/");
-            this.name = new Text(tokens[tokens.length - 1]);            
-        }
     }
 }
