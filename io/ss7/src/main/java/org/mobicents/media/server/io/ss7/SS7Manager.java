@@ -23,7 +23,9 @@
 package org.mobicents.media.server.io.ss7;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.mobicents.media.server.scheduler.CancelableTask;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.protocols.stream.api.SelectorKey;
 import org.mobicents.media.hardware.dahdi.Channel;
@@ -50,7 +52,7 @@ public class SS7Manager {
     private PollTask pollTask;
 
     //state flag
-    private volatile boolean isActive;
+    private AtomicBoolean active;
 
     private volatile int count;
 
@@ -72,6 +74,7 @@ public class SS7Manager {
     public SS7Manager(PriorityQueueScheduler scheduler) throws IOException {
     	this.scheduler=scheduler;
         this.selector = new Selector();
+        this.active = new AtomicBoolean(false);
         pollTask = new PollTask();
     }
 
@@ -116,12 +119,11 @@ public class SS7Manager {
      */
     public void start() {
     	synchronized(LOCK) {
-    		if (this.isActive) return;
+    	    if (!this.active.getAndSet(true)) {
+                this.pollTask.startNow();
 
-    		this.isActive = true;
-    		this.pollTask.startNow();
-        
-    		logger.info(String.format("Initialized SS7 interface[%s]", name));
+                logger.info(String.format("Initialized SS7 interface[%s]", name));
+            }
     	}
     }
 
@@ -130,10 +132,7 @@ public class SS7Manager {
      */
     public void stop() {
     	synchronized(LOCK) {
-    		if (!this.isActive) return;
-
-    		this.isActive = false;        
-    		this.pollTask.cancel();
+    	    this.active.set(false);
     		logger.info("Stopped");
     	}
     }
@@ -141,14 +140,14 @@ public class SS7Manager {
     /**
      * Schedulable task for polling UDP channels
      */
-    private class PollTask extends Task {
+    private class PollTask extends CancelableTask {
 
         /**
          * Creates new instance of this task
          * @param scheduler
          */
-        public PollTask() {
-            super();
+        PollTask() {
+            super(active);
         }
 
         public EventQueueType getQueueType() {
@@ -158,7 +157,7 @@ public class SS7Manager {
         @Override
         public long perform() {
             //force stop
-            if (!isActive) return 0;
+            if (!active.get()) return 0;
 
             //select channels ready for IO and ignore error
             try {

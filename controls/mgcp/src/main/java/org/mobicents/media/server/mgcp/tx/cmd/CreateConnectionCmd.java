@@ -276,7 +276,8 @@ public class CreateConnectionCmd extends Action {
             	try {
                     connections[0] = endpoint.createConnection(call, ConnectionType.RTP,lcOptions.getIsLocal());
                     connections[0].setCallAgent(getEvent().getAddress());                
-                } catch (Exception e) {            	
+                } catch (Exception e) {
+            	    e.printStackTrace();
                     throw new MgcpCommandException(MgcpResponseCode.ENDPOINT_NOT_AVAILABLE, new Text("Problem with connection" + e.getMessage()));
                 }
                 

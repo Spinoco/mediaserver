@@ -26,6 +26,7 @@ import org.mobicents.media.hardware.dahdi.Channel;
 import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.oob.OOBOutput;
 import org.mobicents.media.server.impl.AbstractSink;
+import org.mobicents.media.server.scheduler.CancelableTask;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
@@ -40,6 +41,7 @@ import org.mobicents.media.server.spi.memory.Memory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  *
  * @author Oifa Yulian
@@ -82,6 +84,8 @@ public class SS7Output extends AbstractSink {
     
     private OOBOutput oobOutput;
     private OOBTranslator oobTranslator;
+
+    private AtomicBoolean active = new AtomicBoolean(false);
     
     /**
      * Creates new transmitter
@@ -111,18 +115,16 @@ public class SS7Output extends AbstractSink {
     	return this.oobOutput;
     }
     
-    public void activate()
-    {
-    	output.start();
-    	oobOutput.start();
-    }
-    
-    public void deactivate()
-    {
-    	output.stop();
-    	oobOutput.stop();
-    }
-    
+    public void activate() {
+		output.start();
+		oobOutput.start();
+	}
+
+    public void deactivate() {
+		output.stop();
+		oobOutput.stop();
+	}
+
     /**
      * Assigns the digital signaling processor of this component.
      * The DSP allows to get more output formats.
@@ -143,14 +145,17 @@ public class SS7Output extends AbstractSink {
         return this.dsp;
     }
 
-    public void start() {    	
-    	super.start();
-    	sender.submit();    	    	
+    public void start() {
+		if (!this.active.getAndSet(true)) {
+			super.start();
+			sender.submit();
+		}
     }
     
     public void stop() {
-    	super.stop();
-    	sender.cancel();
+		if (this.active.getAndSet(false)) {
+			super.stop();
+		}
     }
     
     /**
@@ -191,14 +196,14 @@ public class SS7Output extends AbstractSink {
     	queue.add(frame);    	    	  
     }
     
-    private class Sender extends Task {
+    private class Sender extends CancelableTask {
     	private Frame currFrame=null;
     	private byte[] smallBuffer=new byte[SEND_SIZE];
     	int framePosition=0;
     	int readCount=0;
     	
         public Sender() {
-            super();
+            super(active);
         }        
 
         public EventQueueType getQueueType()
@@ -206,9 +211,7 @@ public class SS7Output extends AbstractSink {
         	return EventQueueType.SS7_SENDER;
         }   
         
-        public void submit()
-        {
-        	this.activateTask();
+        public void submit() {
         	scheduler.submit(this,EventQueueType.SS7_SENDER);
         }
         

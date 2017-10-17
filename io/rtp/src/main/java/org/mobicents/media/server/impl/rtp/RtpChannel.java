@@ -20,12 +20,6 @@
 
 package org.mobicents.media.server.impl.rtp;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.nio.channels.DatagramChannel;
-import java.nio.file.Path;
-
 import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.ice.IceAuthenticator;
 import org.mobicents.media.io.ice.IceComponent;
@@ -41,9 +35,9 @@ import org.mobicents.media.server.impl.srtp.DtlsListener;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.network.channel.MultiplexedChannel;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
+import org.mobicents.media.server.scheduler.CancelableTask;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.FormatNotSupportedException;
 import org.mobicents.media.server.spi.dsp.Processor;
@@ -52,8 +46,15 @@ import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.format.Formats;
 import org.mobicents.media.server.utils.Text;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.channels.DatagramChannel;
+import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
- * 
+ *
  * @author Yulian Oifa
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  *
@@ -100,6 +101,8 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     // Media components
     private AudioComponent audioComponent;
     private OOBComponent oobComponent;
+
+    private AtomicBoolean active = new AtomicBoolean(false);
 
     // Media formats
     protected final static AudioFormat LINEAR_FORMAT = FormatFactory.createAudioFormat("LINEAR", 8000, 16, 1);
@@ -206,7 +209,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
 
     /**
      * Modifies the map between format and RTP payload number
-     * 
+     *
      * @param rtpFormats the format map
      */
     public void setFormatMap(RTPFormats rtpFormats) {
@@ -222,7 +225,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     /**
      * Sets the connection mode of the channel.<br>
      * Possible modes: send_only, recv_only, inactive, send_recv, conference, network_loopback.
-     * 
+     *
      * @param connectionMode the new connection mode adopted by the channel
      */
     public void updateMode(ConnectionMode connectionMode) {
@@ -280,9 +283,10 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         if (udpManager.getRtpTimeout() > 0 && this.remotePeer != null && !connectImmediately) {
             if (this.rtpHandler.isReceivable()) {
                 this.statistics.setLastHeartbeat(scheduler.getClock().getTime());
+                active.set(true);
                 scheduler.submitHeartbeat(heartBeat);
             } else {
-                heartBeat.cancel();
+                active.set(false);
             }
         }
     }
@@ -336,7 +340,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     public boolean isBound() {
         return this.bound;
     }
-    
+
     public boolean isConnected() {
         return this.dataChannel != null && this.dataChannel.isConnected();
     }
@@ -377,9 +381,10 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         if (udpManager.getRtpTimeout() > 0 && !connectImmediately) {
             if (this.rtpHandler.isReceivable()) {
                 this.statistics.setLastHeartbeat(scheduler.getClock().getTime());
+                active.set(true);
                 scheduler.submitHeartbeat(heartBeat);
             } else {
-                heartBeat.cancel();
+                active.set(false);
             }
         }
     }
@@ -399,7 +404,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     private boolean notEmpty(String text) {
         return text != null && !text.isEmpty();
     }
-    
+
     public void enableIce(IceAuthenticator authenticator) {
         if(!this.ice) {
             this.ice = true;
@@ -407,7 +412,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
             this.handlers.addHandler(this.stunHandler);
         }
     }
-    
+
     public void disableIce() {
         if(this.ice) {
             this.ice = false;
@@ -448,7 +453,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
             if (this.rtcpMux) {
                 this.rtcpHandler.enableSRTCP(this.dtlsHandler);
             }
-            
+
             // Add handler to pipeline to handle incoming DTLS packets
             this.dtlsHandler.setChannel(this.dataChannel);
             this.dtlsHandler.addListener(this);
@@ -499,7 +504,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
 
     private void reset() {
         // Heartbeat reset
-        heartBeat.cancel();
+        active.set(false);
 
         // RTP reset
         this.handlers.removeHandler(this.rtpHandler);
@@ -512,7 +517,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
             this.rtcpHandler.reset();
             this.rtcpMux = false;
         }
-        
+
         if(this.ice) {
             disableIce();
             this.stunHandler.reset();
@@ -538,7 +543,11 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         }
     }
 
-    private class HeartBeat extends Task {
+    private class HeartBeat extends CancelableTask {
+
+        public HeartBeat() {
+            super(active);
+        }
 
         public EventQueueType getQueueType() {
             return EventQueueType.HEARTBEAT;

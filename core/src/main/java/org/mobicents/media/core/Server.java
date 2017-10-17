@@ -24,20 +24,18 @@ package org.mobicents.media.core;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
-import org.mobicents.media.server.scheduler.Clock;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.ControlProtocol;
 import org.mobicents.media.server.spi.MediaServer;
 import org.mobicents.media.server.spi.ServerManager;
 
 /**
  * Implementation of a Media Server.
- * 
+ *
  * @author Oifa Yulian
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  * @deprecated Use RestCommMediaServer instead
@@ -60,6 +58,7 @@ public class Server implements MediaServer {
     // Media Server State
     private final Map<ControlProtocol, ServerManager> managers;
     private boolean started;
+    private AtomicBoolean active = new AtomicBoolean(false);
 
     public Server() {
         this.managers = new HashMap<>(2);
@@ -102,6 +101,7 @@ public class Server implements MediaServer {
 
         // Start Media Server
         this.started = true;
+        active.set(true);
         for (ServerManager controller : managers.values()) {
             log.info("Activating controller " + controller.getControlProtocol().name());
             controller.activate();
@@ -123,10 +123,7 @@ public class Server implements MediaServer {
             log.info("Stopping UDP Manager");
         }
         udpManager.stop();
-
-        if (heartbeat != null) {
-            heartbeat.cancel();
-        }
+        active.set(false);
 
         for (ServerManager controller : managers.values()) {
             log.info("Deactivating controller " + controller.getControlProtocol().name());
@@ -146,7 +143,7 @@ public class Server implements MediaServer {
     public boolean isRunning() {
         return this.started;
     }
-    
+
     @Override
     public void addManager(ServerManager manager) {
         managers.put(manager.getControlProtocol(), manager);
@@ -157,10 +154,10 @@ public class Server implements MediaServer {
         managers.remove(manager);
     }
 
-    private final class HeartBeat extends Task {
+    private final class HeartBeat extends CancelableTask {
 
         public HeartBeat() {
-            super();
+            super(active);
         }
 
         @Override

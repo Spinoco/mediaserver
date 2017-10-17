@@ -23,10 +23,12 @@
 package org.mobicents.media.server.mgcp.connection;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.component.audio.AudioComponent;
 import org.mobicents.media.server.component.oob.OOBComponent;
+import org.mobicents.media.server.scheduler.CancelableTask;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
@@ -71,6 +73,8 @@ public abstract class BaseConnection implements Connection {
 	/** Remaining time to live in current state */
 	private volatile long ttl;
 	private HeartBeat heartBeat;
+
+	private AtomicBoolean active = new AtomicBoolean(false);
 
 	private Endpoint activeEndpoint;
 
@@ -131,10 +135,11 @@ public abstract class BaseConnection implements Connection {
 
 		switch (state) {
 		case HALF_OPEN:
+		    active.set(true);
 			scheduler.submitHeartbeat(heartBeat);
 			break;
 		case NULL:
-			heartBeat.cancel();
+		    active.set(false);
 			break;
 		default:
 			break;
@@ -360,10 +365,10 @@ public abstract class BaseConnection implements Connection {
 		this.activeEndpoint = null;
 	}
 
-	private class HeartBeat extends Task {
+	private class HeartBeat extends CancelableTask {
 
 		public HeartBeat() {
-			super();
+			super(active);
 		}
 
 		public EventQueueType getQueueType() {

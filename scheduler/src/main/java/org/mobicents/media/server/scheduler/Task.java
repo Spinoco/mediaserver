@@ -31,13 +31,9 @@ import org.apache.logging.log4j.Logger;
  * @author Oifa Yulian
  */
 public abstract class Task implements Runnable {
-
-    private volatile boolean isActive = true;
     //error handler instance
     protected TaskListener listener;
     
-    private final Object LOCK = new Object();    
-        
     private AtomicBoolean inQueue=new AtomicBoolean(false);
 
     private static  Logger logger = org.apache.logging.log4j.LogManager.getLogger(Task.class);
@@ -74,8 +70,7 @@ public abstract class Task implements Runnable {
      * @return the value of queue
      */
     public abstract EventQueueType getQueueType();
-    
-    
+
     /**
      * Executes task.
      * 
@@ -83,38 +78,22 @@ public abstract class Task implements Runnable {
      */
     public abstract long perform();
 
-    /**
-     * Cancels task execution
-     */
-    public void cancel() {
-    	synchronized(LOCK) {
-    		this.isActive = false;    		
-    	}
-    }
-
     //call should not be synchronized since can run only once in queue cycle
     public void run() {
-    		if (this.isActive)  {
-    			try {
-    				perform();                
-                
-    				//notify listener                
-    				if (this.listener != null) {
-    					this.listener.onTerminate();
-    				}
-    				
-    			} catch (Exception e) {
-    			    logger.error("Could not execute task: "+ e.getMessage(), e);
-    				if (this.listener != null) {
-    					listener.handlerError(e);
-    				} 
-    			}
-    		}      		    		    	
+        try {
+            perform();
+
+            //notify listener
+            if (this.listener != null) {
+                this.listener.onTerminate();
+            }
+
+        } catch (Exception e) {
+            logger.error("Could not execute task: " + this + " : " + e.getMessage(), e);
+            if (this.listener != null) {
+                listener.handlerError(e);
+            }
+        }
     }
 
-    protected void activateTask() {
-    	synchronized(LOCK) {
-    		this.isActive = true;
-    	}
-    }    
 }

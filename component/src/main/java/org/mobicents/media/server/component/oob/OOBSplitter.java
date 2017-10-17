@@ -22,18 +22,18 @@
 
 package org.mobicents.media.server.component.oob;
 
+import org.mobicents.media.server.concurrent.ConcurrentMap;
+import org.mobicents.media.server.scheduler.CancelableTask;
+import org.mobicents.media.server.scheduler.EventQueueType;
+import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
+import org.mobicents.media.server.spi.memory.Frame;
+
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.mobicents.media.server.concurrent.ConcurrentMap;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
-import org.mobicents.media.server.spi.memory.Frame;
-
 /**
  * Implements compound oob splitter , one of core components of mms 3.0
- * 
+ *
  * @author Yulian Oifa
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  */
@@ -49,7 +49,7 @@ public class OOBSplitter {
 	// Mixing Tasks
 	private final InsideMixTask insideMixer;
 	private final OutsideMixTask outsideMixer;
-	private final AtomicBoolean started;
+	private final AtomicBoolean active = new AtomicBoolean(false);
 
 	protected long mixCount = 0;
 
@@ -59,7 +59,6 @@ public class OOBSplitter {
 		this.outsideComponents = new ConcurrentMap<OOBComponent>();
 		this.insideMixer = new InsideMixTask();
 		this.outsideMixer = new OutsideMixTask();
-		this.started = new AtomicBoolean(false);
 	}
 
 	public void addInsideComponent(OOBComponent component) {
@@ -72,7 +71,7 @@ public class OOBSplitter {
 
 	/**
 	 * Releases inside component
-	 * 
+	 *
 	 * @param component
 	 */
 	public void releaseInsideComponent(OOBComponent component) {
@@ -81,7 +80,7 @@ public class OOBSplitter {
 
 	/**
 	 * Releases outside component
-	 * 
+	 *
 	 * @param component
 	 */
 	public void releaseOutsideComponent(OOBComponent component) {
@@ -89,22 +88,21 @@ public class OOBSplitter {
 	}
 
 	public void start() {
-		mixCount = 0;
-		started.set(true);
-		scheduler.submit(insideMixer, EventQueueType.RTP_MIXER);
-		scheduler.submit(outsideMixer, EventQueueType.RTP_MIXER);
+	    if (!active.getAndSet(true)) {
+			mixCount = 0;
+			scheduler.submit(insideMixer, EventQueueType.RTP_MIXER);
+			scheduler.submit(outsideMixer, EventQueueType.RTP_MIXER);
+		}
 	}
 
 	public void stop() {
-		started.set(false);
-		insideMixer.cancel();
-		outsideMixer.cancel();
+		active.set(false);
 	}
 
-	private class InsideMixTask extends Task {
+	private class InsideMixTask extends CancelableTask {
 
 	    public InsideMixTask() {
-			super();
+			super(active);
 		}
 
 		@Override
@@ -150,10 +148,10 @@ public class OOBSplitter {
 		}
 	}
 
-	private class OutsideMixTask extends Task {
+	private class OutsideMixTask extends CancelableTask {
 
 		public OutsideMixTask() {
-			super();
+			super(active);
 		}
 
 		@Override

@@ -199,7 +199,6 @@ public class PriorityQueueScheduler  {
      * @param task the task to be executed.
      */
     public void submit(Task task, EventQueueType tpe) {
-        task.activateTask();
         switch(tpe) {
             case RTP_INPUT :
                 rtpInputQ.accept(task);

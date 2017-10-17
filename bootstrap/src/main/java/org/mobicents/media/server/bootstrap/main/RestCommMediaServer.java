@@ -23,13 +23,11 @@ package org.mobicents.media.server.bootstrap.main;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Scheduler;
-import org.mobicents.media.server.scheduler.Task;
+import org.mobicents.media.server.scheduler.*;
 import org.mobicents.media.server.spi.ControlProtocol;
 import org.mobicents.media.server.spi.MediaServer;
 import org.mobicents.media.server.spi.ServerManager;
@@ -57,6 +55,7 @@ public class RestCommMediaServer implements MediaServer {
     private final HeartBeat heartbeat;
     private final int heartbeatTime;
     private volatile long ttl;
+    private AtomicBoolean active = new AtomicBoolean(false);
 
     @Inject
     public RestCommMediaServer(PriorityQueueScheduler mediaScheduler, Scheduler taskScheduler, UdpManager udpManager,
@@ -125,7 +124,7 @@ public class RestCommMediaServer implements MediaServer {
         this.udpManager.stop();
         this.taskScheduler.stop();
         this.mediaScheduler.stop();
-        this.heartbeat.cancel();
+        this.active.set(false);
         for (ServerManager controller : this.controllers.values()) {
             controller.deactivate();
         }
@@ -139,10 +138,10 @@ public class RestCommMediaServer implements MediaServer {
         return this.started;
     }
 
-    private final class HeartBeat extends Task {
+    private final class HeartBeat extends CancelableTask {
 
         public HeartBeat() {
-            super();
+            super(active);
         }
 
         @Override
@@ -152,6 +151,7 @@ public class RestCommMediaServer implements MediaServer {
 
         public void restart() {
             ttl = heartbeatTime * 600;
+            active.set(true);
             mediaScheduler.submitHeartbeat(this);
         }
 

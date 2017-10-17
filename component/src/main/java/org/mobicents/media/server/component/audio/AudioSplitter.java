@@ -22,20 +22,20 @@
 
 package org.mobicents.media.server.component.audio;
 
+import org.mobicents.media.server.concurrent.ConcurrentMap;
+import org.mobicents.media.server.scheduler.CancelableTask;
+import org.mobicents.media.server.scheduler.EventQueueType;
+import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
+import org.mobicents.media.server.spi.format.AudioFormat;
+import org.mobicents.media.server.spi.format.FormatFactory;
+
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.mobicents.media.server.concurrent.ConcurrentMap;
-import org.mobicents.media.server.scheduler.EventQueueType;
-import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
-import org.mobicents.media.server.scheduler.Task;
-import org.mobicents.media.server.spi.format.AudioFormat;
-import org.mobicents.media.server.spi.format.FormatFactory;
-
 /**
  * Implements compound audio splitter , one of core components of mms 3.0
- * 
+ *
  * @author Yulian Oifa
  * @author Henrique Rosa (henrique.rosa@telestax.com)
  */
@@ -55,7 +55,7 @@ public class AudioSplitter {
 
 	private final InsideMixTask insideMixer;
 	private final OutsideMixTask outsideMixer;
-	private final AtomicBoolean started;
+	private final AtomicBoolean active = new AtomicBoolean(false);
 	private final AtomicLong mixCount;
 
 	// gain value
@@ -67,7 +67,6 @@ public class AudioSplitter {
 		this.outsideMixer = new OutsideMixTask();
 		this.insideComponents = new ConcurrentMap<AudioComponent>();
 		this.outsideComponents = new ConcurrentMap<AudioComponent>();
-		this.started = new AtomicBoolean(false);
 		this.mixCount = new AtomicLong(0);
 	}
 
@@ -85,7 +84,7 @@ public class AudioSplitter {
 
 	/**
 	 * Releases inside component
-	 * 
+	 *
 	 * @param component
 	 */
 	public void releaseInsideComponent(AudioComponent component) {
@@ -94,7 +93,7 @@ public class AudioSplitter {
 
 	/**
 	 * Releases outside component
-	 * 
+	 *
 	 * @param component
 	 */
 	public void releaseOutsideComponent(AudioComponent component) {
@@ -103,7 +102,7 @@ public class AudioSplitter {
 
 	/**
 	 * Modify gain of the output stream.
-	 * 
+	 *
 	 * @param gain
 	 *            the new value of the gain in dBm.
 	 */
@@ -112,28 +111,23 @@ public class AudioSplitter {
 	}
 
 	public void start() {
-	    if(!this.started.get()) {
+	    if(!this.active.getAndSet(true)) {
 	        mixCount.set(0);
-	        started.set(true);
 	        scheduler.submit(insideMixer, EventQueueType.RTP_MIXER);
 	        scheduler.submit(outsideMixer, EventQueueType.RTP_MIXER);
 	    }
 	}
 
 	public void stop() {
-	    if(this.started.get()) {
-	        started.set(false);
-	        insideMixer.cancel();
-	        outsideMixer.cancel();
-	    }
+		active.set(false);
 	}
 
-	private class InsideMixTask extends Task {
+	private class InsideMixTask extends CancelableTask {
 
 	    private final int[] total = new int[PACKET_SIZE / 2];
 
-		public InsideMixTask() {
-			super();
+		InsideMixTask() {
+			super(active);
 		}
 
 		@Override
@@ -209,12 +203,12 @@ public class AudioSplitter {
 		}
 	}
 
-	private class OutsideMixTask extends Task {
-	    
+	private class OutsideMixTask extends CancelableTask {
+
 		private final int[] total = new int[PACKET_SIZE / 2];
 
-		public OutsideMixTask() {
-			super();
+		OutsideMixTask() {
+			super(active);
 		}
 
 		@Override

@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -35,6 +36,7 @@ import org.mobicents.media.ComponentType;
 import org.mobicents.media.server.component.audio.AudioOutput;
 import org.mobicents.media.server.component.oob.OOBOutput;
 import org.mobicents.media.server.impl.AbstractSink;
+import org.mobicents.media.server.scheduler.CancelableTask;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
@@ -112,6 +114,8 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
     private OOBOutput oobOutput;
     private OOBRecorder oobRecorder;
 
+    private AtomicBoolean active = new AtomicBoolean(false);
+
     private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(AudioRecorderImpl.class);
 
     // Hence the recorded runs in OUTPUT task queue, then this shall assure we won't
@@ -156,17 +160,19 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
 
     @Override
     public void activate() {
-        this.lastPacketData = scheduler.getClock().getTime();
-        this.startTime = scheduler.getClock().getTime();
+        if (!active.getAndSet(true)) {
+            this.lastPacketData = scheduler.getClock().getTime();
+            this.startTime = scheduler.getClock().getTime();
 
-        output.start();
-        oobOutput.start();
-        if (this.postSpeechTimer > 0 || this.preSpeechTimer > 0 || this.maxRecordTime > 0) {
-            scheduler.submitHeartbeat(this.heartbeat);
+            output.start();
+            oobOutput.start();
+            if (this.postSpeechTimer > 0 || this.preSpeechTimer > 0 || this.maxRecordTime > 0) {
+                scheduler.submitHeartbeat(this.heartbeat);
+            }
+
+            // send event
+            fireEvent(recorderStarted);
         }
-
-        // send event
-        fireEvent(recorderStarted);
     }
 
     @Override
@@ -176,20 +182,20 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
         }
 
         try {
-            output.stop();
-            oobOutput.stop();
-            this.maxRecordTime = -1;
-            this.lastPacketData = 0;
-            this.startTime = 0;
+            if (active.getAndSet(false)) {
+                output.stop();
+                oobOutput.stop();
+                this.maxRecordTime = -1;
+                this.lastPacketData = 0;
+                this.startTime = 0;
 
-            this.heartbeat.cancel();
-
-            // deactivate can be concurrently invoked from  multiple threads (MediaGroup, KillRecording for example).
-            // to make sure the sink is closed only once, we set the sink ref to null and proceed to commit only if obtained reference is not null.
-            RecorderFileSink snk = sink.getAndSet(null);
-            ConcurrentLinkedQueue<Frame> wb = writeBuff.getAndSet(null);
-            if (snk != null && wb != null) {
-                scheduler.submit(new FlushRecording(snk, wb,  this.lock), EventQueueType.RECORDING);
+                // deactivate can be concurrently invoked from  multiple threads (MediaGroup, KillRecording for example).
+                // to make sure the sink is closed only once, we set the sink ref to null and proceed to commit only if obtained reference is not null.
+                RecorderFileSink snk = sink.getAndSet(null);
+                ConcurrentLinkedQueue<Frame> wb = writeBuff.getAndSet(null);
+                if (snk != null && wb != null) {
+                    scheduler.submit(new FlushRecording(snk, wb, this.lock), EventQueueType.RECORDING);
+                }
             }
 
         } catch (Exception e) {
@@ -380,10 +386,10 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
     /**
      * Heartbeat
      */
-    private class Heartbeat extends Task {
+    private class Heartbeat extends CancelableTask {
 
-        public Heartbeat() {
-            super();
+        Heartbeat() {
+            super(active);
         }
 
         @Override

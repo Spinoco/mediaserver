@@ -23,8 +23,10 @@
 package org.mobicents.media.server.component.audio;
 
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.mobicents.media.server.concurrent.ConcurrentMap;
+import org.mobicents.media.server.scheduler.CancelableTask;
 import org.mobicents.media.server.scheduler.EventQueueType;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.scheduler.Task;
@@ -33,7 +35,7 @@ import org.mobicents.media.server.spi.format.FormatFactory;
 
 /**
  * Implements compound audio mixer , one of core components of mms 3.0
- * 
+ *
  * @author Yulian Oifa
  */
 public class AudioMixer {
@@ -50,7 +52,7 @@ public class AudioMixer {
 	private int packetSize = (int) (period / 1000000) * format.getSampleRate() / 1000 * format.getSampleSize() / 8;
 
 	private MixTask mixer;
-	private volatile boolean started = false;
+	private AtomicBoolean active = new AtomicBoolean(false);
 
 	public long mixCount = 0;
 
@@ -72,7 +74,7 @@ public class AudioMixer {
 
 	/**
 	 * Releases unused input stream
-	 * 
+	 *
 	 * @param input
 	 *            the input stream previously created
 	 */
@@ -91,17 +93,17 @@ public class AudioMixer {
 	}
 
 	public void start() {
-		mixCount = 0;
-		started = true;
-		scheduler.submit(mixer, EventQueueType.RTP_MIXER);
+		if (!active.getAndSet(true)) {
+			mixCount = 0;
+			scheduler.submit(mixer, EventQueueType.RTP_MIXER);
+		}
 	}
 
 	public void stop() {
-		started = false;
-		mixer.cancel();
+	    active.set(false);
 	}
 
-	private class MixTask extends Task {
+	private class MixTask extends CancelableTask {
 		int sourcesCount = 0;
 		private int i;
 		private int minValue = 0;
@@ -110,8 +112,8 @@ public class AudioMixer {
 		private int[] total = new int[packetSize / 2];
 		private int[] current;
 
-		public MixTask() {
-			super();
+		MixTask() {
+			super(active);
 		}
 
 		@Override
