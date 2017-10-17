@@ -22,14 +22,6 @@
 
 package org.mobicents.media.server.mgcp;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.network.channel.MultiplexedChannel;
@@ -40,6 +32,13 @@ import org.mobicents.media.server.mgcp.message.MgcpRequest;
 import org.mobicents.media.server.mgcp.message.MgcpResponse;
 import org.mobicents.media.server.spi.listener.Listeners;
 import org.mobicents.media.server.spi.listener.TooManyListenersException;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
@@ -54,8 +53,6 @@ public class MgcpProvider extends MultiplexedChannel {
     private final MGCPHandler mgcpHandler;
     private final int port;
 
-    private final ConcurrentLinkedQueue<ByteBuffer> txBuffer = new ConcurrentLinkedQueue<ByteBuffer>();
-    private final ConcurrentLinkedQueue<MgcpEventImpl> events = new ConcurrentLinkedQueue<MgcpEventImpl>();
     private final Listeners<MgcpListener> listeners = new Listeners<MgcpListener>();
 
     /**
@@ -71,15 +68,6 @@ public class MgcpProvider extends MultiplexedChannel {
 
         // Setup packet handlers
         this.handlers.addHandler(this.mgcpHandler);
-
-        // prepare event pool
-        for (int i = 0; i < 100; i++) {
-            events.offer(new MgcpEventImpl(this));
-        }
-
-        for (int i = 0; i < 100; i++) {
-            txBuffer.offer(ByteBuffer.allocate(8192));
-        }
     }
 
     /**
@@ -89,10 +77,7 @@ public class MgcpProvider extends MultiplexedChannel {
      * @return event object.
      */
     public MgcpEvent createEvent(int eventID, SocketAddress address) {
-        MgcpEventImpl evt = events.poll();
-        if (evt == null) {
-            evt = new MgcpEventImpl(this);
-        }
+        MgcpEventImpl evt = new MgcpEventImpl(this);
 
         evt.inQueue.set(false);
         evt.setEventID(eventID);
@@ -107,16 +92,12 @@ public class MgcpProvider extends MultiplexedChannel {
      */
     public void send(MgcpEvent event) throws IOException {
         MgcpMessage msg = event.getMessage();
-        ByteBuffer currBuffer = txBuffer.poll();
-        if (currBuffer == null) {
-            currBuffer = ByteBuffer.allocate(8192);
-        }
+        ByteBuffer currBuffer = ByteBuffer.allocate(8192);
 
         msg.write(currBuffer);
         this.dataChannel.send(currBuffer, event.getAddress());
 
         currBuffer.clear();
-        txBuffer.offer(currBuffer);
     }
 
     /**
@@ -166,16 +147,6 @@ public class MgcpProvider extends MultiplexedChannel {
             log.info("Closing the MGCP channel.");
         }
         close();
-    }
-
-    private void recycleEvent(MgcpEventImpl event) {
-        if (event.inQueue.getAndSet(true))
-            log.warn("====================== ALARM ALARM ALARM==============");
-        else {
-            event.response.clean();
-            event.request.clean();
-            events.offer(event);
-        }
     }
 
     /**
@@ -282,11 +253,6 @@ public class MgcpProvider extends MultiplexedChannel {
          */
         protected void setEventID(int eventID) {
             this.eventID = eventID;
-        }
-
-        @Override
-        public void recycle() {
-            recycleEvent(this);
         }
 
         @Override

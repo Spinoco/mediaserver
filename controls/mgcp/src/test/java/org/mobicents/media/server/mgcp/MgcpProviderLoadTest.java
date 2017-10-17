@@ -149,29 +149,24 @@ public class MgcpProviderLoadTest {
         public void process(MgcpEvent event) {
             //CRCX request expected
             MgcpEvent evt = null;
+            MgcpRequest request = (MgcpRequest) event.getMessage();
+            if (!request.getCommand().equals(new Text("CRCX"))) {
+                errorCount++;
+            }
+            SocketAddress destination = event.getAddress();
+            evt = provider1.createEvent(MgcpEvent.RESPONSE, destination);
+            MgcpResponse resp = (MgcpResponse) evt.getMessage();
+
+            resp.setResponseCode(200);
+            resp.setTxID(request.getTxID());
+            resp.setResponseString(new Text("Success"));
+
             try {
-                MgcpRequest request = (MgcpRequest) event.getMessage();
-                if (!request.getCommand().equals(new Text("CRCX"))) {
-                    errorCount++;
-                }
-                SocketAddress destination = event.getAddress();
-                evt = provider1.createEvent(MgcpEvent.RESPONSE, destination);
-                MgcpResponse resp = (MgcpResponse) evt.getMessage();
-
-                resp.setResponseCode(200);
-                resp.setTxID(request.getTxID());
-                resp.setResponseString(new Text("Success"));
-
-                try {
-                    mgcpProvider.send(evt);
-                } catch (Exception e) {                	
-                }
-            } finally {
-                event.recycle();
-                evt.recycle();
+                mgcpProvider.send(evt);
+            } catch (Exception e) {
             }
         }
-        
+
     }
     
     private class Client implements Runnable {
@@ -186,36 +181,32 @@ public class MgcpProviderLoadTest {
         public void run() {
             MgcpEvent evt = null;
 
+            InetSocketAddress destination = new InetSocketAddress("127.0.0.1", 1024);
+
+            evt = provider1.createEvent(MgcpEvent.REQUEST, destination);
+            MgcpRequest req = (MgcpRequest) evt.getMessage();
+
+            req.setCommand(new Text("CRCX"));
+            req.setTxID(txID.getAndIncrement());
+            req.setEndpoint(new Text("test@127.0.0.1"));
+            req.setParameter(new Text("c"), new Text("abcd"));
+
             try {
-                InetSocketAddress destination = new InetSocketAddress("127.0.0.1", 1024);
+                mgcpProvider.send(evt);
+            } catch (Exception e) {
+            }
 
-                evt = provider1.createEvent(MgcpEvent.REQUEST, destination);
-                MgcpRequest req = (MgcpRequest) evt.getMessage();
+            clients.put(req.getTxID(), this);
 
-                req.setCommand(new Text("CRCX"));
-                req.setTxID(txID.getAndIncrement());
-                req.setEndpoint(new Text("test@127.0.0.1"));
-                req.setParameter(new Text("c"), new Text("abcd"));
-
+            synchronized (this) {
                 try {
-                    mgcpProvider.send(evt);
-                } catch (Exception e) {                	
+                    wait(5000);
+                } catch (InterruptedException e) {
                 }
+            }
 
-                clients.put(req.getTxID(), this);
-
-                synchronized (this) {
-                    try {
-                        wait(5000);
-                    } catch (InterruptedException e) {
-                    }
-                }
-
-                if (!passed) {
-                    errorCount++;
-                }
-            } finally {
-                evt.recycle();
+            if (!passed) {
+                errorCount++;
             }
         }
         
@@ -232,19 +223,15 @@ public class MgcpProviderLoadTest {
     	@Override
         public void process(MgcpEvent event) {
             MgcpResponse response = (MgcpResponse) event.getMessage();
-            try {
-                int txID = response.getTxID();
+            int txID = response.getTxID();
 
-                Client client = clients.remove(txID);
-                if (client != null) {
-                    client.terminate();
-                } else {
-                    errorCount++;
-                }
-            } finally {
-                event.recycle();
+            Client client = clients.remove(txID);
+            if (client != null) {
+                client.terminate();
+            } else {
+                errorCount++;
             }
-		}
+        }
 
     }
 }

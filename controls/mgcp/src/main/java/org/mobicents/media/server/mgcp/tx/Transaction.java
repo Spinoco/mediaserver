@@ -139,7 +139,6 @@ public class Transaction implements ActionListener {
             action.setEvent(event);
             process(action);
         } else {
-            event.recycle();
             this.onComplete();
         }
     }
@@ -158,7 +157,6 @@ public class Transaction implements ActionListener {
     public void onComplete() {
         logger.info("tx=" + id + " was executed normaly");
         if (action != null && action.getEvent() != null) {
-        	action.getEvent().recycle();
         	action=null;
         }
         
@@ -185,7 +183,6 @@ public class Transaction implements ActionListener {
     public void onRollback() {
         logger.info("tx=" + id + " Rolled back");
         if (action.getEvent() != null) {
-            action.getEvent().recycle();
             action=null;
         }
         

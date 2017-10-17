@@ -347,8 +347,6 @@ public class CreateConnectionCmd extends Action {
                 transaction().getProvider().send(evt);
             } catch (IOException e) {
             	logger.error(e);
-            } finally {
-                evt.recycle();
             }
 
 
@@ -396,8 +394,6 @@ public class CreateConnectionCmd extends Action {
                 transaction().getProvider().send(evt);
             } catch (IOException e) {    
             	logger.error(e);
-            } finally {            	
-                evt.recycle();
             }
             
             return 0;

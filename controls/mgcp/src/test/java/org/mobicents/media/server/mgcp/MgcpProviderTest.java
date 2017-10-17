@@ -148,8 +148,7 @@ public class MgcpProviderTest {
         req.setParameter(new Text("c"), new Text("abcd"));
         
         provider1.send(evt);
-        evt.recycle();
-        
+
         Thread.sleep(100);
     }
     
@@ -196,19 +195,15 @@ public class MgcpProviderTest {
         protected boolean success = false;
         
         public void process(MgcpEvent event) {
-            try {
-                success = event.getEventID() == MgcpEvent.REQUEST;
-                
-                MgcpRequest req = (MgcpRequest) event.getMessage();
-                
-                success &= req.getCommand().toString().equalsIgnoreCase("crcx");
-                success &= req.getTxID() == 1;
-                success &= req.getEndpoint().toString().equalsIgnoreCase("test@127.0.0.1");
-                success &= req.getParameter(Parameter.CALL_ID).getValue().toString().equals("abcd");
-                
-            } finally {
-                event.recycle();
-            }
+            success = event.getEventID() == MgcpEvent.REQUEST;
+
+            MgcpRequest req = (MgcpRequest) event.getMessage();
+
+            success &= req.getCommand().toString().equalsIgnoreCase("crcx");
+            success &= req.getTxID() == 1;
+            success &= req.getEndpoint().toString().equalsIgnoreCase("test@127.0.0.1");
+            success &= req.getParameter(Parameter.CALL_ID).getValue().toString().equals("abcd");
+
         }
         
     }
@@ -218,16 +213,10 @@ public class MgcpProviderTest {
         protected boolean success = false;
         
         public void process(MgcpEvent event) {
-            try {
-            	success = event.getEventID() == MgcpEvent.RESPONSE;
-                MgcpResponse resp = (MgcpResponse) event.getMessage();
-                success &= resp.getResponseCode() == 200;
-                success &= resp.getTxID() == 1;                
-            }
-            
-            finally {
-                event.recycle();
-            }
+            success = event.getEventID() == MgcpEvent.RESPONSE;
+            MgcpResponse resp = (MgcpResponse) event.getMessage();
+            success &= resp.getResponseCode() == 200;
+            success &= resp.getTxID() == 1;
         }
         
     }

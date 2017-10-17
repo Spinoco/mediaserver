@@ -286,8 +286,6 @@ public class AuditConnectionCmd extends Action {
                 transaction().getProvider().send(evt);
             } catch (IOException e) {
             	logger.error(e);
-            } finally {
-                evt.recycle();
             }
 			
 			return 0;
@@ -317,9 +315,8 @@ public class AuditConnectionCmd extends Action {
                 transaction().getProvider().send(evt);
             } catch (IOException e) {
             	logger.error(e);
-            } finally {
-                evt.recycle();
-            } 
+            }
+
 			return 0;
 		}
 		

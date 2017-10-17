@@ -56,9 +56,4 @@ public interface MgcpEvent extends Event<MgcpProvider> {
      * @return the address object.
      */
     public SocketAddress getAddress();
-    
-    /**
-     * Allows to recycle this event object and thus prevent unnecessary GC.
-     */
-    public void recycle();
 }
