@@ -33,9 +33,6 @@ public class NamingNode<T> {
     //The name of the node
     private Text name;
     
-    //parent node
-    private NamingNode parent;
-    
     //child nodes
     private ArrayList<NamingNode> childs = new ArrayList<NamingNode>();
     
@@ -50,7 +47,6 @@ public class NamingNode<T> {
      */
     public NamingNode(Text name, NamingNode parent) {
         this.name = name;
-        this.parent = parent;
     }
     
     /**
@@ -61,16 +57,7 @@ public class NamingNode<T> {
     public Text getName() {
         return name;
     }
-    
-    /**
-     * Gets the parent node.
-     * 
-     * @return parent node.
-     */
-    public NamingNode getParent() {
-        return parent;
-    }
-    
+
     /**
      * Creates new child node.
      * 
@@ -117,7 +104,7 @@ public class NamingNode<T> {
     public NamingNode find(Text[] path, int n) {
         return find(path, 0, n);
     }
-    
+
     /**
      * Attaches object to this node.
      * 

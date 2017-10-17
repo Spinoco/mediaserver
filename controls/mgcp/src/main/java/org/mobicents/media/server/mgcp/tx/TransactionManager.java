@@ -56,8 +56,6 @@ public class TransactionManager {
     protected MgcpProvider provider;
     protected NamingTree namingService;
     
-    // transactions
-	private final ConcurrentLinkedQueue<Transaction> transactionPool;
 	private final ConcurrentMap<Transaction> activeTransactions;
     
     // cache size in 100ms units    
@@ -80,12 +78,8 @@ public class TransactionManager {
         this.scheduler = scheduler;
 
         // transactions
-        this.transactionPool = new ConcurrentLinkedQueue<Transaction>();
         this.activeTransactions = new ConcurrentMap<Transaction>();
 
-        for (int i = 0; i < size; i++) {
-            this.transactionPool.offer(new Transaction(this));
-        }
 
         // cache
         for (int i = 0; i < CACHE_SIZE; i++) {
@@ -186,10 +180,7 @@ public class TransactionManager {
      * @return the object which represents transaction.
      */
     private Transaction begin(int id) {
-        Transaction t = transactionPool.poll();
-        if (t == null) {
-        	t=new Transaction(this);
-        }
+        Transaction t = new Transaction(this);
         t.uniqueId = id;
         activeTransactions.put(t.uniqueId,t);        
         return t;
@@ -213,16 +204,6 @@ public class TransactionManager {
         return ID_GENERATOR.incrementAndGet();
     }
     
-    /**
-     * Gets the remainder of unused transaction objects.
-     * Used for test purpose.
-     * 
-     * @return the number of available transaction objects.
-     */
-    protected int remainder() {
-    	return transactionPool.size();        
-    }
-    
     private class Heartbeat implements Runnable {
 
         private int queueToClean;
@@ -241,7 +222,6 @@ public class TransactionManager {
                 current.id = 0;
                 current.uniqueId = 0;
                 current.completed = false;
-                transactionPool.offer(current);
                 current = cache[queueToClean].poll();
             }
 

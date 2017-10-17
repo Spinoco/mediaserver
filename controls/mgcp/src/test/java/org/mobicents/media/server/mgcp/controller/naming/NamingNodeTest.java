@@ -72,7 +72,6 @@ public class NamingNodeTest {
     public void testCreateChild() {
         NamingNode child = root.createChild(new Text("child"));
         assertEquals("child", child.getName().toString());
-        assertEquals(root, child.getParent());
     }
     
     @Test

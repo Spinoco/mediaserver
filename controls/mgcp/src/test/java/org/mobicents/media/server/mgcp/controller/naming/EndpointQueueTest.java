@@ -63,9 +63,9 @@ public class EndpointQueueTest {
     
     @Before
     public void setUp() {
-    	queue.add(ac1);
-        queue.add(ac2);
-        queue.add(ac3);
+    	queue.add(ac1, 1);
+        queue.add(ac2, 2);
+        queue.add(ac3, 3);
         
     }
     

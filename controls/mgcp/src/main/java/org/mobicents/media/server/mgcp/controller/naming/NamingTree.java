@@ -82,16 +82,8 @@ public class NamingTree {
     	}
         
     	//finally add endpoint
-    	((EndpointQueue)currentNode.poll()).add(endpoint);
+    	((EndpointQueue)currentNode.poll()).add(endpoint, path[path.length-1].toInteger());
     	((EndpointQueue)currentNode.poll()).setInstaller(installer);
-    }
-    
-    /**
-     * Removes endpoint from this tree.
-     * 
-     * @param endpoint the endpoint to be removed.
-     */
-    public void unregister(MgcpEndpoint endpoint) {    	
     }
     
     /**

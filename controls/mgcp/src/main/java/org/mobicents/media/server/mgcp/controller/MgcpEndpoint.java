@@ -64,9 +64,6 @@ public class MgcpEndpoint {
     //Request executor associated with endpoint
     Request request;
     
-    //pool of connection activities, limited to 15
-    private ConcurrentLinkedQueue<MgcpConnection> connections = new ConcurrentLinkedQueue<MgcpConnection>();
-    
     //list of active connections
     private ConcurrentMap<MgcpConnection> activeConnections=new ConcurrentMap<MgcpConnection>();
     private Iterator<Integer> keyIterator;
@@ -87,10 +84,6 @@ public class MgcpEndpoint {
         
         //create request executor
         request=new Request(this, packages);        
-
-        for (int i = 0; i < N; i++) {
-            connections.offer(new MgcpConnection());
-        }
     }
 
     /**
@@ -159,6 +152,10 @@ public class MgcpEndpoint {
         }
     }
 
+    public Boolean isEmpty() {
+        return this.activeConnections.isEmpty();
+    }
+
     /**
      * Creates new RTP connection.
      * 
@@ -170,10 +167,8 @@ public class MgcpEndpoint {
     	//create connection
     	Connection connection = endpoint.createConnection(type,isLocal);
     	//wrap connection with relative activity
-    	MgcpConnection mgcpConnection = connections.poll();
-    	if(mgcpConnection==null)
-    		mgcpConnection=new MgcpConnection();
-    	
+    	MgcpConnection mgcpConnection = new MgcpConnection();
+
     	mgcpConnection.wrap(this, call, connection);
 
     	//put connection activity into active list
@@ -204,11 +199,8 @@ public class MgcpEndpoint {
     	mgcpConnection.release();
 
     	endpoint.deleteConnection(mgcpConnection.connection);
-        
-    	//return object to pool
-    	connections.offer(mgcpConnection);
 
-    	//update state    	
+    	//update state
     	if (activeConnections.isEmpty()) {
     		int oldValue=this.state.getAndSet(STATE_FREE);
     		if(oldValue!=STATE_FREE && this.stateListener!=null)
@@ -221,7 +213,7 @@ public class MgcpEndpoint {
     public void deleteAllConnections() {
     	keyIterator = activeConnections.keysIterator();
     	while(keyIterator.hasNext())
-    		connections.offer(activeConnections.remove(keyIterator.next()));        
+    		activeConnections.remove(keyIterator.next());
     	
         endpoint.deleteAllConnections();
         
@@ -249,10 +241,8 @@ public class MgcpEndpoint {
      */
     protected MgcpConnection poll(MgcpCall call) {
     	//take first from pool and put into list of active    	
-        MgcpConnection mgcpConnection = connections.poll();
-        if(mgcpConnection==null)
-    		mgcpConnection=new MgcpConnection();
-        
+        MgcpConnection mgcpConnection = new MgcpConnection();
+
         activeConnections.put(mgcpConnection.id,mgcpConnection);
         
         //assign call
@@ -273,10 +263,7 @@ public class MgcpEndpoint {
         mgcpConnection.release();
         
         endpoint.deleteConnection(mgcpConnection.connection);
-        
-        //back to pool
-        connections.offer(mgcpConnection);
-        
+
         if (activeConnections.isEmpty()) {
     		int oldValue=this.state.getAndSet(STATE_FREE);
     		if(oldValue!=STATE_FREE && this.stateListener!=null)

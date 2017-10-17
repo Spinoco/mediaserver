@@ -22,6 +22,8 @@
 package org.mobicents.media.server.mgcp.controller.naming;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.logging.log4j.Logger;
@@ -45,9 +47,9 @@ public class EndpointQueue implements MgcpEndpointStateListener {
     private final static Text ALL = new Text("*");
     
     //queue of endpoints
-    private ArrayList<Holder> completeList=new ArrayList<Holder>(SIZE);
+    private Map<Integer, MgcpEndpoint> completeList= new HashMap<>(SIZE);
     private ConcurrentLinkedQueue<MgcpEndpoint> queue = new ConcurrentLinkedQueue<MgcpEndpoint>();
-    
+
     //reference for just found endpoind
     //private Holder holder;
     
@@ -57,7 +59,6 @@ public class EndpointQueue implements MgcpEndpointStateListener {
     private EndpointInstaller installer;
     
     public  Logger logger = org.apache.logging.log4j.LogManager.getLogger(EndpointQueue.class);
-    
     public void setInstaller(EndpointInstaller installer)
     {
     	this.installer=installer;
@@ -68,10 +69,9 @@ public class EndpointQueue implements MgcpEndpointStateListener {
      * 
      * @param endpoint the endpoint to be added
      */
-    public void add(MgcpEndpoint endpoint) {
-    	Holder holder=new Holder(endpoint);
+    public void add(MgcpEndpoint endpoint, Integer idx) {
     	endpoint.setMgcpEndpointStateListener(this);
-    	completeList.add(holder);
+    	completeList.put(idx, endpoint);
         queue.offer(endpoint);
     }
     
@@ -80,14 +80,11 @@ public class EndpointQueue implements MgcpEndpointStateListener {
      * 
      * @param endpoint the endpoint to be removed.
      */
-    /*public void remove(MgcpEndpoint endpoint) {
-    	for(int i=0;i<completeList.size();i++)
-    		if(completeList.get(i).endpoint==endpoint)
-    		{
-    			completeList.remove(i);
-    			break;
-    		}    	    	
-    }*/
+    public void remove(MgcpEndpoint endpoint) {
+        String parts[] = endpoint.getName().split("/");
+        String idx = parts[parts.length-1];
+        completeList.remove(new Text(idx).toInteger());
+    }
      
     /**
      * Finds endpoints matching to name pattern.
@@ -103,10 +100,9 @@ public class EndpointQueue implements MgcpEndpointStateListener {
     	//return all endpoint if all requested
         if (name.equals(ALL)) {
             k = 0;
-            for(int i=0;i<completeList.size();i++) {
-                endpoints[k++] = completeList.get(i).endpoint;
-            }
-            
+            for (MgcpEndpoint endpoint: completeList.values())
+                endpoints[k++] = endpoint;
+
             return completeList.size();
         }
         
@@ -115,8 +111,7 @@ public class EndpointQueue implements MgcpEndpointStateListener {
         	MgcpEndpoint endp=queue.poll();
         	while(endp==null && installer!=null && installer.canExpand())
         	{
-        		if(logger.isDebugEnabled())    	
-            		logger.debug("No free endpoints,expanding");            		
+          		logger.debug("No free endpoints,expanding");
             	
         		synchronized(installer)
         		{
@@ -133,26 +128,25 @@ public class EndpointQueue implements MgcpEndpointStateListener {
             	{
             		logger.debug("Endpoint " + endp.getName() + " taken (free="+queue.size()+")");
             	}
-        		return 1;        		            
+        		return 1;
         	}
-        	        	
+
             return 0;
         }
                
         int value=name.toInteger();
-        if(value>0 && value<=completeList.size())
-        {
-        	endpoints[0] = completeList.get(value-1).endpoint;
-        	return 1;
+        if (completeList.containsKey(value)) {
+            endpoints[0] = completeList.get(value);
+            return 1;
         }
-        
+
         return 0;
     }
     
     @Override
     public void onFreed(MgcpEndpoint endpoint)
     {
-    	queue.offer(endpoint);    
+        remove(endpoint);
     	if(logger.isDebugEnabled())    	
     	{
     	    logger.debug("Endpoint " + endpoint.getName() + " released (free="+queue.size()+")");

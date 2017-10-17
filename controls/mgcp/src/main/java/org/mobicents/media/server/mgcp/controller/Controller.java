@@ -75,9 +75,7 @@ public class Controller implements MgcpListener, ServerManager {
     protected GlobalTransactionManager txManager;
     
     // Ported from media server
-    private final NamingService namingService;
     private final ArrayList<EndpointInstaller> installers;
-    private final Map<String, Endpoint> endpoints;
 
     protected int port;
     protected int poolSize;
@@ -85,9 +83,7 @@ public class Controller implements MgcpListener, ServerManager {
     
     public Controller() {
         this.poolSize = 10;
-        this.namingService = new NamingService();
         this.installers = new ArrayList<EndpointInstaller>(5);
-        this.endpoints = new ConcurrentHashMap<>();
         this.active = false;
     }
     
@@ -289,6 +285,7 @@ public class Controller implements MgcpListener, ServerManager {
             namingTree.register(mgcpEndpoint,installer);
             logger.info("Endpoint restarted: " + endpoint.getLocalName());
         } catch (Exception e) {
+            e.printStackTrace();
         	logger.error("Could not register endpoint: " + endpoint.getLocalName());
         }
     }
@@ -335,16 +332,16 @@ public class Controller implements MgcpListener, ServerManager {
             return;
         }
 
-        // register endpoint with naming service
-        try {
-            namingService.register(endpoint);
-        } catch (Exception e) {
-            endpoint.stop();
-            logger.error("Could not register endpoint " + endpoint.getLocalName(), e);
-        }
+//        // register endpoint with naming service
+//        try {
+//            namingService.register(endpoint);
+//        } catch (Exception e) {
+//            endpoint.stop();
+//            logger.error("Could not register endpoint " + endpoint.getLocalName(), e);
+//        }
 
         // register endpoint localy
-        endpoints.put(endpoint.getLocalName(), endpoint);
+//        endpoints.put(endpoint.getLocalName(), endpoint);
 
         // send notification to manager
         onStarted(endpoint, installer);
@@ -355,21 +352,21 @@ public class Controller implements MgcpListener, ServerManager {
      *
      * @param name the local name of the endpoint to be uninstalled
      */
-    public void uninstall(String name) {
-        // unregister locally
-        Endpoint endpoint = endpoints.remove(name);
-        onStopped(endpoint);
-        try {
-            // TODO: lookup irrespective of endpoint usage
-            endpoint = namingService.lookup(name, true);
-            if (endpoint != null) {
-                endpoint.stop();
-                namingService.unregister(endpoint);
-            }
-        } catch (Exception e) {
-            logger.error(e);
-        }
-    }
+//    public void uninstall(String name) {
+//        // unregister locally
+//        Endpoint endpoint = endpoints.remove(name);
+//        onStopped(endpoint);
+//        try {
+//            // TODO: lookup irrespective of endpoint usage
+//            endpoint = namingService.lookup(name, true);
+//            if (endpoint != null) {
+//                endpoint.stop();
+//                namingService.unregister(endpoint);
+//            }
+//        } catch (Exception e) {
+//            logger.error(e);
+//        }
+//    }
     
     @Override
     public void activate() throws IllegalStateException {

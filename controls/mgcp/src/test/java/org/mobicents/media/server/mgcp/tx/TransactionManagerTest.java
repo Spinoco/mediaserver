@@ -86,42 +86,6 @@ public class TransactionManagerTest {
     public void testTermination() {
         Transaction tx = txManager.allocateNew(1);
         assertTrue("Transaction not found", tx != null);        
-        assertEquals(2, txManager.remainder());
-        
-        txManager.terminate(tx);
-        
-        try
-        {
-        	Thread.sleep(700);
-        }
-        catch(InterruptedException e)
-        {
-        	
-        }
-        
-        assertEquals(3, txManager.remainder());
-    }
-    
-    public void testTransaction(int id) throws InterruptedException {
-    	try
-    	{    		
-    		Transaction tx = txManager.allocateNew(id);
-        	tx.process(action);
-        	Thread.sleep(700);
-        	assertEquals(3, txManager.remainder());
-    	}
-    	catch(Exception e)
-    	{
-    		e.printStackTrace();
-    	}
-    }
-    
-    @Test
-    public void testExecution() throws InterruptedException {    	
-    	for (int i = 0; i < 10; i++) {
-    		System.out.println("Transaction: Test# " + i);
-    		testTransaction(i);
-    	}    	
     }
 
 	private class MyTask extends Task {
