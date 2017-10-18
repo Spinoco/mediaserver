@@ -103,15 +103,11 @@ public class PriorityQueueScheduler  {
 
     // scheudler for non realtime tasks. Note that here we expect blocking to occur
     private ExecutorService workerExecutorV2 =
-              new ForkJoinPool (
-                      SYSTEM_PARALLELISM * 4 // we may have long-blocking (i.e. recording file...) tasks here as such we need more threads
-                    , new NamedForkJoinWorkerThreadFactory("ms-worker")
-                    , null, true
-              );
+            Executors.newFixedThreadPool(SYSTEM_PARALLELISM * 4, new NamedThreadFactory("ms-worker"));
 
     // where realtime tasks are executed after being in rtScheduler
     private ExecutorService workerExecutorV2RT =
-            Executors.newFixedThreadPool(SYSTEM_PARALLELISM * 2, new NamedThreadFactory("ms-v2-rt-worker"));
+            Executors.newFixedThreadPool(SYSTEM_PARALLELISM * 2, new NamedThreadFactory("ms-rt-worker"));
 
 
 
