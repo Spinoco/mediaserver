@@ -6,11 +6,11 @@
 					 filePattern="mms-%d{yyyy-MM-dd}-%i.log"
 					 immediateFlush="false" append="true">
 			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        	<Policies>
+				<TimeBasedTriggeringPolicy interval="1" modulate="true" />
+            	<SizeBasedTriggeringPolicy size="100 MB" />
+			</Policies>
 		</RollingFile>
-        <Policies>
-			<TimeBasedTriggeringPolicy interval="1" modulate="true" />
-            <SizeBasedTriggeringPolicy size="100 MB" />
-		</Policies>
 	</Appenders>
 	<Loggers>
 		<Root level="info" includeLocation="false">
