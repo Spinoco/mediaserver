@@ -111,11 +111,9 @@ public class PriorityQueueScheduler  {
 
     // where realtime tasks are executed after being in rtScheduler
     private ExecutorService workerExecutorV2RT =
-            new ForkJoinPool (
-                    SYSTEM_PARALLELISM * 2
-                    , new NamedForkJoinWorkerThreadFactory("ms-rt-worker")
-                    , null, true
-            );
+            Executors.newFixedThreadPool(SYSTEM_PARALLELISM * 2, new NamedThreadFactory("ms-v2-rt-worker"));
+
+
 
 
     private RealTimeScheduler rtpScheduler = new RealTimeScheduler(

@@ -88,7 +88,11 @@ public class RealTimeScheduler {
     /** shuts down the scheduler. Note this may block up to `delay` **/
     public void shutdown() {
         running.set(false);
-
+        try {
+            done.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
