@@ -133,9 +133,7 @@ public abstract class BaseEndpointImpl implements Endpoint {
 		mediaGroup.releaseAll();
 		deleteAllConnections();
 		// TODO: unregister at scheduler level
-        if (logger.isInfoEnabled()) {
-            logger.info("Stopped endpoint " + localName);
-        }
+        logger.info("Stopped endpoint " + localName);
 	}
 
 	@Override

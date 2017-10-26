@@ -131,14 +131,6 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         return handshakeComplete;
     }
 
-    public boolean isHandshakeFailed() {
-        return handshakeFailed;
-    }
-
-    public boolean isHandshaking() {
-        return handshaking;
-    }
-
     public String getLocalFingerprint() {
         if (this.localFingerprint == null || this.localFingerprint.isEmpty()) {
             this.localFingerprint = this.server.generateFingerprint(this.localHashFunction);
@@ -148,22 +140,6 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
 
     public void resetLocalFingerprint() {
         this.localFingerprint = "";
-    }
-
-    public String getLocalHashFunction() {
-        return localHashFunction;
-    }
-
-    public String getRemoteHashFunction() {
-        return remoteHashFunction;
-    }
-
-    public String getRemoteFingerprintValue() {
-        return remoteFingerprint;
-    }
-
-    public String getRemoteFingerprint() {
-        return remoteHashFunction + " " + remoteFingerprint;
     }
 
     public void setRemoteFingerprint(String hashFunction, String fingerprint) {
@@ -193,22 +169,6 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
 
     private SRTPPolicy getSrtcpPolicy() {
         return server.getSrtcpPolicy();
-    }
-
-    public PacketTransformer getSrtpDecoder() {
-        return srtpDecoder;
-    }
-
-    public PacketTransformer getSrtpEncoder() {
-        return srtpEncoder;
-    }
-
-    public PacketTransformer getSrtcpDecoder() {
-        return srtcpDecoder;
-    }
-
-    public PacketTransformer getSrtcpEncoder() {
-        return srtcpEncoder;
     }
 
     /**

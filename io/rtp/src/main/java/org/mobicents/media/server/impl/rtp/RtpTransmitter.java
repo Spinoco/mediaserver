@@ -21,7 +21,6 @@
 package org.mobicents.media.server.impl.rtp;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.PortUnreachableException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
@@ -163,20 +162,15 @@ public class RtpTransmitter {
 			packet.sendTo(channel);
 			statistics.onRtpSent(packet);
 		}
-
-
-
 	}
 	
 	public void sendDtmf(Frame frame) {
 		if (!this.dtmfSupported) {
-			frame.recycle();
 			return;
 		}
 		
 		// ignore frames with duplicate timestamp
 		if (frame.getTimestamp() / 1000000L == dtmfTimestamp) {
-			frame.recycle();
 			return;
 		}
 
@@ -198,8 +192,6 @@ public class RtpTransmitter {
 					, frame.getLength()
 			);
 
-
-			frame.recycle();
 			if(isConnected()) {
 				send(oobPacket);
 			}
@@ -219,7 +211,6 @@ public class RtpTransmitter {
 	public void send(Frame frame) {
 		// discard frame if format is unknown
 		if (frame.getFormat() == null) {
-			frame.recycle();
 			return;
 		}
 
@@ -228,7 +219,6 @@ public class RtpTransmitter {
 			currentFormat = formats.getRTPFormat(frame.getFormat());
 			// discard packet if format is still unknown
 			if (currentFormat == null) {
-				frame.recycle();
 				return;
 			}
 			// update clock rate
@@ -237,7 +227,6 @@ public class RtpTransmitter {
 
 		// ignore frames with duplicate timestamp
 		if (frame.getTimestamp() / 1000000L == timestamp) {
-			frame.recycle();
 			return;
 		}
 
@@ -259,8 +248,6 @@ public class RtpTransmitter {
 					, frame.getOffset()
 					, frame.getLength()
 			);
-
-			frame.recycle();
 
 			if (isConnected()) {
 				send(rtpPacket);

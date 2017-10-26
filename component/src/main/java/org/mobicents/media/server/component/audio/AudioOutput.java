@@ -79,21 +79,13 @@ public class AudioOutput extends AbstractSource {
 
 	@Override
 	public void stop() {
-		while (buffer.size() > 0) {
-			buffer.poll().recycle();
-		}
+		buffer = new ConcurrentLinkedQueue<>();
 		super.stop();
-	}
-
-	public void resetBuffer() {
-		while (buffer.size() > 0) {
-			buffer.poll().recycle();
-		}
 	}
 
 	public void offer(Frame frame) {
 		if (buffer.size() > 1) {
-			buffer.poll().recycle();
+			buffer.poll();
 		}
 		buffer.offer(frame);
 	}

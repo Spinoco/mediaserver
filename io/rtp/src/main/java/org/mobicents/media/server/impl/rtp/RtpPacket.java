@@ -79,7 +79,6 @@ public class RtpPacket implements Serializable {
     private SocketAddress localPeer;
     private SocketAddress remotePeer;
 
-
     /** construct this rtp packet from data ecrypted by supplied DtlsHandler **/
     public static RtpPacket fromDtlsEncrypted(DtlsHandler handler, SocketAddress localPeer, SocketAddress remotePeer, byte[] packet, int offset, int dataLength) {
         byte[] decoded = handler.decodeRTP(packet,offset,dataLength, localPeer, remotePeer);
@@ -175,35 +174,6 @@ public class RtpPacket implements Serializable {
      */
     public int getContributingSource() {
         return buffer.get(0) & 0x0F;
-    }
-
-    /**
-     * Padding indicator.
-     *
-     * If the padding bit is set, the packet contains one or more
-     * additional padding octets at the end which are not part of the
-     * payload. The last octet of the padding contains a count of how
-     * many padding octets should be ignored. Padding may be needed by
-     * some encryption algorithms with fixed block sizes or for
-     * carrying several RTP packets in a lower-layer protocol data
-     * unit.
-     *
-     * @return true if padding bit set.
-     */
-    public boolean hasPadding() {
-        return (buffer.get(0) & 0x20) == 0x020;
-    }
-
-    /**
-     * Extension indicator.
-     *
-     * If the extension bit is set, the fixed header is followed by
-     * exactly one header extension.
-     *
-     * @return true if extension bit set.
-     */
-    public boolean hasExtensions() {
-        return (buffer.get(0) & 0x10) == 0x010;
     }
 
     /**
@@ -318,16 +288,6 @@ public class RtpPacket implements Serializable {
     }
 
     /**
-     * Get RTCP SSRC from a RTCP packet
-     *
-     * @return RTP SSRC from source RTP packet
-     */
-    public long GetRTCPSyncSource()
-    {
-        return (readUnsignedIntAsLong(4));
-    }    
-    
-    /**
      * Read an unsigned integer as long at specified offset
      *
      * @param off start offset of this unsigned integer
@@ -360,8 +320,6 @@ public class RtpPacket implements Serializable {
 
     }
 
-
-
     @Override
     public String toString() {
         return "RTP Packet[marker=" + getMarker() + ", seq=" + getSeqNumber() +
@@ -371,7 +329,6 @@ public class RtpPacket implements Serializable {
                 ", remote=" + this.remotePeer +
                 "]";
     }
-    
 
     /**
      * Get RTP header length from a RTP packet
@@ -438,9 +395,6 @@ public class RtpPacket implements Serializable {
         return (buffer.get(0) & 0x0f);
     }
     
-
-    
-
     /**
      * Get the length of this packet's raw data
      *
@@ -490,8 +444,8 @@ public class RtpPacket implements Serializable {
     }
 
     /** sends content of this packet to channel **/
-    public int sendTo(DatagramChannel channel) throws IOException {
-        return channel.send(buffer, remotePeer);
+    public void sendTo(DatagramChannel channel) throws IOException {
+        channel.send(buffer, remotePeer);
     }
 
     public SocketAddress getLocalPeer() {
@@ -500,13 +454,6 @@ public class RtpPacket implements Serializable {
 
     public SocketAddress getRemotePeer() {
         return remotePeer;
-    }
-
-    /** copy content of this packet payload to new array of bytes **/
-    public byte[] payloadToArray() {
-        byte[] array = new byte[buffer.limit() - RtpPacket.FIXED_HEADER_SIZE];
-        getPayload(array,0);
-        return array;
     }
 
     /** copy content of this packet (header + payload) to new array of bytes **/

@@ -31,7 +31,6 @@ import org.mobicents.media.server.spi.format.Format;
  * @author yulian oifa
  */
 public class Frame {
-    private Partition partition;
     private byte[] data;
 
     private volatile int offset;
@@ -45,20 +44,10 @@ public class Frame {
     private volatile Format format;
     private volatile String header;
     
-    protected AtomicBoolean inPartition=new AtomicBoolean(false);
-    
-    protected Frame(Partition partition, byte[] data) {
-        this.partition = partition;
+    protected Frame(byte[] data) {
         this.data = data;
     }
 
-    protected void reset() {
-        this.timestamp = 0;
-        this.duration = 0;
-        this.sn = 0;
-        this.eom = false;
-    }
-    
     public String getHeader() {
         return header;
     }
@@ -126,10 +115,6 @@ public class Frame {
     public void setFormat(Format format) {
         this.format = format;
     }    
-
-    public void recycle() {
-        partition.recycle(this);
-    }
 
     @Override
     public Frame clone() {

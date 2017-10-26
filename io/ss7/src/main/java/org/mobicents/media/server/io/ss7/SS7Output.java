@@ -245,7 +245,6 @@ public class SS7Output extends AbstractSink {
         		{
         			System.arraycopy(data, framePosition, smallBuffer, 0, data.length-framePosition);
         			readCount=data.length-framePosition;
-        			currFrame.recycle();
         			currFrame=null;
         			framePosition=0;
         		}    		
@@ -276,8 +275,6 @@ public class SS7Output extends AbstractSink {
     	 private boolean hasEndOfEvent=false;
     	 private long endSeq=0;
     	 
-    	 byte[] data = new byte[4];
-    	    
     	 public OOBTranslator()
     	 {
     		super("oob translator");
@@ -288,8 +285,7 @@ public class SS7Output extends AbstractSink {
     		if(data.length!=4)
             	return;
         	
-        	boolean endOfEvent=false;
-            endOfEvent=(data[1] & 0X80)!=0;
+        	boolean endOfEvent= (data[1] & 0X80)!=0;
             
            //lets ignore end of event packets
             if(endOfEvent)

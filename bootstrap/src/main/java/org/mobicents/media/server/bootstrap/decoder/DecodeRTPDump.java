@@ -36,8 +36,6 @@ public class DecodeRTPDump {
             System.exit(1);
         }
 
-
-
         Path decode = Paths.get(args[0]);
         Path wavFile = decode.getParent().resolve(decode.getFileName() + ".wav");
 
@@ -51,7 +49,6 @@ public class DecodeRTPDump {
         // decoder to decode rtp samples written in hex
         BaseEncoding decoder = BaseEncoding.base16().lowerCase();
 
-
         // configure dsp factory
         DspFactoryImpl dspFactory = new DspFactoryImpl();
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.alaw.Encoder");
@@ -60,7 +57,6 @@ public class DecodeRTPDump {
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.ulaw.Decoder");
 
         Dsp dsp = dspFactory.newProcessor();
-
 
         Files.lines(decode)
         .skip(2)         // remove 2 header lines
@@ -83,12 +79,8 @@ public class DecodeRTPDump {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            // recycle frames
-            pcmFrame.recycle();
-            rtpFrame.recycle();
 
         });
-
 
         // close file and write header
         sink.commit();

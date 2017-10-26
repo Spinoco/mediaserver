@@ -64,7 +64,7 @@ public class OOBInput extends AbstractSink {
     @Override
     public void onMediaTransfer(Frame frame) throws IOException {
     	if (buffer.size() >= limit) {
-    		buffer.poll().recycle();
+    		buffer.poll();
     	} 
     	buffer.offer(frame);    	
     }
@@ -87,18 +87,4 @@ public class OOBInput extends AbstractSink {
     	return buffer.poll();
     }
 
-    /**
-     * Recycles input stream
-     */
-    public void recycle() {
-    	while(buffer.size()>0) {
-    		buffer.poll().recycle();
-    	}
-    }
-    
-    public void resetBuffer() {
-    	while(buffer.size()>0) {
-    		buffer.poll().recycle();
-    	}
-    }
 }

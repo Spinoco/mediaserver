@@ -22,32 +22,18 @@
 
 package org.mobicents.media.server.spi.memory;
 
-import org.mobicents.media.server.concurrent.ConcurrentMap;
-
 /**
  *
  * @author oifa yulian
  */
 public class Memory 
 {
-    private static ConcurrentMap<Partition> partitions = new ConcurrentMap<Partition>();
-
 	/**
 	 * Allocates frame from the pool of sized partitions. Always returns instance either from cached frames or new fresh allocated frame.
 	 * @param size
 	 * @return
 	 */
-	public static Frame allocate(int size)
-    {
-    	Partition currPartition=partitions.get(size);
-    	if(currPartition==null)
-    	{
-    		currPartition=new Partition(size);
-    		Partition oldPartition=partitions.putIfAbsent(size,currPartition);
-    		if(oldPartition!=null)
-    			currPartition=oldPartition;		
-    	}
-    	
-    	return currPartition.allocate();
+	public static Frame allocate(int size) {
+    	return new Frame(new byte[size]);
     }
 }

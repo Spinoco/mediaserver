@@ -21,9 +21,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Should Garbage collection SoW occur (Stop of the world) this will compensate for missed possibilities to process cycles.
  * For example shoudl SoW take 40 ms, and delay is set 20ms, this will aproximatelly run two cycles immediatelly next to each other.
  *
- *
- *
- *
  */
 public class RealTimeScheduler {
 
@@ -36,8 +33,6 @@ public class RealTimeScheduler {
 
     private AtomicBoolean running = new AtomicBoolean(false); // when true scheduler is running
     private CountDownLatch done = new CountDownLatch(1);
-
-
 
     public RealTimeScheduler(long cycleDelay, OrderedTaskQueue[] queues, ExecutorService es, ThreadFactory tf) {
         this.cycleDelay = cycleDelay;
@@ -84,11 +79,9 @@ public class RealTimeScheduler {
         }
     }
 
-
     /** shuts down the scheduler. Note this may block up to `delay` **/
     public void shutdown() {
         running.set(false);
-
     }
 
     /**
@@ -135,6 +128,5 @@ public class RealTimeScheduler {
             }
         }
     }
-
 
 }
