@@ -78,7 +78,9 @@ public class Encoder implements Codec {
     @Override
     public Frame process(Frame frame) {
 
-        // lazily init encoder, as we do not want to always spawn if we didn't start the encoding yet
+        // lazily init encoder, as we do not want to always spawn
+        // when java abject is initiated. It seems to be initiated pretty often at different places
+        // and then recycled without doing any work at all.
         if (this.encoderId == 0) {
             try {
                 this.encoderId = OpusNative.createEncoder(OPUS_SAMPLE_RATE, 1, OpusNative.OPUS_APPLICATION_VOIP, BITRATE);

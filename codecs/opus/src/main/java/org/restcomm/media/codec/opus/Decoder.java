@@ -75,7 +75,9 @@ public class Decoder implements Codec {
     @Override
     public Frame process(Frame frame) {
 
-        // lazily init encoder, as we do not want to always spawn if we didn't start the encoding yet
+        // lazily init decoder, as we do not want to always spawn
+        // when java abject is initiated. It seems to be initiated pretty often at different places
+        // and then recycled without doing any work at all.
         if (this.decoderId == 0) {
             try {
                 this.decoderId = this.decoderId = OpusNative.createDecoder(OPUS_SAMPLE_RATE, 1);
@@ -89,7 +91,6 @@ public class Decoder implements Codec {
         if (frameSize > 0) {
 
             Frame res = Memory.allocate(frameSize * 2);
-            // System.arraycopy(decodedBuff, 0, res.getData(), 0, frameSize * 2);
 
             ByteBuffer.wrap(res.getData()).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(decodedBuff, 0, frameSize);
 
