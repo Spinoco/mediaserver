@@ -37,7 +37,9 @@ public abstract class AVProfile {
     public final static RTPAudioFormat DVI4_16K = new RTPAudioFormat(6, AudioFormat.DVI4, 16000, 4, 1);
     public final static RTPAudioFormat LPC = new RTPAudioFormat(7, AudioFormat.LPC, 8000, AudioFormat.NOT_SPECIFIED, 1);    
     public final static RTPAudioFormat PCMA = new RTPAudioFormat(8, AudioFormat.ALAW, 8000, 8, 1);
-    
+    private final static RTPAudioFormat OPUS = new RTPAudioFormat(111, AudioFormat.OPUS,  48000, 8, 2);
+
+
     public final static RTPAudioFormat G722 = new RTPAudioFormat(9, AudioFormat.G722, 8000, 8, 1);
     
     public final static RTPAudioFormat L16_STEREO = new RTPAudioFormat(10, 
@@ -64,6 +66,7 @@ public abstract class AVProfile {
         audioFormats.put(PCMA.getPayloadType(), PCMA);
         audioFormats.put(G722.getPayloadType(), G722);  
         audioFormats.put(G729.getPayloadType(), G729);
+        audioFormats.put(G729.getPayloadType(), OPUS);
 
         audioFormats.put(L16_STEREO.getPayloadType(), L16_STEREO);
         audioFormats.put(L16_MONO.getPayloadType(), L16_MONO);

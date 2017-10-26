@@ -28,6 +28,7 @@ public class AudioFormat extends Format {
 	public static final String G728 = "g728";
 	public static final String G729 = "G729";
 	public static final String G729A = "g729a";
+	public static final String OPUS = "opus";
 	public static final String GSM = "gsm";
 	public static final String GSM_MS = "gsm/ms";
 	public static final String MAC3 = "MAC3";
