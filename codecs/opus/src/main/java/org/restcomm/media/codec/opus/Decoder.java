@@ -41,20 +41,19 @@ import org.mobicents.media.server.spi.memory.Memory;
  */
 public class Decoder implements Codec {
 
-    private final static Logger log = LogManager.getLogger(Encoder.class);
+    private final static Logger log = LogManager.getLogger(Decoder.class);
 
     private final static Format opus = FormatFactory.createAudioFormat("opus", 48000, 8, 2);
     private final static Format linear = FormatFactory.createAudioFormat("linear", 8000, 16, 1);
 
-    private long decoderId = 0;
+    private volatile long decoderId = 0;
 
-    private final int OPUS_SAMPLE_RATE = 48000;
-    private final int MAX_FRAME_SIZE = 6*480;
+    private final int OPUS_SAMPLE_RATE = 8000;
+    private final int MAX_FRAME_SIZE = 160;
 
     private short[] decodedBuff = new short[MAX_FRAME_SIZE];
 
     public Decoder() {
-        this.decoderId = OpusNative.createDecoder(OPUS_SAMPLE_RATE, 1);
     }
 
     @Override
@@ -75,17 +74,27 @@ public class Decoder implements Codec {
 
     @Override
     public Frame process(Frame frame) {
-        System.out.println("ABOUT TO DECODE " + frame.toString());
 
-        int frameSize = OpusNative.decode(decoderId, frame.getData(), decodedBuff);
+        // lazily init encoder, as we do not want to always spawn if we didn't start the encoding yet
+        if (this.decoderId == 0) {
+            try {
+                this.decoderId = this.decoderId = OpusNative.createDecoder(OPUS_SAMPLE_RATE, 1);
+            } catch (Throwable t) {
+                log.error("Failed to instantiate opus decoder", t);
+            }
+        }
+
+        int frameSize = OpusNative.decode(decoderId, frame.getData(), decodedBuff, 0);
 
         if (frameSize > 0) {
 
             Frame res = Memory.allocate(frameSize * 2);
-            System.arraycopy(decodedBuff, 0, res.getData(), 0, frameSize * 2);
+            // System.arraycopy(decodedBuff, 0, res.getData(), 0, frameSize * 2);
+
+            ByteBuffer.wrap(res.getData()).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(decodedBuff, 0, frameSize);
 
             res.setOffset(0);
-            res.setLength(frameSize*2);
+            res.setLength(frameSize * 2);
             res.setTimestamp(frame.getTimestamp());
             res.setDuration(frame.getDuration());
             res.setSequenceNumber(frame.getSequenceNumber());

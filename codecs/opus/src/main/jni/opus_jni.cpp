@@ -67,8 +67,6 @@ JNIEXPORT jlong JNICALL Java_org_restcomm_media_codec_opus_OpusNative_createEnco
       , jint bitrate
     ) {
 
-    fprintf(stderr, "XXXR Create Encoder: %i %i %i %i\n", sampleRate, channels, applicationType, bitrate);
-
     // store eventually any error
     int err;
 
@@ -95,7 +93,7 @@ JNIEXPORT jlong JNICALL Java_org_restcomm_media_codec_opus_OpusNative_createEnco
         return ((jlong) 0);
     }
 
-   fprintf(stderr, "XXXR Created Encoder: %p\n", encoder);
+   fprintf(stderr, "OPUS: Created Encoder: %p (sampleRate=%i, channels=%i, app=%i, bitRate=%i)\n", encoder, sampleRate, channels, applicationType, bitrate);
 
 
     // return pointer of the encoder just by converting it to long
@@ -139,7 +137,7 @@ JNIEXPORT void Java_org_restcomm_media_codec_opus_OpusNative_destroyEncoder(
     // convert pointer from long
     OpusEncoder *encoderPtr = ((OpusEncoder *)encoder);
 
-    fprintf(stderr, "XXXR Destroy Encoder: %p \n", encoderPtr);
+    fprintf(stderr, "OPUS: Destroy Encoder: %p \n", encoderPtr);
 
     opus_encoder_destroy(encoderPtr);
 
@@ -151,8 +149,6 @@ JNIEXPORT jlong Java_org_restcomm_media_codec_opus_OpusNative_createDecoder(
   , jint  sampleRate
   , jint  channels
 ) {
-
-    fprintf(stderr, "XXXR Create Decoder: %i %i i\n", sampleRate, channels);
 
 
      // store eventually any error
@@ -169,7 +165,7 @@ JNIEXPORT jlong Java_org_restcomm_media_codec_opus_OpusNative_createDecoder(
       return ((jlong) 0);
     }
 
-    fprintf(stderr, "XXXR Created Decoder: %p\n", decoder);
+    fprintf(stderr, "OPUS: Created Decoder: %p (sampleRate=%i, channels=%i)\n", decoder, sampleRate, channels);
 
     // return pointer of the decoder just by converting it to long
     return ((jlong) decoder);
@@ -216,7 +212,7 @@ JNIEXPORT void Java_org_restcomm_media_codec_opus_OpusNative_destroyDecoder(
     // convert pointer from long
     OpusDecoder *decoderPtr = ((OpusDecoder *)decoder);
 
-    fprintf(stderr, "XXXR Destroy Decoder: %p \n", decoderPtr);
+    fprintf(stderr, "OPUS: Destroy Decoder: %p \n", decoderPtr);
 
     opus_decoder_destroy(decoderPtr);
 }

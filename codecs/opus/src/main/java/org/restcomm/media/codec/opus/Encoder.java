@@ -48,21 +48,20 @@ public class Encoder implements Codec {
     private final static Format linear = FormatFactory.createAudioFormat("linear", 8000, 16, 1);
 
 
-    private long encoderId = 0;
+    private volatile long encoderId = 0;
 
-    private final int OPUS_SAMPLE_RATE = 48000;
-    private final int BITRATE = 48000;
-    private final int MAX_PACKET_SIZE = 3*1276;
+    private final int OPUS_SAMPLE_RATE = 8000;
+    private final int BITRATE = 32000;
+    private final int MAX_PACKET_SIZE = 320;
 
     private byte[] encodedBuff = new byte[MAX_PACKET_SIZE];
 
     public Encoder() {
-        this.encoderId = OpusNative.createEncoder(OPUS_SAMPLE_RATE, 1, OpusNative.OPUS_APPLICATION_VOIP, BITRATE);
     }
 
     @Override
     protected void finalize() throws Throwable {
-        OpusNative.destroyEncoder(encoderId);
+        if (encoderId != 0) OpusNative.destroyEncoder(encoderId);
         super.finalize();
     }
 
@@ -78,13 +77,19 @@ public class Encoder implements Codec {
 
     @Override
     public Frame process(Frame frame) {
-        System.out.println("ABOUT TO ENCODE " + frame.toString());
+
+        // lazily init encoder, as we do not want to always spawn if we didn't start the encoding yet
+        if (this.encoderId == 0) {
+            try {
+                this.encoderId = OpusNative.createEncoder(OPUS_SAMPLE_RATE, 1, OpusNative.OPUS_APPLICATION_VOIP, BITRATE);
+            } catch (Throwable t) {
+                log.error("Failed to instantiate opus encoder", t);
+            }
+        }
 
         int frameLength = frame.getData().length;
         short[] pcm = new short[frameLength / 2];
-        //System.arraycopy(frame.getData(), 0, pcm, 0, frameLength);
-        ///ShortBuffer.wrap(pcm).put()
-        //ByteBuffer.wrap(pcm).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(frame.getData());
+
         ByteBuffer.wrap(frame.getData()).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(pcm);
         int encoded = OpusNative.encode(encoderId, pcm, encodedBuff);
 

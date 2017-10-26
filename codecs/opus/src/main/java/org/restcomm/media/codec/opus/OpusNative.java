@@ -134,9 +134,9 @@ public class OpusNative {
      *
      * @param decoder   Id of encoder from the `createEncoder` function
      * @param data      Source array of opus data that may be decoded
-     * @param pcm       Destiantion array of PCM samples
+     * @param pcm       Destination array of PCM samples
      */
-    public static native int decode(long decoder, byte[] data, short[] pcm);
+    public static native int decode(long decoder, byte[] data, short[] pcm, int fec);
 
 
     /**
@@ -147,12 +147,5 @@ public class OpusNative {
      */
     public static native void destroyDecoder(long decoder);
 
-
-//    public static void main(String[] args ) {
-//        System.out.println("Hello world");
-//        long encoderId = createDecoder(48000, 1);
-//        System.out.println("Encoder: " + encoderId);
-//        destroyDecoder(encoderId);
-//    }
 
 }

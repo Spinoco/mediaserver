@@ -210,7 +210,7 @@ public class RtpTransmitter {
 	
 	public void send(Frame frame) {
 		// discard frame if format is unknown
-		if (frame.getFormat() == null) {
+		if (frame == null || frame.getFormat() == null) {
 			return;
 		}
 
