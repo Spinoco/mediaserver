@@ -68,11 +68,6 @@ public class DtlsSrtpServer extends DefaultTlsServer {
 	// Policies
 	private SRTPPolicy srtpPolicy;
 	private SRTPPolicy srtcpPolicy;
-	
-	public void notifyAlertRaised(short alertLevel, short alertDescription, String message, Exception cause) {
-    	Level logLevel = (alertLevel == AlertLevel.fatal) ? Level.ERROR : Level.WARN; 
-        LOGGER.log(logLevel, String.format("DTLS server raised alert (AlertLevel.%d, AlertDescription.%d, message='%s')", alertLevel, alertDescription, message), cause);
-    }
 
     public void notifyAlertReceived(short alertLevel, short alertDescription) {
     	Level logLevel = (alertLevel == AlertLevel.fatal) ? Level.ERROR : Level.WARN; 

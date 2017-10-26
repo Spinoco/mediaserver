@@ -120,7 +120,6 @@ public class OOBMixer {
 				}
 			}
 
-			current.recycle();
 			scheduler.submit(this,  EventQueueType.RTP_MIXER);
 			mixCount.incrementAndGet();
 			return 0;

@@ -518,7 +518,6 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
                     , f.getOffset()
                     , f.getLength()
                 ));
-                f.recycle();
             } catch (Exception ex) {
                 logger.error("Failed to write sample to file: " + snk + " ( " + f + " )", ex);
             }

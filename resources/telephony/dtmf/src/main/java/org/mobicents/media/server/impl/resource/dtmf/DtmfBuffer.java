@@ -23,6 +23,7 @@
 package org.mobicents.media.server.impl.resource.dtmf;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.logging.log4j.Logger;
@@ -99,12 +100,7 @@ public class DtmfBuffer implements Serializable {
         else
         	lastActivity=now;
     }
-    
-    public void updateTime()
-    {
-    	lastActivity= System.currentTimeMillis();
-    }
-    
+
     /**
      * Queues specified event.
      * 
@@ -123,8 +119,9 @@ public class DtmfBuffer implements Serializable {
      */
     public void flush() {
         logger.info(String.format("(%s) Flush, buffer size: %d", detector.getName(), queue.size()));
-        while(queue.size()>0)
-        	detector.fireEvent(queue.poll());                
+        for (DtmfEventImpl aQueue : queue) {
+            detector.fireEvent(aQueue);
+        }
     }
     
     /**
