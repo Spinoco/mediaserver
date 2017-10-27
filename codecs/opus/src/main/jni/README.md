@@ -18,4 +18,4 @@ c++ opus_jni.cpp -I $OPUS_HOME/include/ -I $JAVA_HOME/include/ -I $JAVA_HOME/inc
 
 ## LINUX
 
-c++ opus_jni.cpp -std=c++11 -I $JAVA_HOME/include -I $JAVA_HOME/linux -I $OPUS_HOME/include -lopus -Wall -fPIC -shared -o libopus_jni.so
+c++ opus_jni.cpp -std=c++11 -I $JAVA_HOME/include -I $JAVA_HOME/include/linux -I $OPUS_HOME/include -lopus -Wall -fPIC -shared -o libopus_jni.so
