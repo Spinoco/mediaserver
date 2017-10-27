@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import io.netty.util.internal.StringUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x509.Certificate;
@@ -270,7 +271,7 @@ public class DtlsSrtpServer extends DefaultTlsServer {
         System.arraycopy(sharedSecret, 0, srtpMasterClientKey, 0, keyLen); 
         System.arraycopy(sharedSecret, keyLen, srtpMasterServerKey, 0, keyLen);
         System.arraycopy(sharedSecret, 2*keyLen, srtpMasterClientSalt, 0, saltLen);
-        System.arraycopy(sharedSecret, (2*keyLen+saltLen), srtpMasterServerSalt, 0, saltLen);    	
+        System.arraycopy(sharedSecret, (2*keyLen+saltLen), srtpMasterServerSalt, 0, saltLen);
     }
     
     public SRTPPolicy getSrtpPolicy() {
@@ -295,6 +296,14 @@ public class DtlsSrtpServer extends DefaultTlsServer {
     
     public byte[] getSrtpMasterClientSalt() {
     	return srtpMasterClientSalt;
+    }
+
+    public byte[] getServerRandom() {
+        return context.getSecurityParameters().getServerRandom();
+    }
+
+    public byte[] getClientRandom() {
+        return context.getSecurityParameters().getClientRandom();
     }
     
 	/**

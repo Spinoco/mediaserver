@@ -35,8 +35,10 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.netty.util.internal.StringUtil;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.tls.DTLSServerProtocol;
+import org.bouncycastle.crypto.tls.DTLSTransport;
 import org.bouncycastle.crypto.tls.DatagramTransport;
 import org.mobicents.media.server.impl.rtp.crypto.DtlsSrtpServer;
 import org.mobicents.media.server.impl.rtp.crypto.PacketTransformer;
@@ -440,9 +442,25 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                         ")"
                 );
 
-
                 // Prepare the shared key to be used in RTP streaming
                 server.prepareSrtpSharedSecret();
+
+                logger.info(
+                "Handshake got consensus on: " +
+                    "startedHandshakeAT: " + startTime.get() +
+                    ", local: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getLocalAddress().toString() : "null") +
+                    ", remote: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getRemoteAddress().toString() : "null") +
+                    ", localFingerPrint: " + DtlsHandler.this.localFingerprint +
+                    ", remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint +
+                    ", serverRandom: " +  StringUtil.toHexString(server.getServerRandom()) +
+                    ", clientRandom: " + StringUtil.toHexString(server.getClientRandom()) +
+                    ", getMasterClientKey: " + StringUtil.toHexString(getMasterClientKey()) +
+                    ", getMasterServerKey: " + StringUtil.toHexString(getMasterServerKey()) +
+                    ", getMasterClientSalt: " + StringUtil.toHexString(getMasterClientSalt()) +
+                    ", getMasterServerSalt: " + StringUtil.toHexString(getMasterServerSalt()) +
+                    ", srtpPolicy: " + getSrtpPolicy().toParsableString() + ", " +
+                    ", srtcpPolicy: " + getSrtcpPolicy().toParsableString()
+                );
 
                 // Generate encoders for DTLS traffic
                 srtpDecoder = generateRtpDecoder();
