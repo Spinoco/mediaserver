@@ -230,4 +230,30 @@ public class SRTPPolicy
     {
         this.saltKeyLength = keyLength;
     }
+
+    public String toParsableString() {
+        return "[" + encType +
+                "," + encKeyLength +
+                "," + authType +
+                "," + authKeyLength +
+                "," + authTagLength +
+                "," + saltKeyLength + "]";
+    }
+
+    public static SRTPPolicy fromString(String string) {
+        String[] parsed =
+                string
+                .replace("[", "")
+                .replace("]", "")
+                .split(",");
+
+        return new SRTPPolicy(
+                Integer.parseInt(parsed[0])
+                , Integer.parseInt(parsed[1])
+                , Integer.parseInt(parsed[2])
+                , Integer.parseInt(parsed[3])
+                , Integer.parseInt(parsed[4])
+                , Integer.parseInt(parsed[5])
+        );
+    }
 }
