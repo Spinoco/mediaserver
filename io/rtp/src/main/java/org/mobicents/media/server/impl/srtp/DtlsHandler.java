@@ -471,8 +471,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
 
             try {
                 // Perform the handshake in a non-blocking fashion
-                DTLSTransport transport = serverProtocol.accept(server, DtlsHandler.this);
-
+                serverProtocol.accept(server, DtlsHandler.this);
 
                 DtlsHandler.logger.info("Handshake completed in : " + (System.currentTimeMillis() - DtlsHandler.this.startTime.get()) + " ms (" +
                         " qSz: " + sz +
@@ -482,7 +481,6 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                         " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint +
                         ")"
                 );
-
 
                 // Prepare the shared key to be used in RTP streaming
                 server.prepareSrtpSharedSecret();

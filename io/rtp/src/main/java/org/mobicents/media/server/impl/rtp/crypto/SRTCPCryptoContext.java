@@ -324,8 +324,6 @@ public class SRTCPCryptoContext {
             decrypt = true;
         }
 
-        System.out.println("Decrypt" + decrypt);
-
         int index = indexEflag & ~0x80000000;
         
         /* Replay control */
