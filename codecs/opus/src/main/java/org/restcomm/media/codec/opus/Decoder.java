@@ -50,6 +50,8 @@ public class Decoder implements Codec {
 
     private final int OPUS_SAMPLE_RATE = 8000;
     private final int MAX_FRAME_SIZE = 160;
+    private final int SAMPLE_LENGTH = 1000000 / OPUS_SAMPLE_RATE; // 1s / 8Khz ~ 125000ns / sample
+
 
     private short[] decodedBuff = new short[MAX_FRAME_SIZE];
 
@@ -97,7 +99,7 @@ public class Decoder implements Codec {
             res.setOffset(0);
             res.setLength(frameSize * 2);
             res.setTimestamp(frame.getTimestamp());
-            res.setDuration(frameSize * 16 * 8000); // sample size is 16 bit, 8 000 Khz, ~ 20ms samples for frame size of 160 samples. Note different sample rate of the decoder then announced in sdp // the format
+            res.setDuration(frameSize * SAMPLE_LENGTH);
             res.setSequenceNumber(frame.getSequenceNumber());
             res.setEOM(frame.isEOM());
             res.setFormat(linear);
