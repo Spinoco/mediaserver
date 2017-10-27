@@ -80,7 +80,7 @@ public class Decoder implements Codec {
         // and then recycled without doing any work at all.
         if (this.decoderId == 0) {
             try {
-                this.decoderId = this.decoderId = OpusNative.createDecoder(OPUS_SAMPLE_RATE, 1);
+                this.decoderId = OpusNative.createDecoder(OPUS_SAMPLE_RATE, 1);
             } catch (Throwable t) {
                 log.error("Failed to instantiate opus decoder", t);
             }
@@ -97,7 +97,7 @@ public class Decoder implements Codec {
             res.setOffset(0);
             res.setLength(frameSize * 2);
             res.setTimestamp(frame.getTimestamp());
-            res.setDuration(frame.getDuration());
+            res.setDuration(frameSize * 16 * 8000); // sample size is 16 bit, 8 000 Khz, ~ 20ms samples for frame size of 160 samples. Note different sample rate of the decoder then announced in sdp // the format
             res.setSequenceNumber(frame.getSequenceNumber());
             res.setEOM(frame.isEOM());
             res.setFormat(linear);
