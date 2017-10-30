@@ -21,8 +21,10 @@
 
 package org.restcomm.media.codec.opus;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -107,8 +109,28 @@ public class Decoder implements Codec {
 
             return res;
         } else {
-            log.error("Failed to decode Opus packet: " + frameSize + " source: " + frame);
-            return null;
+            log.error(
+                "Failed to decode Opus packet."
+                   + "err="  + frameSize
+                   + ", source=" + frame
+                   + ", content=" + (frame.getData() == null ? "NULL" : new BigInteger(frame.getData()).toString(16))
+            );
+
+            // to make sure the call still takes next samples lets make this sample a silence
+            // and continue. This may improve compatibility, i.e. for unsupported packets
+            // assume 160 samples in silent frame
+            Frame res = Memory.allocate(MAX_FRAME_SIZE * 2);
+            Arrays.fill(res.getData(), (byte)0xFF);
+            res.setOffset(0);
+            res.setLength(MAX_FRAME_SIZE * 2);
+            res.setTimestamp(frame.getTimestamp());
+            res.setDuration(MAX_FRAME_SIZE * SAMPLE_LENGTH);
+            res.setSequenceNumber(frame.getSequenceNumber());
+            res.setEOM(frame.isEOM());
+            res.setFormat(linear);
+            res.setHeader(frame.getHeader());
+
+            return res;
         }
     }
 }
