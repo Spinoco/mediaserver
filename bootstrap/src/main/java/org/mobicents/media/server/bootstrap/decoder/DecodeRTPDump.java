@@ -22,9 +22,12 @@ import java.nio.file.Paths;
  */
 public class DecodeRTPDump {
 
+    private static final int FORMAT = 3;
+
     // ulaw and linear fromats
     static Format ulaw = FormatFactory.createAudioFormat("pcmu", 8000, 8, 1);
     static Format linear = FormatFactory.createAudioFormat("linear", 8000, 16, 1);
+    static Format opus = FormatFactory.createAudioFormat("opus", 48000, 8, 2);
 
     /**
      * Expects 1 parameter - file to decode (jbr) and decodes it to same filename with .wav extension
@@ -55,6 +58,8 @@ public class DecodeRTPDump {
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.alaw.Decoder");
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.ulaw.Encoder");
         dspFactory.addCodec("org.mobicents.media.server.impl.dsp.audio.g711.ulaw.Decoder");
+        dspFactory.addCodec("org.restcomm.media.codec.opus.Encoder");
+        dspFactory.addCodec("org.restcomm.media.codec.opus.Decoder");
 
         Dsp dsp = dspFactory.newProcessor();
 
@@ -72,7 +77,12 @@ public class DecodeRTPDump {
             System.arraycopy(rtpPayload, 0, rtpFrame.getData(), 0, rtpPayload.length);
 
             // decode to PCM
-            Frame pcmFrame = dsp.process(rtpFrame, ulaw, linear);
+            Frame pcmFrame;
+            if (data[FORMAT].equals("111")) {
+                pcmFrame = dsp.process(rtpFrame, opus, linear);
+            } else {
+                pcmFrame = dsp.process(rtpFrame, ulaw, linear);
+            }
 
             try {
                 sink.write(ByteBuffer.wrap(pcmFrame.getData()));
