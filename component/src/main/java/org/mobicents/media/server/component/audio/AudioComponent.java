@@ -22,6 +22,7 @@
 
 package org.mobicents.media.server.component.audio;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,6 +56,13 @@ public class AudioComponent {
 	// Mixing State
 	private final int[] data;
 	final AtomicBoolean first;
+
+	//return empty data
+	static int[] emptyData() {
+		int[] data = new int[PACKET_SIZE / 2];
+		Arrays.fill(data, 0);
+		return data;
+	}
 
 	/**
 	 * Creates new instance with default name.

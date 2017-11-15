@@ -54,8 +54,6 @@ public class AudioMixer {
 	private MixTask mixer;
 	private AtomicBoolean active = new AtomicBoolean(false);
 
-	public long mixCount = 0;
-
 	// gain value
 	private double gain = 1.0;
 
@@ -94,7 +92,6 @@ public class AudioMixer {
 
 	public void start() {
 		if (!active.getAndSet(true)) {
-			mixCount = 0;
 			scheduler.submit(mixer, EventQueueType.RTP_MIXER);
 		}
 	}
@@ -151,8 +148,15 @@ public class AudioMixer {
 			}
 
 			if (sourcesCount == 0) {
+			    int[] empty = AudioComponent.emptyData();
+
+				activeComponents = components.valuesIterator();
+				while (activeComponents.hasNext()) {
+					AudioComponent component = activeComponents.next();
+					component.offer(empty);
+				}
+
 				scheduler.submit(this,  EventQueueType.RTP_MIXER);
-				mixCount++;
 				return 0;
 			}
 
@@ -193,7 +197,6 @@ public class AudioMixer {
 			}
 
 			scheduler.submit(this,  EventQueueType.RTP_MIXER);
-			mixCount++;
 			return 0;
 		}
 	}

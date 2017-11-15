@@ -387,7 +387,6 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         	overallDelay=0;
         	while(overallDelay<20000000L)
         	{
-        	    if (readCount > 2) logger.warn("Multiple cycles in Worker#perfrom " + readCount);
         		readCount++;
         		frame = evolve(timestamp);
         		if (frame == null) {
