@@ -40,7 +40,6 @@ import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.tls.DTLSServerProtocol;
 import org.bouncycastle.crypto.tls.DTLSTransport;
 import org.bouncycastle.crypto.tls.DatagramTransport;
-import org.bouncycastle.util.encoders.Hex;
 import org.mobicents.media.server.impl.rtp.crypto.DtlsSrtpServer;
 import org.mobicents.media.server.impl.rtp.crypto.PacketTransformer;
 import org.mobicents.media.server.impl.rtp.crypto.SRTPPolicy;
