@@ -397,6 +397,14 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         if (!hasTimeout()) {
             if (this.channel != null && this.channel.isOpen() && this.channel.isConnected()) {
                 this.channel.send(ByteBuffer.wrap(buf, off, len), channel.getRemoteAddress());
+                //Change Cipher spec has a content type of 20, thus we know that we want to delay the next packet.
+                if ((buf[off] & 0xff) == 20) {
+                    try {
+                        Thread.sleep(20);
+                    } catch (InterruptedException e) {
+                        logger.warn("Could not sleep thread to wait for sending of DTLS packets");
+                    }
+                }
             } else {
                 logger.warn("Handler skipped send operation because channel is not open or connected.");
             }
