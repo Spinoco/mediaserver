@@ -88,7 +88,7 @@ public class RtcpHandler implements PacketHandler {
 
         // core stuff
         this.pipelinePriority = 0;
-        this.byteBuffer = ByteBuffer.allocateDirect(RtpPacket.RTP_PACKET_MAX_SIZE);
+        this.byteBuffer = ByteBuffer.allocate(RtpPacket.RTP_PACKET_MAX_SIZE);
 
         // rtcp stuff
         this.statistics = statistics;

@@ -137,7 +137,7 @@ public class RecorderFileSink {
                 logger.info("Size  " + sampleSize + " of recording file " + file);
             }
 
-            ByteBuffer headerBuffer = ByteBuffer.allocateDirect(44);
+            ByteBuffer headerBuffer = ByteBuffer.allocate(44);
             headerBuffer.clear();
             // RIFF
             headerBuffer.put((byte) 0x52);

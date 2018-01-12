@@ -58,7 +58,7 @@ public class MultiplexedChannel implements Channel {
 	public MultiplexedChannel() {
 		this.handlers = new PacketHandlerPipeline();
 		this.pendingData = new ConcurrentLinkedQueue<>();
-		this.receiveBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+		this.receiveBuffer = ByteBuffer.allocate(BUFFER_SIZE);
 	}
 	
 	@Override

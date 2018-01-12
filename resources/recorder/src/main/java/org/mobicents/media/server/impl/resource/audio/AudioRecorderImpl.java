@@ -79,7 +79,7 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
     private long preSpeechTimer = -1L;
 
     // samples
-    private ByteBuffer byteBuffer = ByteBuffer.allocateDirect(8192);
+    private ByteBuffer byteBuffer = ByteBuffer.allocate(8192);
     private byte[] data;
     private int offset;
     private int len;
