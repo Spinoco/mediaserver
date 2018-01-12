@@ -101,8 +101,7 @@ public class JainMgcpStackImpl extends Thread implements JainMgcpStack, OAM_IF {
 
 	private DatagramChannel channel;
 	// private Selector selector;
-	ByteBuffer receiveBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
-	ByteBuffer sendBuffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
+	ByteBuffer receiveBuffer = ByteBuffer.allocate(BUFFER_SIZE);
 
 	byte[] b = new byte[BUFFER_SIZE];
 
