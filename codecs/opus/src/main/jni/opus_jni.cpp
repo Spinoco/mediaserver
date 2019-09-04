@@ -119,6 +119,8 @@ JNIEXPORT jint Java_org_restcomm_media_codec_opus_OpusNative_encode(
 
     int encodedBytes = opus_encode(encoderPtr, pcmData, pcmLen, encoded, dataSize);
 
+    env->ReleaseShortArrayElements(pcm, pcmData, 0);
+
     // update supplied array with number of bytes encoded if encodedBytes > 0
     // note the encodedBytes may return < 0 in case of err
     if (encodedBytes > 0) {
@@ -195,6 +197,8 @@ JNIEXPORT jint Java_org_restcomm_media_codec_opus_OpusNative_decode(
     short decoded[pcmSize];
 
     int frameSize = opus_decode(decoderPtr, (unsigned char *)opusData, opusLen, decoded, pcmSize, fec);
+
+    env->ReleaseByteArrayElements(data, opusData, 0);
 
     if (frameSize > 0) {
          env->SetShortArrayRegion(pcm, 0, frameSize, decoded);
