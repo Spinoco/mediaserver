@@ -296,8 +296,9 @@ public class GeneratorImpl extends AbstractSource implements DtmfGenerator, Pool
             else
                 //without end of event flag
                 data[1]=(byte)(0x3F & oobVolume);
-            
-            eventDuration=(short)(160*index);
+
+            //all events with end of event flag has the same eventDuration
+            eventDuration=(short)(160*Math.min(index, (toneDuration / 20) + 1));
             data[2]=(byte)((eventDuration>>8) & 0xFF);
             data[3]=(byte)(eventDuration & 0xFF);
             
