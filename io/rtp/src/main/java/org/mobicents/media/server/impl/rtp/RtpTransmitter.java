@@ -168,21 +168,20 @@ public class RtpTransmitter {
 		if (!this.dtmfSupported) {
 			return;
 		}
-		
-		// ignore frames with duplicate timestamp
-		if (frame.getTimestamp() / 1000000L == dtmfTimestamp) {
-			return;
+
+		//dtmfTimestamp is defined only in marked frames
+		if (frame.isMark()) {
+			// convert to milliseconds first
+			dtmfTimestamp = frame.getTimestamp() / 1000000L;
+			// convert to rtp time units
+			dtmfTimestamp = rtpClock.convertToRtpTime(dtmfTimestamp);
 		}
 
-		// convert to milliseconds first
-		dtmfTimestamp = frame.getTimestamp() / 1000000L;
-		// convert to rtp time units
-		dtmfTimestamp = rtpClock.convertToRtpTime(dtmfTimestamp);
 		try {
 			RtpPacket oobPacket = RtpPacket.outgoing(
 					this.channel.getLocalAddress()
 					, this.channel.getRemoteAddress()
-					, false
+					, frame.isMark()
 					, AVProfile.telephoneEventsID
 					, this.sequenceNumber++
 					, dtmfTimestamp

@@ -160,7 +160,7 @@ public class DtmfInput extends AbstractSource {
         	byte[] newData=currFrame.getData();
         	newData[0]=data[0];
         	newData[1]=(byte)(0x3F & data[1]);
-        	eventDuration=(short)(160*i);
+        	eventDuration=(short)(160*(i+1));
         	newData[2]=(byte)((eventDuration>>8) & 0xFF);
         	newData[3]=(byte)(eventDuration & 0xFF);        	
         	currFrame.setSequenceNumber(event.getSeqNumber()+i);
@@ -168,8 +168,9 @@ public class DtmfInput extends AbstractSource {
             currFrame.setLength(packetSize);
             currFrame.setFormat(dtmf);
             currFrame.setDuration(period);
-            currFrame.setTimestamp(clock.convertToAbsoluteTime(event.getTimestamp() + 20*i));
-            frameBuffer.add(currFrame);                       
+            currFrame.setTimestamp(clock.convertToAbsoluteTime(event.getTimestamp()));
+            currFrame.setMark(i == 0);
+            frameBuffer.add(currFrame);
         }
         
         for(int i=7;i<10;i++)
@@ -178,7 +179,7 @@ public class DtmfInput extends AbstractSource {
         	byte[] newData=currFrame.getData();
         	newData[0]=data[0];
         	newData[1]=(byte)(0x80 | data[1]);
-        	eventDuration=(short)(160*i);
+        	eventDuration=(short)(160*8); //all end frames has final duration (7+1)*160
         	newData[2]=(byte)((eventDuration>>8) & 0xFF);
         	newData[3]=(byte)(eventDuration & 0xFF);
         	currFrame.setSequenceNumber(event.getSeqNumber()+i);
@@ -186,7 +187,8 @@ public class DtmfInput extends AbstractSource {
             currFrame.setLength(packetSize);
             currFrame.setFormat(dtmf);
             currFrame.setDuration(period);
-            currFrame.setTimestamp(clock.convertToAbsoluteTime(event.getTimestamp() + 20*i));
+            currFrame.setTimestamp(clock.convertToAbsoluteTime(event.getTimestamp()));
+            currFrame.setMark(false);
             frameBuffer.add(currFrame);                       
         }
         
