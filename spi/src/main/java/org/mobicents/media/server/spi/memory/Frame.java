@@ -43,6 +43,7 @@ public class Frame {
     private volatile boolean eom;
     private volatile Format format;
     private volatile String header;
+    private volatile boolean mark; //marker bit
     
     protected Frame(byte[] data) {
         this.data = data;
@@ -114,7 +115,15 @@ public class Frame {
 
     public void setFormat(Format format) {
         this.format = format;
-    }    
+    }
+
+    public void setMark(boolean value) {
+        this.mark = value;
+    }
+
+    public boolean isMark() {
+        return this.mark;
+    }
 
     @Override
     public Frame clone() {
@@ -128,6 +137,7 @@ public class Frame {
         frame.format = format;
         frame.timestamp = timestamp;
         frame.header = header;
+        frame.mark = mark;
         return frame;
     }
 
