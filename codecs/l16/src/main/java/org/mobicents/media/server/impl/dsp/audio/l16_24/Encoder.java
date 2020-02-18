@@ -42,10 +42,10 @@ public class Encoder implements Codec {
         Frame res = Memory.allocate(960);
         byte[] src = frame.getData();
         byte[] dest = res.getData();
-        for ( int i = 0; i < src.length; i++) {
-            dest[i*3] = src[i];
-            dest[i*3+1] = src[i];
-            dest[i*3+2] = src[i];
+        for ( int i = 0,  j=0; i < src.length; i++, j+=3) {
+            dest[j] = src[i];
+            dest[j+1] = src[i];
+            dest[j+2] = src[i];
         }
 
         res.setOffset(0);

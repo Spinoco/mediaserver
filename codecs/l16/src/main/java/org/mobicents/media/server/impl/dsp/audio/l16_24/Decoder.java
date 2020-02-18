@@ -42,10 +42,8 @@ public class Decoder implements Codec {
         Frame res = Memory.allocate(320);
         byte[] dest = res.getData();
         byte[] src = frame.getData();
-        for (int i=0; i < src.length; i++) {
-           if (i % 3 == 0) {
-               dest[i/3] = src[i];
-           }
+        for (int i=0, j=0; i < src.length; i+=3, j++) {
+            dest[j] = src[i];
         }
         res.setOffset(0);
         res.setLength(320);
