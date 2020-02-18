@@ -30,6 +30,7 @@ package org.mobicents.media.core.configuration;
 public enum CodecType {
     
     L16("l16", "org.mobicents.media.server.impl.dsp.audio.l16.Encoder", "org.mobicents.media.server.impl.dsp.audio.l16.Decoder"),
+    L16_24("l16_24", "org.mobicents.media.server.impl.dsp.audio.l16_24.Encoder", "org.mobicents.media.server.impl.dsp.audio.l16_24.Decoder"),
     PCMU("pcmu", "org.mobicents.media.server.impl.dsp.audio.g711.ulaw.Encoder", "org.mobicents.media.server.impl.dsp.audio.g711.ulaw.Decoder"), 
     PCMA("pcma", "org.mobicents.media.server.impl.dsp.audio.g711.alaw.Encoder", "org.mobicents.media.server.impl.dsp.audio.g711.alaw.Decoder"), 
     GSM("gsm", "org.mobicents.media.server.impl.dsp.audio.gsm.Encoder", "org.mobicents.media.server.impl.dsp.audio.gsm.Decoder"), 
