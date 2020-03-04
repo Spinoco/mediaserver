@@ -27,8 +27,11 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
+import org.mobicents.media.server.impl.resource.asr.ASRImpl;
+import org.mobicents.media.server.impl.resource.asr.ASRListener;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
 import org.mobicents.media.server.mgcp.controller.signal.Signal;
@@ -67,6 +70,7 @@ public class PlayCollect extends Signal {
 
     private final Event oc;
     private final Event of;
+    private final Event asrEvent;
 
     // Core Components
     private PriorityQueueScheduler scheduler;
@@ -74,6 +78,8 @@ public class PlayCollect extends Signal {
     // Media Components
     private Player player;
     private DtmfDetector dtmfDetector;
+    private ASRImpl asr;
+    private ASRHandler asrHandler;
     private Options options;
     private final EventBuffer buffer;
     private final PromptHandler promptHandler;
@@ -98,6 +104,7 @@ public class PlayCollect extends Signal {
     // Listeners
     private boolean dtmfListenerAdded = false;
     private boolean playerListenerAdded = false;
+    private boolean asrListenerAdded = false;
 
     // Concurrency
     private final AtomicBoolean terminated;
@@ -109,14 +116,21 @@ public class PlayCollect extends Signal {
         // MGCP Responses
         this.oc = new Event(new Text("oc"));
         this.of = new Event(new Text("of"));
+        this.asrEvent = new Event(new Text("asr"));
+
+
         this.oc.add(new NotifyImmediately("N"));
         this.oc.add(new InteruptPrompt("S", player));
+
         this.of.add(new NotifyImmediately("N"));
+
+        this.asrEvent.add(new NotifyImmediately("N"));
 
         // Media Components
         this.dtmfHandler = new DtmfHandler(this);
         this.promptHandler = new PromptHandler(this);
         this.buffer = new EventBuffer();
+        this.asrHandler = new ASRHandler(this);
 
         // PlayCollect Status
         this.isPromptActive = false;
@@ -165,6 +179,7 @@ public class PlayCollect extends Signal {
         // at this stage DTMF detector started but local buffer is not assigned
         // yet as listener
         prepareCollectPhase(options);
+        prepareASRPhase(options);
 
         if (options.getFirstDigitTimer() > 0) {
             this.firstDigitTimer = options.getFirstDigitTimer();
@@ -286,6 +301,7 @@ public class PlayCollect extends Signal {
      */
     private void prepareCollectPhase(Options options) {
         // obtain detector instance
+        System.out.println("ENDPOINT: " + getEndpoint());
         dtmfDetector = (DtmfDetector) getEndpoint().getResource(MediaType.AUDIO, ComponentType.DTMF_DETECTOR);
 
         // DTMF detector was buffering digits and now it can contain
@@ -306,6 +322,17 @@ public class PlayCollect extends Signal {
         } else {
             buffer.setCount(options.getDigitsNumber());
         }
+
+        System.out.println("Collect PHASE prepared " + options);
+    }
+
+    // prepares ASR shall the ASR be used in collect phase
+    private void prepareASRPhase(Options options) {
+        if (options.getASREnabled()) {
+            asr = (ASRImpl) getEndpoint().getResource(MediaType.AUDIO, ComponentType.ASR_COLLECT);
+            this.asr.configure(options.getASRGoogleConfig(), options.getAsrGoogleUtterance());
+        }
+
     }
 
     /**
@@ -320,6 +347,11 @@ public class PlayCollect extends Signal {
                 dtmfListenerAdded = true;
             }
             dtmfDetector.flushBuffer();
+
+            // add detector, if required
+            if (!asrListenerAdded && asr != null) {
+                asr.addListener(this.asrHandler);
+            }
         } catch (TooManyListenersException e) {
             of.fire(this, RC_300);
             logger.error("Too many listeners for DTMF detector, firing of");
@@ -343,19 +375,28 @@ public class PlayCollect extends Signal {
                 } else {
                     heartbeat.setTtl(-1);
                 }
-
-                if (this.maxDuration > 0) {
-                    heartbeat.setOverallTtl(this.maxDuration);
-                } else {
-                    heartbeat.setOverallTtl(-1);
-                }
-
-                heartbeat.activate();
-                getEndpoint().getScheduler().submitHeartbeat(heartbeat);
             }
 
-            buffer.activate();
-            buffer.flush();
+            if (this.maxDuration > 0) {
+                heartbeat.setOverallTtl(this.maxDuration);
+            } else {
+                heartbeat.setOverallTtl(-1);
+            }
+
+            if (this.asr != null) {
+                // this take different path with listeners
+                this.asr.activate();
+
+            } else {
+                buffer.activate();
+                buffer.flush();
+            }
+
+            heartbeat.activate();
+            getEndpoint().getScheduler().submitHeartbeat(heartbeat);
+
+            if (this.asr != null) this.asr.activate();
+
         }
     }
 
@@ -372,6 +413,10 @@ public class PlayCollect extends Signal {
             buffer.passivate();
             buffer.clear();
             dtmfDetector = null;
+        }
+        if (this.asr != null) {
+            this.asr.deactivate();
+            this.asr = null;
         }
     }
 
@@ -405,6 +450,9 @@ public class PlayCollect extends Signal {
             return true;
         }
         if (!of.isActive() && of.matches(event)) {
+            return true;
+        }
+        if (!asrEvent.isActive() && asrEvent.matches(event)) {
             return true;
         }
 
@@ -675,6 +723,26 @@ public class PlayCollect extends Signal {
                     of.fire(signal, RC_300);
                     complete();
                     break;
+            }
+        }
+    }
+
+    private class ASRHandler implements ASRListener {
+        private PlayCollect signal;
+
+        public ASRHandler(PlayCollect signal) {
+            this.signal = signal;
+        }
+
+        @Override
+        public void notifySpeechRecognition(String fragment) {
+            // we have to encode the text to base64 utf8
+            try {
+                String encoded = BaseEncoding.base64().encode(fragment.getBytes());
+                // this event is fired manually, as it has no control over the Signal.
+                signal.sendEvent(this.signal.getPackage().getName(), asrEvent.getName(), new Text("asr=" + encoded));
+            } catch (Throwable t) {
+                t.printStackTrace();
             }
         }
     }

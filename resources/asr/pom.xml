@@ -4,20 +4,27 @@
     <packaging>jar</packaging>
 
     <parent>
-        <groupId>org.mobicents.media.controls</groupId>
-        <artifactId>controls</artifactId>
+        <groupId>org.mobicents.media.resources</groupId>
+        <artifactId>resources</artifactId>
         <version>5.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mgcp</artifactId>
-    <name>MGCP</name>
-    
+    <artifactId>asr</artifactId>
+    <name>ASR</name>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>libraries-bom</artifactId>
+                <version>4.1.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
-    	<dependency>
-            <groupId>org.mobicents.media</groupId>
-            <artifactId>concurrent</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.mobicents.media</groupId>
             <artifactId>spi</artifactId>
@@ -28,37 +35,24 @@
             <artifactId>components</artifactId>
             <version>${project.version}</version>
         </dependency>
-	<dependency>
-            <groupId>org.mobicents.media</groupId>
-            <artifactId>core</artifactId>
+        <dependency>
+            <groupId>org.mobicents.media.codecs</groupId>
+            <artifactId>g711</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.mobicents.media.resources</groupId>
-            <artifactId>tones</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mobicents.media.resources</groupId>
-            <artifactId>asr</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-	<dependency>
-            <groupId>org.mobicents.media.client</groupId>
-            <artifactId>mgcp-driver</artifactId>
+            <groupId>org.mobicents.media.codecs</groupId>
+            <artifactId>g729</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>jain</groupId>
-            <artifactId>jain-mgcp-ri</artifactId>
-            <version>1.0</version>
+            <groupId>org.mobicents.media.codecs</groupId>
+            <artifactId>gsm</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.mobicents.media.io</groupId>
-            <artifactId>network</artifactId>
-            <version>${project.version}</version>
-            <type>jar</type>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-speech</artifactId>
         </dependency>
     </dependencies>
 
@@ -73,7 +67,7 @@
                 </configuration>
             </plugin>
         </plugins>
-        <finalName>restcomm-mediaserver-mgcp-${project.version}</finalName>
+        <finalName>restcomm-mediaserver-asr-${project.version}</finalName>
     </build>
 
 </project>

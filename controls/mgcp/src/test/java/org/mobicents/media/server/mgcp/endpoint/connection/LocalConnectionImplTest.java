@@ -44,6 +44,8 @@ import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorFactory
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorPool;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorFactory;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorPool;
+import org.mobicents.media.server.impl.resource.asr.ASRFactory;
+import org.mobicents.media.server.impl.resource.asr.ASRPool;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.mgcp.connection.LocalConnectionFactory;
@@ -92,6 +94,8 @@ public class LocalConnectionImplTest {
     private PhoneSignalDetectorPool signalDetectorPool;
     private PhoneSignalGeneratorFactory signalGeneratorFactory;
     private PhoneSignalGeneratorPool signalGeneratorPool;
+    private ASRFactory ASRFactory;
+    private ASRPool ASRPool;
     
     private ChannelsManager channelsManager;
     protected DspFactoryImpl dspFactory = new DspFactoryImpl();
@@ -126,7 +130,9 @@ public class LocalConnectionImplTest {
         this.signalDetectorPool = new PhoneSignalDetectorPool(signalDetectorFactory);
         this.signalGeneratorFactory = new PhoneSignalGeneratorFactory(mediaScheduler);
         this.signalGeneratorPool = new PhoneSignalGeneratorPool(signalGeneratorFactory);
-        resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool);
+        this.ASRFactory = new ASRFactory(mediaScheduler, null);
+        this.ASRPool = new ASRPool(ASRFactory);
+        resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool, ASRPool);
 
         //assign scheduler to the endpoint
         endpoint = new MyTestEndpoint("test");
