@@ -50,15 +50,14 @@ import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorFactory
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorPool;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorFactory;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorPool;
+import org.mobicents.media.server.impl.resource.asr.ASRFactory;
+import org.mobicents.media.server.impl.resource.asr.ASRPool;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.mgcp.connection.LocalConnectionFactory;
 import org.mobicents.media.server.mgcp.connection.LocalConnectionPool;
 import org.mobicents.media.server.mgcp.connection.RtpConnectionFactory;
 import org.mobicents.media.server.mgcp.connection.RtpConnectionPool;
-import org.mobicents.media.server.mgcp.endpoint.BaseMixerEndpointImpl;
-import org.mobicents.media.server.mgcp.endpoint.BridgeEndpoint;
-import org.mobicents.media.server.mgcp.endpoint.IvrEndpoint;
 import org.mobicents.media.server.mgcp.resources.ResourcesPool;
 import org.mobicents.media.server.scheduler.Clock;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
@@ -107,6 +106,8 @@ public class LocalMediaGroupTest implements DtmfDetectorListener {
     private PhoneSignalDetectorPool signalDetectorPool;
     private PhoneSignalGeneratorFactory signalGeneratorFactory;
     private PhoneSignalGeneratorPool signalGeneratorPool;
+    private ASRFactory asrFactory;
+    private ASRPool asrPool;
     
     //endpoint and connection
     private BaseMixerEndpointImpl endpoint1,endpoint2;
@@ -153,7 +154,9 @@ public class LocalMediaGroupTest implements DtmfDetectorListener {
         this.signalDetectorPool = new PhoneSignalDetectorPool(signalDetectorFactory);
         this.signalGeneratorFactory = new PhoneSignalGeneratorFactory(mediaScheduler);
         this.signalGeneratorPool = new PhoneSignalGeneratorPool(signalGeneratorFactory);
-        resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool);
+        this.asrFactory = new ASRFactory(mediaScheduler, null);
+        this.asrPool = new ASRPool(asrFactory);
+        resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool, asrPool);
 
         //assign scheduler to the endpoint
         endpoint1 = new IvrEndpoint("test");

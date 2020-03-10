@@ -17,6 +17,7 @@
         <module>telephony</module>
         <module>mediaplayer</module>
         <module>recorder</module>
+        <module>asr</module>
     </modules>
 	
 

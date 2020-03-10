@@ -22,6 +22,7 @@
 
 package org.mobicents.media.server.mgcp.pkg.au;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -69,6 +70,8 @@ public class Options {
     private final static Text cur = new Text("cur");
     private final static Text dpa = new Text("dpa");
     private final static Text x_md= new Text("x-md");
+	private final static Text x_asr_google= new Text("x-asr-google");
+	private final static Text x_asr_google_utterance= new Text("x-asr-google-utterance");
     
     private final static Text TRUE = new Text("true");
     private final static Text FALSE = new Text("false");
@@ -145,6 +148,9 @@ public class Options {
     private char lastKey=' ';
     private boolean hasCurrKey=false;
     private char currKey=' ';
+
+    private String asrGoogleConfig;
+    private boolean asrGoogleUtterance = false;
     
     static
     {
@@ -218,6 +224,8 @@ public class Options {
         options.lastKey=' ';
         options.hasCurrKey=false;
         options.currKey=' ';
+        options.asrGoogleConfig = null;
+        options.asrGoogleUtterance = false;
         
     	cache.offer(options);
     }
@@ -529,7 +537,12 @@ public class Options {
     	            }  
             	}
             	else if (name.equals(x_md))
-                    this.maxDuration = value.toInteger();        		
+                    this.maxDuration = value.toInteger();
+            	else if (name.equals(x_asr_google))
+					this.asrGoogleConfig = value.toString();
+				else if (name.equals(x_asr_google_utterance))
+					this.asrGoogleUtterance = value.toString().toLowerCase().equals("true");
+
             }
         }
     }
@@ -713,4 +726,84 @@ public class Options {
     public char getLastKey() {
         return this.lastKey;
     }
+
+	public String getASRGoogleConfig() {
+		return this.asrGoogleConfig;
+	}
+
+	public Boolean getAsrGoogleUtterance() {
+		return this.asrGoogleUtterance;
+	}
+
+	public Boolean getASREnabled() {
+    	return this.asrGoogleConfig != null;
+	}
+
+	@Override
+	public String toString() {
+		return "Options{" +
+				"recordID=" + recordID +
+				", isPrompt=" + isPrompt +
+				", isReprompt=" + isReprompt +
+				", isDeletePersistentAudio=" + isDeletePersistentAudio +
+				", isFailureAnnouncement=" + isFailureAnnouncement +
+				", isSuccessAnnouncement=" + isSuccessAnnouncement +
+				", isNoSpeechReprompt=" + isNoSpeechReprompt +
+				", isNoDigitsReprompt=" + isNoDigitsReprompt +
+				", override=" + override +
+				", segmentsBuffer=" + segmentsBuffer +
+				", promptBuffer=" + promptBuffer +
+				", repromptBuffer=" + repromptBuffer +
+				", failureAnnouncementBuffer=" + failureAnnouncementBuffer +
+				", successAnnouncementBuffer=" + successAnnouncementBuffer +
+				", noSpeechRepromptBuffer=" + noSpeechRepromptBuffer +
+				", noDigitsRepromptBuffer=" + noDigitsRepromptBuffer +
+				", deletePersistentAudioBuffer=" + deletePersistentAudioBuffer +
+				", segments=" + segments +
+				", prompt=" + prompt +
+				", reprompt=" + reprompt +
+				", failureAnnouncement=" + failureAnnouncement +
+				", successAnnouncement=" + successAnnouncement +
+				", noSpeechReprompt=" + noSpeechReprompt +
+				", noDigitsReprompt=" + noDigitsReprompt +
+				", deletePersistentAudio=" + deletePersistentAudio +
+				", cursor=" + cursor +
+				", duration=" + duration +
+				", offset=" + offset +
+				", repeatCount=" + repeatCount +
+				", interval=" + interval +
+				", digitsNumber=" + digitsNumber +
+				", maxDigitsNumber=" + maxDigitsNumber +
+				", postSpeechTimer=" + postSpeechTimer +
+				", preSpeechTimer=" + preSpeechTimer +
+				", digitPattern=" + digitPattern +
+				", digitPatterns=" + digitPatterns +
+				", name=" + name +
+				", value=" + value +
+				", parameter=" + Arrays.toString(parameter) +
+				", nonInterruptable=" + nonInterruptable +
+				", recordDuration=" + recordDuration +
+				", clearDigits=" + clearDigits +
+				", includeEndInput=" + includeEndInput +
+				", endInputKey=" + endInputKey +
+				", firstDigitTimer=" + firstDigitTimer +
+				", interDigitTimer=" + interDigitTimer +
+				", maxDuration=" + maxDuration +
+				", numberOfAttempts=" + numberOfAttempts +
+				", tempSequence=" + tempSequence +
+				", tempChar=" + tempChar +
+				", hasNextKey=" + hasNextKey +
+				", nextKey=" + nextKey +
+				", hasPrevKey=" + hasPrevKey +
+				", prevKey=" + prevKey +
+				", hasFirstKey=" + hasFirstKey +
+				", firstKey=" + firstKey +
+				", hasLastKey=" + hasLastKey +
+				", lastKey=" + lastKey +
+				", hasCurrKey=" + hasCurrKey +
+				", currKey=" + currKey +
+				", asrGoogleConfig='" + asrGoogleConfig + '\'' +
+				", asrGoogleUtterance=" + asrGoogleUtterance  +
+				'}';
+	}
 }

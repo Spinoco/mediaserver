@@ -45,6 +45,8 @@ import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorFactory
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetectorPool;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorFactory;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalGeneratorPool;
+import org.mobicents.media.server.impl.resource.asr.ASRFactory;
+import org.mobicents.media.server.impl.resource.asr.ASRPool;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.mgcp.connection.LocalConnectionFactory;
@@ -97,6 +99,8 @@ public class ReclaimingTest {
     private PhoneSignalDetectorPool signalDetectorPool;
     private PhoneSignalGeneratorFactory signalGeneratorFactory;
     private PhoneSignalGeneratorPool signalGeneratorPool;
+    private ASRFactory asrFactory;
+    private ASRPool asrPool;
     
     @Before
     public void setUp() throws ResourceUnavailableException, TooManyConnectionsException, IOException {
@@ -128,7 +132,9 @@ public class ReclaimingTest {
         this.signalDetectorPool = new PhoneSignalDetectorPool(signalDetectorFactory);
         this.signalGeneratorFactory = new PhoneSignalGeneratorFactory(mediaScheduler);
         this.signalGeneratorPool = new PhoneSignalGeneratorPool(signalGeneratorFactory);
-        resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool);
+        this.asrFactory = new ASRFactory(mediaScheduler,  null);
+        this.asrPool = new ASRPool(asrFactory);
+        resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool, asrPool);
 
         //assign scheduler to the endpoint
         endpoint1 = new MyTestEndpoint("test-1");

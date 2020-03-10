@@ -77,6 +77,8 @@ public class IvrEndpoint extends BaseMixerEndpointImpl {
 				return mediaGroup.getDtmfDetector();
 			case DTMF_GENERATOR:
 				return mediaGroup.getDtmfGenerator();
+			case ASR_COLLECT:
+				return mediaGroup.getASRCollect();
 			default:
 				break;
 			}
