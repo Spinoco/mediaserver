@@ -239,7 +239,9 @@ public class RtpTransmitter {
 		// convert to rtp time units
 //		timestamp = rtpClock.convertToRtpTime(timestamp);
 		timestamp = rtpClock.getLocalRtpTime();
-		this.sequenceNumber = this.dtmfSequenceNumber + 1 + (int)((timestamp/160)%65535);
+		int newSeq = this.dtmfSequenceNumber + 1 + (int)((timestamp/160)%65535);
+		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
+		else this.sequenceNumber++;
 
 		try {
 			RtpPacket rtpPacket = RtpPacket.outgoing(
