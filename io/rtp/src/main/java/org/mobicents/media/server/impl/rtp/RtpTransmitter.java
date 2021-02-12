@@ -66,6 +66,7 @@ public class RtpTransmitter {
 	private long timestamp;
 	private long dtmfTimestamp;
 	private int sequenceNumber;
+	private int dtmfSequenceNumber;
 
 	public RtpTransmitter(final PriorityQueueScheduler scheduler, final RtpClock clock, final RtpStatistics statistics) {
 		this.rtpClock = clock;
@@ -74,6 +75,7 @@ public class RtpTransmitter {
 		this.rtpOutput = new RTPOutput(scheduler, this);
 		this.dtmfOutput = new DtmfOutput(scheduler, this);
 		this.sequenceNumber = 0;
+		this.dtmfSequenceNumber = 0;
 		this.dtmfTimestamp = -1;
 		this.timestamp = -1;
 		this.formats = null;
@@ -176,6 +178,9 @@ public class RtpTransmitter {
 			// convert to rtp time units
 			dtmfTimestamp = rtpClock.convertToRtpTime(dtmfTimestamp);
 		}
+		this.dtmfSequenceNumber++;
+		this.sequenceNumber = this.dtmfSequenceNumber + 1 + (int)((timestamp/160)%65535);
+
 
 		try {
 			RtpPacket oobPacket = RtpPacket.outgoing(
@@ -183,7 +188,7 @@ public class RtpTransmitter {
 					, this.channel.getRemoteAddress()
 					, frame.isMark()
 					, AVProfile.telephoneEventsID
-					, this.sequenceNumber++
+					, this.sequenceNumber
 					, dtmfTimestamp
 					, this.statistics.getSsrc()
 					, frame.getData()
@@ -234,7 +239,7 @@ public class RtpTransmitter {
 		// convert to rtp time units
 		timestamp = rtpClock.convertToRtpTime(timestamp);
 
-		this.sequenceNumber = 1 + (int)((timestamp/160)%65535);
+		this.sequenceNumber = this.dtmfSequenceNumber + 1 + (int)((timestamp/160)%65535);
 
 		try {
 			RtpPacket rtpPacket = RtpPacket.outgoing(
