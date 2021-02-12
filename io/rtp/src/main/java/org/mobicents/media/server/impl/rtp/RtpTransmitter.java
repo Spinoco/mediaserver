@@ -234,13 +234,15 @@ public class RtpTransmitter {
 		// convert to rtp time units
 		timestamp = rtpClock.convertToRtpTime(timestamp);
 
+		this.sequenceNumber = 1 + (int)((timestamp/160)%65535);
+
 		try {
 			RtpPacket rtpPacket = RtpPacket.outgoing(
 					this.channel.getLocalAddress()
 					, this.channel.getRemoteAddress()
 					, false
 					, currentFormat.getID()
-					, this.sequenceNumber++
+					, this.sequenceNumber
 					, timestamp
 					, this.statistics.getSsrc()
 					, frame.getData()
