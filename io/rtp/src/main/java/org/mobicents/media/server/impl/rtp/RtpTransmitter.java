@@ -248,7 +248,8 @@ public class RtpTransmitter {
 		}
         rtpTime = localRtpTime;
 
-		int newSeq = this.dtmfSequenceNumber + 1 + (int)((timestamp/160)%65535);
+        long seq = timestamp/160;
+		int newSeq = this.dtmfSequenceNumber + 1 + (int)(seq%65535);
 		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
 		else this.sequenceNumber++;
 
@@ -259,7 +260,7 @@ public class RtpTransmitter {
 					, false
 					, currentFormat.getID()
 					, this.sequenceNumber
-					, timestamp - (timestamp % 160)
+					, seq*160
 					, this.statistics.getSsrc()
 					, frame.getData()
 					, frame.getOffset()
