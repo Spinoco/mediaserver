@@ -259,7 +259,7 @@ public class RtpTransmitter {
 					, false
 					, currentFormat.getID()
 					, this.sequenceNumber
-					, timestamp
+					, timestamp - (timestamp % 160)
 					, this.statistics.getSsrc()
 					, frame.getData()
 					, frame.getOffset()
