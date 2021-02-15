@@ -240,16 +240,16 @@ public class RtpTransmitter {
 //		timestamp = frame.getTimestamp() / 1000000L;
 		// convert to rtp time units
 //		timestamp = rtpClock.convertToRtpTime(timestamp);
-        long localRtpTime = rtpClock.getLocalRtpTimeNoDrift();
-        if (rtpTime < 0) {
-            timestamp = 0;
-		} else {
-			timestamp += localRtpTime - rtpTime;
-		}
-        rtpTime = localRtpTime;
+//        long localRtpTime = rtpClock.getLocalRtpTimeNoDrift();
+//        if (rtpTime < 0) {
+//            timestamp = 0;
+//		} else {
+//			timestamp += localRtpTime - rtpTime;
+//		}
+//        rtpTime = localRtpTime;
 
-        long seq = timestamp/160;
-		int newSeq = this.dtmfSequenceNumber + 1 + (int)(seq%65535);
+        timestamp = rtpClock.getLocalRtpTimeNoDrift();
+		int newSeq = this.dtmfSequenceNumber + 1 + (int)((timestamp/160)%65535);
 		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
 		else this.sequenceNumber++;
 
@@ -260,7 +260,7 @@ public class RtpTransmitter {
 					, false
 					, currentFormat.getID()
 					, this.sequenceNumber
-					, seq*160
+					, timestamp - (timestamp%160)
 					, this.statistics.getSsrc()
 					, frame.getData()
 					, frame.getOffset()
