@@ -105,6 +105,10 @@ public class RtpClock {
     public long getLocalRtpTime() {
         return scale * wallClock.getTime(TimeUnit.MILLISECONDS) + drift;
     }
+
+    public long getLocalRtpTimeNoDrift() {
+        return scale * wallClock.getTime(TimeUnit.MILLISECONDS);
+    }
     
     /**
      * Returns the time in milliseconds

@@ -240,7 +240,7 @@ public class RtpTransmitter {
 //		timestamp = frame.getTimestamp() / 1000000L;
 		// convert to rtp time units
 //		timestamp = rtpClock.convertToRtpTime(timestamp);
-        long localRtpTime = rtpClock.getLocalRtpTime();
+        long localRtpTime = rtpClock.getLocalRtpTimeNoDrift();
         if (rtpTime < 0) {
             timestamp = 0;
 		} else {
