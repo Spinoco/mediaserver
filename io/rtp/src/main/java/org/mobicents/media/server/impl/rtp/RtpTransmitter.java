@@ -231,23 +231,6 @@ public class RtpTransmitter {
 			rtpClock.setClockRate(currentFormat.getClockRate());
 		}
 
-//		 ignore frames with duplicate timestamp
-//		if (frame.getTimestamp() / 1000000L == timestamp) {
-//			return;
-//		}
-
-//		 convert to milliseconds first
-//		timestamp = frame.getTimestamp() / 1000000L;
-		// convert to rtp time units
-//		timestamp = rtpClock.convertToRtpTime(timestamp);
-//        long localRtpTime = rtpClock.getLocalRtpTimeNoDrift();
-//        if (rtpTime < 0) {
-//            timestamp = 0;
-//		} else {
-//			timestamp += localRtpTime - rtpTime;
-//		}
-//        rtpTime = localRtpTime;
-
         timestamp = rtpClock.getLocalRtpTimeNoDrift();
 		int newSeq = this.dtmfSequenceNumber + 1 + (int)((timestamp/160)%65535);
 		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
