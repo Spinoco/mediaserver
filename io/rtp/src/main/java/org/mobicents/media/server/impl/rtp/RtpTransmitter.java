@@ -173,6 +173,7 @@ public class RtpTransmitter {
 
 		//dtmfTimestamp is defined only in marked frames
 		if (frame.isMark()) {
+			this.dtmfSequenceNumber = 0;
 			dtmfTimestamp = rtpClock.getLocalRtpTimeNoDrift();
 		} else {
 			this.dtmfSequenceNumber++;
@@ -230,7 +231,7 @@ public class RtpTransmitter {
 		}
 
         timestamp = rtpClock.getLocalRtpTimeNoDrift();
-		int newSeq = this.dtmfSequenceNumber + 1 + (int)(timestamp/160);
+		int newSeq = 1 + (int)(timestamp/160);
 		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
 		else this.sequenceNumber++;
 
