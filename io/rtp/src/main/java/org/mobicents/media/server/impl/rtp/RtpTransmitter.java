@@ -67,7 +67,6 @@ public class RtpTransmitter {
 	private long dtmfTimestamp;
 	private int sequenceNumber;
 	private int dtmfSequenceNumber;
-	private long rtpTime;
 
 	public RtpTransmitter(final PriorityQueueScheduler scheduler, final RtpClock clock, final RtpStatistics statistics) {
 		this.rtpClock = clock;
@@ -81,7 +80,6 @@ public class RtpTransmitter {
 		this.timestamp = -1;
 		this.formats = null;
 		this.secure = false;
-		this.rtpTime = -1L;
 	}
 	
 	public void setFormatMap(final RTPFormats rtpFormats) {
@@ -175,14 +173,14 @@ public class RtpTransmitter {
 
 		//dtmfTimestamp is defined only in marked frames
 		if (frame.isMark()) {
-			// convert to milliseconds first
-			dtmfTimestamp = frame.getTimestamp() / 1000000L;
-			// convert to rtp time units
-			dtmfTimestamp = rtpClock.convertToRtpTime(dtmfTimestamp);
+			dtmfTimestamp = rtpClock.getLocalRtpTimeNoDrift();
+		} else {
+			this.dtmfSequenceNumber++;
 		}
-		this.dtmfSequenceNumber++;
-		this.sequenceNumber = this.dtmfSequenceNumber + 1 + (int)((timestamp/160)%65535);
 
+		int newSeq = this.dtmfSequenceNumber + 1 + (int)(timestamp/160);
+		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
+		else this.sequenceNumber++;
 
 		try {
 			RtpPacket oobPacket = RtpPacket.outgoing(
@@ -232,7 +230,7 @@ public class RtpTransmitter {
 		}
 
         timestamp = rtpClock.getLocalRtpTimeNoDrift();
-		int newSeq = this.dtmfSequenceNumber + 1 + (int)((timestamp/160)%65535);
+		int newSeq = this.dtmfSequenceNumber + 1 + (int)(timestamp/160);
 		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
 		else this.sequenceNumber++;
 
