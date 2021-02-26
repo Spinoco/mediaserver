@@ -63,6 +63,10 @@ public class RtpTransmitter {
 	// Details of a transmitted packet
 	private RTPFormats formats;
 	private RTPFormat currentFormat;
+
+	// For formats with different sample rates, we need to know number of samples in each frame,
+	// This is so that we can compute the correct sequence number for the stream.
+	private int samplesPerFrame;
 	private long timestamp;
 	private long dtmfTimestamp;
 	private int sequenceNumber;
@@ -175,12 +179,12 @@ public class RtpTransmitter {
 		if (frame.isMark()) {
 			this.dtmfSequenceNumber = 0;
 			long localRtp = rtpClock.getLocalRtpTimeNoDrift();
-			dtmfTimestamp = localRtp - (localRtp%160);
+			dtmfTimestamp = localRtp - (localRtp % samplesPerFrame);
 		} else {
 			this.dtmfSequenceNumber++;
 		}
 
-		int newSeq = this.dtmfSequenceNumber + 1 + (int)(dtmfTimestamp/160);
+		int newSeq = this.dtmfSequenceNumber + 1 + (int)(dtmfTimestamp / samplesPerFrame);
 		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
 		else this.sequenceNumber++;
 
@@ -229,10 +233,11 @@ public class RtpTransmitter {
 			}
 			// update clock rate
 			rtpClock.setClockRate(currentFormat.getClockRate());
+			samplesPerFrame = currentFormat.getClockRate() / 50;
 		}
 
         timestamp = rtpClock.getLocalRtpTimeNoDrift();
-		int newSeq = 1 + (int)(timestamp/160);
+		int newSeq = 1 + (int)(timestamp / samplesPerFrame);
 		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
 		else this.sequenceNumber++;
 
@@ -243,7 +248,7 @@ public class RtpTransmitter {
 					, false
 					, currentFormat.getID()
 					, this.sequenceNumber
-					, timestamp - (timestamp%160)
+					, timestamp - (timestamp % samplesPerFrame)
 					, this.statistics.getSsrc()
 					, frame.getData()
 					, frame.getOffset()
