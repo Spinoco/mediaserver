@@ -71,6 +71,7 @@ public class RtpTransmitter {
 	private long dtmfTimestamp;
 	private int sequenceNumber;
 	private int dtmfSequenceNumber;
+	private long rtpTimestamp;
 
 	public RtpTransmitter(final PriorityQueueScheduler scheduler, final RtpClock clock, final RtpStatistics statistics) {
 		this.rtpClock = clock;
@@ -84,6 +85,7 @@ public class RtpTransmitter {
 		this.timestamp = -1;
 		this.formats = null;
 		this.secure = false;
+		this.rtpTimestamp = 0;
 	}
 	
 	public void setFormatMap(final RTPFormats rtpFormats) {
@@ -241,6 +243,11 @@ public class RtpTransmitter {
 		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
 		else this.sequenceNumber++;
 
+		long newRtpTimestamp = timestamp - (timestamp % samplesPerFrame);
+
+		if (newRtpTimestamp > this.rtpTimestamp) this.rtpTimestamp = newRtpTimestamp;
+		else this.rtpTimestamp = this.rtpTimestamp + samplesPerFrame;
+
 		try {
 			RtpPacket rtpPacket = RtpPacket.outgoing(
 					this.channel.getLocalAddress()
@@ -248,7 +255,7 @@ public class RtpTransmitter {
 					, false
 					, currentFormat.getID()
 					, this.sequenceNumber
-					, timestamp - (timestamp % samplesPerFrame)
+					, this.rtpTimestamp
 					, this.statistics.getSsrc()
 					, frame.getData()
 					, frame.getOffset()
