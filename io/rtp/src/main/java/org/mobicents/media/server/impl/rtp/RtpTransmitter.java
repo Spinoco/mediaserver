@@ -63,9 +63,15 @@ public class RtpTransmitter {
 	// Details of a transmitted packet
 	private RTPFormats formats;
 	private RTPFormat currentFormat;
+
+	// For formats with different sample rates, we need to know number of samples in each frame,
+	// This is so that we can compute the correct sequence number for the stream.
+	private int samplesPerFrame;
 	private long timestamp;
 	private long dtmfTimestamp;
 	private int sequenceNumber;
+	private int dtmfSequenceNumber;
+	private long rtpTimestamp;
 
 	public RtpTransmitter(final PriorityQueueScheduler scheduler, final RtpClock clock, final RtpStatistics statistics) {
 		this.rtpClock = clock;
@@ -74,10 +80,12 @@ public class RtpTransmitter {
 		this.rtpOutput = new RTPOutput(scheduler, this);
 		this.dtmfOutput = new DtmfOutput(scheduler, this);
 		this.sequenceNumber = 0;
+		this.dtmfSequenceNumber = 0;
 		this.dtmfTimestamp = -1;
 		this.timestamp = -1;
 		this.formats = null;
 		this.secure = false;
+		this.rtpTimestamp = 0;
 	}
 	
 	public void setFormatMap(final RTPFormats rtpFormats) {
@@ -168,23 +176,27 @@ public class RtpTransmitter {
 		if (!this.dtmfSupported) {
 			return;
 		}
-		
-		// ignore frames with duplicate timestamp
-		if (frame.getTimestamp() / 1000000L == dtmfTimestamp) {
-			return;
+
+		//dtmfTimestamp is defined only in marked frames
+		if (frame.isMark()) {
+			this.dtmfSequenceNumber = 0;
+			long localRtp = rtpClock.getLocalRtpTimeNoDrift();
+			dtmfTimestamp = localRtp - (localRtp % samplesPerFrame);
+		} else {
+			this.dtmfSequenceNumber++;
 		}
 
-		// convert to milliseconds first
-		dtmfTimestamp = frame.getTimestamp() / 1000000L;
-		// convert to rtp time units
-		dtmfTimestamp = rtpClock.convertToRtpTime(dtmfTimestamp);
+		int newSeq = this.dtmfSequenceNumber + 1 + (int)(dtmfTimestamp / samplesPerFrame);
+		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
+		else this.sequenceNumber++;
+
 		try {
 			RtpPacket oobPacket = RtpPacket.outgoing(
 					this.channel.getLocalAddress()
 					, this.channel.getRemoteAddress()
-					, false
+					, frame.isMark()
 					, AVProfile.telephoneEventsID
-					, this.sequenceNumber++
+					, this.sequenceNumber
 					, dtmfTimestamp
 					, this.statistics.getSsrc()
 					, frame.getData()
@@ -223,17 +235,18 @@ public class RtpTransmitter {
 			}
 			// update clock rate
 			rtpClock.setClockRate(currentFormat.getClockRate());
+			samplesPerFrame = currentFormat.getClockRate() / 50;
 		}
 
-		// ignore frames with duplicate timestamp
-		if (frame.getTimestamp() / 1000000L == timestamp) {
-			return;
-		}
+        timestamp = rtpClock.getLocalRtpTimeNoDrift();
+		int newSeq = 1 + (int)(timestamp / samplesPerFrame);
+		if (newSeq > this.sequenceNumber) this.sequenceNumber = newSeq;
+		else this.sequenceNumber++;
 
-		// convert to milliseconds first
-		timestamp = frame.getTimestamp() / 1000000L;
-		// convert to rtp time units
-		timestamp = rtpClock.convertToRtpTime(timestamp);
+		long newRtpTimestamp = timestamp - (timestamp % samplesPerFrame);
+
+		if (newRtpTimestamp > this.rtpTimestamp) this.rtpTimestamp = newRtpTimestamp;
+		else this.rtpTimestamp = this.rtpTimestamp + samplesPerFrame;
 
 		try {
 			RtpPacket rtpPacket = RtpPacket.outgoing(
@@ -241,8 +254,8 @@ public class RtpTransmitter {
 					, this.channel.getRemoteAddress()
 					, false
 					, currentFormat.getID()
-					, this.sequenceNumber++
-					, timestamp
+					, this.sequenceNumber
+					, this.rtpTimestamp
 					, this.statistics.getSsrc()
 					, frame.getData()
 					, frame.getOffset()
