@@ -33,6 +33,7 @@ import org.mobicents.media.server.impl.rtp.CnameGenerator;
 import org.mobicents.media.server.impl.rtp.RtpListener;
 import org.mobicents.media.server.impl.rtp.channels.AudioChannel;
 import org.mobicents.media.server.impl.rtp.sdp.SdpFactory;
+import org.mobicents.media.server.io.network.BindType;
 import org.mobicents.media.server.io.sdp.SdpException;
 import org.mobicents.media.server.io.sdp.SessionDescription;
 import org.mobicents.media.server.io.sdp.SessionDescriptionParser;
@@ -320,10 +321,18 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
             throw new IOException("Audio codecs were not supported");
         }
 
-        // Bind audio channel to an address provided by UdpManager
-        this.audioChannel.bind(this.local, remoteAudio.isRtcpMux());
+		boolean enableIce = remoteAudio.containsIce();
 
-        boolean enableIce = remoteAudio.containsIce();
+		BindType bindType = BindType.Default;
+		if (this.local) {
+			bindType = BindType.Local;
+		} else if(enableIce) {
+			bindType = BindType.WebRtc;
+		}
+
+        // Bind audio channel to an address provided by UdpManager
+        this.audioChannel.bind(bindType, remoteAudio.isRtcpMux());
+
         if (enableIce) {
             // Enable ICE. Wait for ICE handshake to finish before connecting RTP/RTCP channels
             this.audioChannel.enableICE(this.channelsManager.getExternalAddress(), remoteAudio.isRtcpMux());
@@ -408,12 +417,20 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
     public void generateOffer(boolean webrtc) throws IOException {
         // Only open and bind a new channel if not currently configured
         if (!this.audioChannel.isOpen()) {
-            // call is outbound since the connection is generating the offer
+
+        	BindType bindType = BindType.Default;
+			if (this.local) {
+				bindType = BindType.Local;
+			} else if(webrtc) {
+				bindType = BindType.WebRtc;
+			}
+
+			// call is outbound since the connection is generating the offer
             this.outbound = true;
 
             // setup audio channel
             this.audioChannel.open();
-            this.audioChannel.bind(this.local, webrtc);
+            this.audioChannel.bind(bindType, webrtc);
 
             if (webrtc) {
                 this.audioChannel.enableICE(this.channelsManager.getExternalAddress(), true);

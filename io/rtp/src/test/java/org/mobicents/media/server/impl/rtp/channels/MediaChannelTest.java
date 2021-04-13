@@ -30,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.impl.rtp.sdp.SdpFactory;
+import org.mobicents.media.server.io.network.BindType;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.sdp.fields.MediaDescriptionField;
 import org.mobicents.media.server.scheduler.Clock;
@@ -99,7 +100,7 @@ public class MediaChannelTest {
 		// activate local channel and bind it to local address
 		// there will be two underlying channels for RTP and RTCP
 		localChannel.open();
-		localChannel.bind(false, false);
+		localChannel.bind(BindType.Default, false);
 		
 		String localAddress = localChannel.rtpChannel.getLocalHost();
 		int localRtpPort = localChannel.rtpChannel.getLocalPort();
@@ -109,7 +110,7 @@ public class MediaChannelTest {
 		// activate "remote" channel and bind it to local address
 		// there will be two underlying channels for RTP and RTCP
 		remoteChannel.open();
-		remoteChannel.bind(false, rtcpMux);
+		remoteChannel.bind(BindType.Default, rtcpMux);
 		
 		String remoteAddress = remoteChannel.rtpChannel.getLocalHost();
 		int remoteRtpPort = remoteChannel.rtpChannel.getLocalPort();
@@ -159,7 +160,7 @@ public class MediaChannelTest {
 		// activate local channel and bind it to local address
 		// there will be two underlying channels for RTP and RTCP
 		localChannel.open();
-		localChannel.bind(false, rtcpMux);
+		localChannel.bind(BindType.Default, rtcpMux);
 		
 		String localAddress = localChannel.rtpChannel.getLocalHost();
 		int localPort = localChannel.rtpChannel.getLocalPort();
@@ -168,7 +169,7 @@ public class MediaChannelTest {
 		// activate "remote" channel and bind it to local address
 		// there will be two underlying channels for RTP and RTCP
 		remoteChannel.open();
-		remoteChannel.bind(false, rtcpMux);
+		remoteChannel.bind(BindType.Default, rtcpMux);
 		
 		String remoteAddress = remoteChannel.rtpChannel.getLocalHost();
 		int remotePort = remoteChannel.rtpChannel.getLocalPort();
