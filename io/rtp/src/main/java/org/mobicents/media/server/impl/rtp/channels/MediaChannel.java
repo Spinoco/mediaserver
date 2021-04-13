@@ -33,7 +33,6 @@ import org.mobicents.media.server.impl.rtp.RtpChannel;
 import org.mobicents.media.server.impl.rtp.RtpClock;
 import org.mobicents.media.server.impl.rtp.SsrcGenerator;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
-import org.mobicents.media.server.io.network.BindType;
 import org.mobicents.media.server.io.sdp.fields.MediaDescriptionField;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
@@ -453,10 +452,10 @@ public abstract class MediaChannel {
 	 * @throws IOException
 	 *             When channel cannot be bound to an address.
 	 */
-	public void bind(BindType bindType, boolean rtcpMux) throws IOException, IllegalStateException {
-		this.rtpChannel.bind(bindType, rtcpMux);
+	public void bind(boolean isLocal, boolean rtcpMux) throws IOException, IllegalStateException {
+		this.rtpChannel.bind(isLocal, rtcpMux);
 		if(!rtcpMux) {
-			this.rtcpChannel.bind(bindType, this.rtpChannel.getLocalPort() + 1);
+			this.rtcpChannel.bind(isLocal, this.rtpChannel.getLocalPort() + 1);
 		}
 		this.rtcpMux = rtcpMux;
 		
@@ -527,11 +526,11 @@ public abstract class MediaChannel {
 	 * @throws IllegalStateException
 	 *             The binding operation is not allowed if ICE is active
 	 */
-	public void bindRtcp(BindType bindType, int port) throws IOException, IllegalStateException {
+	public void bindRtcp(boolean isLocal, int port) throws IOException, IllegalStateException {
 		if(this.ice) {
 			throw new IllegalStateException("Cannot bind when ICE is enabled");
 		}
-		this.rtcpChannel.bind(bindType, port);
+		this.rtcpChannel.bind(isLocal, port);
 		this.rtcpMux = (port == this.rtpChannel.getLocalPort());
 	}
 

@@ -46,7 +46,6 @@ import org.mobicents.media.server.component.oob.OOBComponent;
 import org.mobicents.media.server.component.oob.OOBMixer;
 import org.mobicents.media.server.impl.resource.dtmf.DetectorImpl;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
-import org.mobicents.media.server.io.network.BindType;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.scheduler.Clock;
@@ -138,7 +137,7 @@ public class RTPEventTest implements DtmfDetectorListener {
         detector.addListener(this);
         
         channel = channelsManager.getRtpChannel(new RtpStatistics(rtpClock), rtpClock, rtpClock, null);
-        channel.bind(BindType.Default, false);
+        channel.bind(false, false);
 
         sender = new Sender(channel.getLocalPort());
         

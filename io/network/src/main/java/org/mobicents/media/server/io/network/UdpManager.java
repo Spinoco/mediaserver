@@ -57,7 +57,6 @@ public class UdpManager {
     private final Scheduler scheduler;
     private final PortManager portManager;
     private final PortManager localPortManager;
-    private final PortManager webRtcPortManager;
 
     // UDP Manager properties
     private static final int PORT_ANY = -1;
@@ -89,7 +88,6 @@ public class UdpManager {
         // Core elements
         this.portManager = new PortManager();
         this.localPortManager = new PortManager();
-        this.webRtcPortManager = new PortManager();
 
         // UDP Manager properties
         this.inet = INET_UNKNOWN;
@@ -308,21 +306,22 @@ public class UdpManager {
         return key;
     }
 
-    public void bind(DatagramChannel channel, int port, BindType bindType) throws IOException {
-        switch(bindType) {
-            case Local:
-                bindTo(this.localPortManager, getLocalBindAddress(), channel, port);
-                break;
-            case WebRtc:
-                bindTo(this.webRtcPortManager, getWebRTCAddress(), channel, port);
-                break;
-            default:
-                bindTo(this.portManager, getBindAddress(), channel, port);
+    public void bind(DatagramChannel channel, int port, boolean local) throws IOException {
+        if (local) {
+            bindLocal(channel, port);
+        } else {
+            bind(channel, port);
         }
     }
 
-    /** solely for webrtc interface this has to be used for binds of webrtc/ice calls **/
-    private void bindTo(PortManager portManager, String bindToAddress,  DatagramChannel channel, int port) throws IOException {
+    /**
+     * Binds socket to global bind address and specified port.
+     * 
+     * @param channel the channel
+     * @param port the port to bind to
+     * @throws IOException
+     */
+    public void bind(DatagramChannel channel, int port) throws IOException {
         // select port if wildcarded
         if (port == PORT_ANY) {
             port = portManager.next();
@@ -332,12 +331,12 @@ public class UdpManager {
         IOException ex = null;
         for (int q = 0; q < 100; q++) {
             try {
-                channel.bind(new InetSocketAddress(bindToAddress, port));
+                channel.bind(new InetSocketAddress(bindAddress, port));
                 ex = null;
                 break;
             } catch (IOException e) {
                 ex = e;
-                logger.info("Failed trying to bind " + bindToAddress + ":" + port);
+                logger.info("Failed trying to bind " + bindAddress + ":" + port);
                 port = portManager.next();
             }
         }
@@ -345,7 +344,38 @@ public class UdpManager {
         if (ex != null) {
             throw ex;
         }
+    }
 
+    /**
+     * Binds socket to global bind address and specified port.
+     * 
+     * @param channel the channel
+     * @param port the port to bind to
+     * @throws IOException
+     */
+    public void bindLocal(DatagramChannel channel, int port) throws IOException {
+        // select port if wildcarded
+        if (port == PORT_ANY) {
+            port = localPortManager.next();
+        }
+
+        // try bind
+        IOException ex = null;
+        for (int q = 0; q < 100; q++) {
+            try {
+                channel.bind(new InetSocketAddress(localBindAddress, port));
+                ex = null;
+                break;
+            } catch (IOException e) {
+                ex = e;
+                logger.info("Failed trying to bind " + localBindAddress + ":" + port);
+                port = localPortManager.next();
+            }
+        }
+
+        if (ex != null) {
+            throw ex;
+        }
     }
 
     private void generateTasks() throws IOException {

@@ -34,7 +34,6 @@ import org.mobicents.media.server.component.audio.AudioMixer;
 import org.mobicents.media.server.component.audio.Sine;
 import org.mobicents.media.server.component.audio.SpectraAnalyzer;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
-import org.mobicents.media.server.io.network.BindType;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.scheduler.Clock;
@@ -146,8 +145,8 @@ public class RtpChannelTest {
         channel2.setOutputFormats(fmts);
         channel2.setInputDsp(dsp22);        
         
-        channel1.bind(BindType.Default, false);
-        channel2.bind(BindType.Default, false);
+        channel1.bind(false, false);
+        channel2.bind(false, false);
 
         channel1.setRemotePeer(new InetSocketAddress("127.0.0.1", channel2.getLocalPort()));
         channel2.setRemotePeer(new InetSocketAddress("127.0.0.1", channel1.getLocalPort()));

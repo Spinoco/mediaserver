@@ -36,7 +36,6 @@ import org.mobicents.media.server.impl.rtp.RtpListener;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
 import org.mobicents.media.server.impl.srtp.DtlsHandler;
 import org.mobicents.media.server.impl.srtp.DtlsListener;
-import org.mobicents.media.server.io.network.BindType;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.network.channel.MultiplexedChannel;
 import org.mobicents.media.server.utils.Text;
@@ -169,7 +168,7 @@ public class RtcpChannel extends MultiplexedChannel implements DtlsListener, Ice
 	 * @throws IOException
 	 *             When the channel cannot be openend or bound
 	 */
-	public void bind(BindType bindType, int port) throws IOException {
+	public void bind(boolean isLocal, int port) throws IOException {
 		try {
 			// Open this channel with UDP Manager on first available address
 			this.selectionKey = udpManager.open(this);
@@ -182,7 +181,7 @@ public class RtcpChannel extends MultiplexedChannel implements DtlsListener, Ice
 		onBinding();
 
 		// bind data channel
-		this.udpManager.bind(this.dataChannel, port, bindType);
+		this.udpManager.bind(this.dataChannel, port, isLocal);
 		this.bound = true;
 	}
 

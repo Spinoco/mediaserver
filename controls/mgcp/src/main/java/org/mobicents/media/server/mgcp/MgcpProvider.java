@@ -23,7 +23,6 @@
 package org.mobicents.media.server.mgcp;
 
 import org.apache.logging.log4j.Logger;
-import org.mobicents.media.server.io.network.BindType;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.network.channel.MultiplexedChannel;
 import org.mobicents.media.server.io.network.channel.PacketHandler;
@@ -136,7 +135,7 @@ public class MgcpProvider extends MultiplexedChannel {
             if (log.isInfoEnabled()) {
                 log.info("Binding channel to " + transport.getLocalBindAddress() + ":" + port);
             }
-            transport.bind(this.dataChannel, this.port, BindType.Local);
+            transport.bindLocal(this.dataChannel, this.port);
         } catch (Exception e) {
             log.error("Could not bind MGCP channel. Closing the channel.", e);
             close();

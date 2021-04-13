@@ -32,7 +32,6 @@ import org.mobicents.media.server.impl.rtcp.RtcpHandler;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
 import org.mobicents.media.server.impl.srtp.DtlsHandler;
 import org.mobicents.media.server.impl.srtp.DtlsListener;
-import org.mobicents.media.server.io.network.BindType;
 import org.mobicents.media.server.io.network.UdpManager;
 import org.mobicents.media.server.io.network.channel.MultiplexedChannel;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
@@ -323,19 +322,19 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
 //        }
     }
 
-    public void bind(BindType bindType, boolean rtcpMux) throws IOException {
+    public void bind(boolean isLocal, boolean rtcpMux) throws IOException {
         // Open this channel with UDP Manager on first available address
         this.selectionKey = udpManager.open(this);
         this.dataChannel = (DatagramChannel) this.selectionKey.channel();
 
         // bind data channel
-        this.udpManager.bind(this.dataChannel, PORT_ANY, bindType);
+        this.udpManager.bind(this.dataChannel, PORT_ANY, isLocal);
 
         this.rtcpMux = rtcpMux;
         this.bound = true;
 
         // activate media elements
-        onBinding(!bindType.equals(BindType.Local));
+        onBinding(!isLocal);
     }
 
     public boolean isBound() {
