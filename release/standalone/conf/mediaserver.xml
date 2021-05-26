@@ -40,6 +40,7 @@
 			<codec name="pcmu" />
 			<codec name="pcma" />
 			<codec name="opus" />
+			<codec name="l16_16" />
 			<codec name="l16_24" />
 		</codecs>
 	</media>

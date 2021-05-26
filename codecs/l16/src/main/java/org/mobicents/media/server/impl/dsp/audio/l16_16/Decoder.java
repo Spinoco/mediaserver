@@ -18,7 +18,7 @@ public class Decoder implements Codec {
         byte[] dest = res.getData();
         byte[] src = frame.getData();
         for (int i=0, j=0; i < src.length; i+=2, j++) {
-            dest[j] = src[i];
+            dest[j] = src[i+1];
         }
         res.setOffset(0);
         res.setLength(320);
