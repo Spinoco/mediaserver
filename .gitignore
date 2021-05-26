@@ -30,4 +30,4 @@ media-server-docs/sources-telscale/src
 client/jsr-309/tck/tck-run
 *.iml
 
-.idea/
+.idea

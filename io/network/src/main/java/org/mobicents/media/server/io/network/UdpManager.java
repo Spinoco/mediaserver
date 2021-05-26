@@ -238,6 +238,7 @@ public class UdpManager {
      */
     public void setLowestPort(int low) {
         portManager.setLowestPort(low);
+        webRtcPortManager.setLowestPort(low);
     }
 
     /**
@@ -256,6 +257,7 @@ public class UdpManager {
      */
     public void setHighestPort(int high) {
         portManager.setHighestPort(high);
+        webRtcPortManager.setHighestPort(high);
     }
 
     /**
@@ -264,7 +266,7 @@ public class UdpManager {
      * @retun min port number
      */
     public int getHighestPort() {
-        return portManager.getLowestPort();
+        return portManager.getHighestPort();
     }
 
     public void addSelector(Selector selector) {

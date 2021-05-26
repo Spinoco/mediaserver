@@ -39,7 +39,7 @@ public class Encoder implements Codec {
     private final static Format linear = FormatFactory.createAudioFormat("linear", 8000, 16, 1);
 
     public Frame process(Frame frame) {
-	Frame res = Memory.allocate(320);
+	    Frame res = Memory.allocate(320);
         System.arraycopy( frame.getData(), 0, res.getData(), 0, 320 );
 
         res.setOffset(0);
