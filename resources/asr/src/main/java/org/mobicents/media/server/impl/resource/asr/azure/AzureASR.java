@@ -72,6 +72,8 @@ public class AzureASR extends ASR {
             active.set(true);
             output.start();
         }
+
+
     }
 
     @Override

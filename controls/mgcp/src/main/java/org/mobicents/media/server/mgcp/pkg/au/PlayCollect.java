@@ -301,7 +301,6 @@ public class PlayCollect extends Signal {
      */
     private void prepareCollectPhase(Options options) {
         // obtain detector instance
-        System.out.println("ENDPOINT: " + getEndpoint());
         dtmfDetector = (DtmfDetector) getEndpoint().getResource(MediaType.AUDIO, ComponentType.DTMF_DETECTOR);
 
         // DTMF detector was buffering digits and now it can contain
@@ -322,8 +321,6 @@ public class PlayCollect extends Signal {
         } else {
             buffer.setCount(options.getDigitsNumber());
         }
-
-        System.out.println("Collect PHASE prepared " + options);
     }
 
     // prepares ASR shall the ASR be used in collect phase
