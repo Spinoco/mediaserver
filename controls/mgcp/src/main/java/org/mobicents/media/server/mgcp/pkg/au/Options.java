@@ -72,6 +72,7 @@ public class Options {
     private final static Text x_md= new Text("x-md");
 	private final static Text x_asr_google= new Text("x-asr-google");
 	private final static Text x_asr_google_utterance= new Text("x-asr-google-utterance");
+	private final static Text x_lg = new Text("x-lg");
     
     private final static Text TRUE = new Text("true");
     private final static Text FALSE = new Text("false");
@@ -149,8 +150,9 @@ public class Options {
     private boolean hasCurrKey=false;
     private char currKey=' ';
 
-    private String asrGoogleConfig;
-    private boolean asrGoogleUtterance = false;
+	private String asrLang;
+	private String asrGoogleConfig;
+	private boolean asrGoogleUtterance = false;
     
     static
     {
@@ -224,9 +226,10 @@ public class Options {
         options.lastKey=' ';
         options.hasCurrKey=false;
         options.currKey=' ';
-        options.asrGoogleConfig = null;
-        options.asrGoogleUtterance = false;
-        
+		options.asrGoogleConfig = null;
+		options.asrGoogleUtterance = false;
+        options.asrLang = null;
+
     	cache.offer(options);
     }
     
@@ -538,7 +541,9 @@ public class Options {
             	}
             	else if (name.equals(x_md))
                     this.maxDuration = value.toInteger();
-            	else if (name.equals(x_asr_google))
+				else if (name.equals(x_lg))
+					this.asrLang = value.toString();
+				else if (name.equals(x_asr_google))
 					this.asrGoogleConfig = value.toString();
 				else if (name.equals(x_asr_google_utterance))
 					this.asrGoogleUtterance = value.toString().toLowerCase().equals("true");
@@ -727,6 +732,10 @@ public class Options {
         return this.lastKey;
     }
 
+	public String getAsrLang() {
+		return this.asrLang;
+	}
+
 	public String getASRGoogleConfig() {
 		return this.asrGoogleConfig;
 	}
@@ -736,7 +745,7 @@ public class Options {
 	}
 
 	public Boolean getASREnabled() {
-    	return this.asrGoogleConfig != null;
+    	return this.asrLang != null || this.asrGoogleConfig != null;
 	}
 
 	@Override
@@ -802,8 +811,7 @@ public class Options {
 				", lastKey=" + lastKey +
 				", hasCurrKey=" + hasCurrKey +
 				", currKey=" + currKey +
-				", asrGoogleConfig='" + asrGoogleConfig + '\'' +
-				", asrGoogleUtterance=" + asrGoogleUtterance  +
+				", asrLang='" + asrLang +
 				'}';
 	}
 }

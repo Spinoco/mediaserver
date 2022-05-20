@@ -25,6 +25,7 @@ package org.mobicents.media.server.mgcp.endpoint;
 import org.mobicents.media.Component;
 import org.mobicents.media.ComponentType;
 
+import org.mobicents.media.server.impl.resource.asr.ASR;
 import org.mobicents.media.server.impl.resource.asr.ASRImpl;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.Endpoint;
@@ -274,7 +275,7 @@ public class MediaGroup {
 		try {
 			if (this.asrCollect == null) {
 				this.asrCollect = this.resourcesPool.newAudioComponent(ComponentType.ASR_COLLECT);
-				audioComponent.addOutput(((ASRImpl)this.asrCollect).getAudioOutput());
+				audioComponent.addOutput(((ASR)this.asrCollect).getAudioOutput());
 				writeComponents++;
 				audioComponent.updateMode(readComponents!=0,true);
 				updateEndpoint(0,1);
@@ -291,11 +292,11 @@ public class MediaGroup {
 		acquireResourceSemaphore();
 		try {
 			if (this.asrCollect != null) {
-				audioComponent.remove(((ASRImpl)this.asrCollect).getAudioOutput());
+				audioComponent.remove(((ASR)this.asrCollect).getAudioOutput());
 				writeComponents --;
 				audioComponent.updateMode(readComponents != 0,writeComponents != 0);
 				updateEndpoint(0,-1);
-				((ASRImpl)this.asrCollect).clearAllListeners();
+				((ASR)this.asrCollect).clearAllListeners();
 				this.asrCollect.deactivate();
 				this.resourcesPool.releaseAudioComponent(this.asrCollect, ComponentType.ASR_COLLECT);
 				this.asrCollect = null;

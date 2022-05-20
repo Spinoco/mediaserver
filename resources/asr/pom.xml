@@ -15,6 +15,11 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>com.microsoft.cognitiveservices.speech</groupId>
+                <artifactId>client-sdk</artifactId>
+                <version>1.21.0</version>
+            </dependency>
+            <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
                 <version>19.0.0</version>
@@ -60,6 +65,10 @@
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-speech</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.microsoft.cognitiveservices.speech</groupId>
+            <artifactId>client-sdk</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -75,5 +84,14 @@
         </plugins>
         <finalName>restcomm-mediaserver-asr-${project.version}</finalName>
     </build>
+
+
+    <repositories>
+        <repository>
+            <id>maven-cognitiveservices-speech</id>
+            <name>Microsoft Cognitive Services Speech Maven Repository</name>
+            <url>https://csspeechstorage.blob.core.windows.net/maven/</url>
+        </repository>
+    </repositories>
 
 </project>

@@ -55,4 +55,12 @@
 		<signalDetector poolSize="0" />
 		<signalGenerator poolSize="0" />
 	</resources>
+
+	<asr>
+		<azure>
+			<key>${sys:mms.asr.azure.key}</key>
+			<region>${sys:mms.asr.azure.region}</region>
+
+		</azure>
+	</asr>
 </mediaserver>

@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.Logger;
 import org.mobicents.media.ComponentType;
-import org.mobicents.media.server.impl.resource.asr.ASRImpl;
+import org.mobicents.media.server.impl.resource.asr.ASR;
 import org.mobicents.media.server.impl.resource.asr.ASRListener;
 import org.mobicents.media.server.mgcp.controller.signal.Event;
 import org.mobicents.media.server.mgcp.controller.signal.NotifyImmediately;
@@ -78,7 +78,7 @@ public class PlayCollect extends Signal {
     // Media Components
     private Player player;
     private DtmfDetector dtmfDetector;
-    private ASRImpl asr;
+    private ASR asr;
     private ASRHandler asrHandler;
     private Options options;
     private final EventBuffer buffer;
@@ -329,10 +329,9 @@ public class PlayCollect extends Signal {
     // prepares ASR shall the ASR be used in collect phase
     private void prepareASRPhase(Options options) {
         if (options.getASREnabled()) {
-            asr = (ASRImpl) getEndpoint().getResource(MediaType.AUDIO, ComponentType.ASR_COLLECT);
-            this.asr.configure(options.getASRGoogleConfig(), options.getAsrGoogleUtterance());
+            asr = (ASR) getEndpoint().getResource(MediaType.AUDIO, ComponentType.ASR_COLLECT);
+            this.asr.configure(options.getAsrLang());
         }
-
     }
 
     /**

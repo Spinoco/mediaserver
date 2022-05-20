@@ -130,7 +130,7 @@ public class LocalConnectionImplTest {
         this.signalDetectorPool = new PhoneSignalDetectorPool(signalDetectorFactory);
         this.signalGeneratorFactory = new PhoneSignalGeneratorFactory(mediaScheduler);
         this.signalGeneratorPool = new PhoneSignalGeneratorPool(signalGeneratorFactory);
-        this.ASRFactory = new ASRFactory(mediaScheduler, null);
+        this.ASRFactory = new ASRFactory(mediaScheduler, null, null, null);
         this.ASRPool = new ASRPool(ASRFactory);
         resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool, ASRPool);
 

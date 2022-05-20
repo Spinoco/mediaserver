@@ -21,6 +21,7 @@
 
 package org.mobicents.media.server.bootstrap.ioc.provider;
 
+import org.mobicents.media.server.impl.resource.asr.ASR;
 import org.mobicents.media.server.impl.resource.audio.AudioRecorderImpl;
 import org.mobicents.media.server.impl.resource.dtmf.DetectorImpl;
 import org.mobicents.media.server.impl.resource.dtmf.GeneratorImpl;
@@ -50,7 +51,7 @@ public class ResourcesPoolProvider implements Provider<ResourcesPool> {
     private final ResourcePool<GeneratorImpl> dtmfGenerators;
     private final ResourcePool<PhoneSignalDetector> signalDetectors;
     private final ResourcePool<PhoneSignalGenerator> signalGenerators;
-    private final ResourcePool<ASRImpl> transcribers;
+    private final ResourcePool<ASR> transcribers;
 
     @Inject
     public ResourcesPoolProvider(ResourcePool<RtpConnectionImpl> rtpConnections,
@@ -58,7 +59,7 @@ public class ResourcesPoolProvider implements Provider<ResourcesPool> {
             ResourcePool<AudioRecorderImpl> recorders, ResourcePool<DetectorImpl> dtmfDetectors,
             ResourcePool<GeneratorImpl> dtmfGenerators, ResourcePool<PhoneSignalDetector> signalDetectors,
             ResourcePool<PhoneSignalGenerator> signalGenerators,
-            ResourcePool<ASRImpl> transcribers
+            ResourcePool<ASR> transcribers
     ) {
         this.players = players;
         this.recorders = recorders;

@@ -132,7 +132,7 @@ public class ReclaimingTest {
         this.signalDetectorPool = new PhoneSignalDetectorPool(signalDetectorFactory);
         this.signalGeneratorFactory = new PhoneSignalGeneratorFactory(mediaScheduler);
         this.signalGeneratorPool = new PhoneSignalGeneratorPool(signalGeneratorFactory);
-        this.asrFactory = new ASRFactory(mediaScheduler,  null);
+        this.asrFactory = new ASRFactory(mediaScheduler,  null, null, null);
         this.asrPool = new ASRPool(asrFactory);
         resourcesPool=new ResourcesPool(rtpConnectionPool, localConnectionPool, playerPool, recorderPool, dtmfDetectorPool, dtmfGeneratorPool, signalDetectorPool, signalGeneratorPool, asrPool);
 

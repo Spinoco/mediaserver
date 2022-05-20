@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import org.mobicents.media.Component;
 import org.mobicents.media.ComponentFactory;
 import org.mobicents.media.ComponentType;
+import org.mobicents.media.server.impl.resource.asr.ASR;
 import org.mobicents.media.server.impl.resource.audio.AudioRecorderImpl;
 import org.mobicents.media.server.impl.resource.dtmf.DetectorImpl;
 import org.mobicents.media.server.impl.resource.dtmf.GeneratorImpl;
@@ -55,7 +56,7 @@ public class ResourcesPool implements ComponentFactory {
 	private final ResourcePool<GeneratorImpl> dtmfGenerators;
 	private final ResourcePool<PhoneSignalDetector> signalDetectors;
 	private final ResourcePool<PhoneSignalGenerator> signalGenerators;
-	private final ResourcePool<ASRImpl> asr;
+	private final ResourcePool<ASR> asr;
 
 	// Connections
 	private final ResourcePool<LocalConnectionImpl> localConnections;
@@ -65,7 +66,7 @@ public class ResourcesPool implements ComponentFactory {
             ResourcePool<AudioPlayerImpl> players, ResourcePool<AudioRecorderImpl> recorders,
             ResourcePool<DetectorImpl> dtmfDetectors, ResourcePool<GeneratorImpl> dtmfGenerators,
             ResourcePool<PhoneSignalDetector> signalDetectors, ResourcePool<PhoneSignalGenerator> signalGenerators,
-					 ResourcePool<ASRImpl> transcribers) {
+					 ResourcePool<ASR> transcribers) {
         // Media Resources
         this.players = players;
         this.recorders = recorders;
@@ -188,7 +189,7 @@ public class ResourcesPool implements ComponentFactory {
 			break;
 
 		case ASR_COLLECT:
-			this.asr.offer((ASRImpl) component);
+			this.asr.offer((ASR) component);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Released Transcriber [pool size:" + asr.size() + ", free:" + asr.count()+"]");
 			}

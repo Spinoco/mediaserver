@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.TypeLiteral;
 import org.mobicents.media.core.configuration.MediaServerConfiguration;
+import org.mobicents.media.server.impl.resource.asr.ASR;
 import org.mobicents.media.server.impl.resource.asr.ASRFactory;
 import org.mobicents.media.server.impl.resource.asr.ASRImpl;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
@@ -39,11 +40,11 @@ public class ASRFactoryProvider implements Provider<ASRFactory> {
 
     @Override
     public ASRFactory get() {
-        return new ASRFactory(mediaScheduler, googleRunner);
+        return new ASRFactory(mediaScheduler, googleRunner, config.getAsrConfiguration().getAzureKey(), config.getAsrConfiguration().getAzureRegion());
     }
 
 
-    public static final class AsrFactoryType extends TypeLiteral<PooledObjectFactory<ASRImpl>> {
+    public static final class AsrFactoryType extends TypeLiteral<PooledObjectFactory<ASR>> {
 
         public static final AsrFactoryType INSTANCE = new AsrFactoryType();
 
