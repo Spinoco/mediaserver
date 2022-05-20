@@ -31,3 +31,7 @@ client/jsr-309/tck/tck-run
 *.iml
 
 .idea
+
+#ignore release
+release
+

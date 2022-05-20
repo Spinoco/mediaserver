@@ -67,4 +67,11 @@
 		<signalDetector poolSize="0" />
 		<signalGenerator poolSize="0" />
 	</resources>
+
+	<asr>
+		<azure>
+			<key></key>
+			<region></region>
+		</azure>
+	</asr>
 </mediaserver>
