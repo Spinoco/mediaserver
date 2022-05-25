@@ -25,6 +25,8 @@ package org.mobicents.media.server.mgcp.endpoint;
 import org.mobicents.media.Component;
 import org.mobicents.media.ComponentType;
 
+import org.mobicents.media.server.impl.resource.asr.ASR;
+import org.mobicents.media.server.impl.resource.asr.ASRImpl;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.Endpoint;
 import org.mobicents.media.server.component.audio.AudioComponent;
@@ -52,6 +54,7 @@ public class MediaGroup {
 	private Component dtmfGenerator;
 	private Component signalDetector;
 	private Component signalGenerator;
+	private Component asrCollect;
 	
 	private ResourcesPool resourcesPool;
 	
@@ -82,18 +85,25 @@ public class MediaGroup {
 	{
 		return this.oobComponent;
 	}
-	
-	public Component getPlayer()
-	{
+
+	private void acquireResourceSemaphore() {
 		try
 		{
 			resourceSemaphore.acquire();
 		}
 		catch(Exception ex)
 		{
-			
+
 		}
-		
+	}
+
+	private void releaseResourceSemaphore() {
+		resourceSemaphore.release();
+	}
+
+	public Component getPlayer()
+	{
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -108,7 +118,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 		
 		return this.player;
@@ -116,16 +126,8 @@ public class MediaGroup {
 	
 	public void releasePlayer()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
-		
-		
+		acquireResourceSemaphore();
+
 		try
 		{
 			if(this.player!=null)		
@@ -142,7 +144,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 	}
 	
@@ -153,14 +155,7 @@ public class MediaGroup {
 	
 	public Component getRecorder()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -178,7 +173,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 		
 		return this.recorder;
@@ -186,14 +181,7 @@ public class MediaGroup {
 	
 	public void releaseRecorder()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -214,7 +202,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 	}
 	
@@ -225,14 +213,7 @@ public class MediaGroup {
 	
 	public Component getDtmfDetector()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -250,22 +231,15 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 		
 		return this.dtmfDetector;
 	}
 	
 	public void releaseDtmfDetector()
-	{		
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+	{
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -287,7 +261,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 	}
 	
@@ -295,17 +269,51 @@ public class MediaGroup {
 	{
 		return this.dtmfDetector!=null;
 	}
+
+	public Component getASRCollect() {
+		acquireResourceSemaphore();
+		try {
+			if (this.asrCollect == null) {
+				this.asrCollect = this.resourcesPool.newAudioComponent(ComponentType.ASR_COLLECT);
+				audioComponent.addOutput(((ASR)this.asrCollect).getAudioOutput());
+				writeComponents++;
+				audioComponent.updateMode(readComponents!=0,true);
+				updateEndpoint(0,1);
+
+
+			}
+		} finally {
+			releaseResourceSemaphore();
+		}
+		return this.asrCollect;
+	}
+
+	public Component releaseASRCollect() {
+		acquireResourceSemaphore();
+		try {
+			if (this.asrCollect != null) {
+				audioComponent.remove(((ASR)this.asrCollect).getAudioOutput());
+				writeComponents --;
+				audioComponent.updateMode(readComponents != 0,writeComponents != 0);
+				updateEndpoint(0,-1);
+				((ASR)this.asrCollect).clearAllListeners();
+				this.asrCollect.deactivate();
+				this.resourcesPool.releaseAudioComponent(this.asrCollect, ComponentType.ASR_COLLECT);
+				this.asrCollect = null;
+			}
+		} finally {
+			releaseResourceSemaphore();
+		}
+		return  this.asrCollect;
+	}
+
+	public boolean hasASRCollect() {
+		return  false;
+	}
 	
 	public Component getDtmfGenerator()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -323,7 +331,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 		
 		return this.dtmfGenerator;
@@ -331,14 +339,7 @@ public class MediaGroup {
 	
 	public void releaseDtmfGenerator()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -358,7 +359,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 	}
 	
@@ -369,14 +370,7 @@ public class MediaGroup {
 	
 	public Component getSignalDetector()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -391,7 +385,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 		
 		return this.signalDetector;
@@ -399,14 +393,7 @@ public class MediaGroup {
 	
 	public void releaseSignalDetector()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -425,7 +412,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 	}
 	
@@ -436,14 +423,7 @@ public class MediaGroup {
 	
 	public Component getSignalGenerator()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -458,7 +438,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 		
 		return this.signalGenerator;
@@ -466,14 +446,7 @@ public class MediaGroup {
 	
 	public void releaseSignalGenerator()
 	{
-		try
-		{
-			resourceSemaphore.acquire();
-		}
-		catch(Exception ex)
-		{
-			
-		}
+		acquireResourceSemaphore();
 		
 		try
 		{
@@ -490,7 +463,7 @@ public class MediaGroup {
 		}
 		finally
 		{
-			resourceSemaphore.release();
+			releaseResourceSemaphore();
 		}
 	}
 	
@@ -546,5 +519,6 @@ public class MediaGroup {
 		releaseDtmfGenerator();
 		releaseSignalDetector();
 		releaseSignalGenerator();
+		releaseASRCollect();
 	}		
 }

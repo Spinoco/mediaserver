@@ -22,25 +22,26 @@
 
 package org.mobicents.media.server.mgcp.pkg.au;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.mobicents.media.server.utils.Text;
 /**
  * Represents parameters supplied with command.
- * 
+ *
  * @author oifa yulian
  */
 public class Options {
 
 	public static ConcurrentLinkedQueue<Options> cache = new ConcurrentLinkedQueue<Options>();
-    
+
     private final static Text ann = new Text("an");
     private final static Text du = new Text("du");
     private final static Text of = new Text("of");
     private final static Text it = new Text("it");
     private final static Text ip = new Text("ip");
-    private final static Text rp = new Text("rp");    
+    private final static Text rp = new Text("rp");
     private final static Text iv = new Text("iv");
     private final static Text mn = new Text("mn");
     private final static Text mx = new Text("mx");
@@ -57,7 +58,7 @@ public class Options {
     private final static Text pst = new Text("pst");
     private final static Text cb = new Text("cb");
     private final static Text fdt= new Text("fdt");
-    private final static Text idt= new Text("idt");    
+    private final static Text idt= new Text("idt");
     private final static Text na= new Text("na");
     private final static Text eik = new Text("eik");
     private final static Text iek = new Text("iek");
@@ -69,16 +70,19 @@ public class Options {
     private final static Text cur = new Text("cur");
     private final static Text dpa = new Text("dpa");
     private final static Text x_md= new Text("x-md");
-    
+    private final static Text x_asr_google= new Text("x-asr-google");
+    private final static Text x_asr_google_utterance= new Text("x-asr-google-utterance");
+    private final static Text x_lg = new Text("x-lg");
+
     private final static Text TRUE = new Text("true");
     private final static Text FALSE = new Text("false");
-    
+
     //private Text prompt = new Text(new byte[150], 0, 150);
     private Text recordID = new Text(new byte[2048], 0, 2048);
-    
+
     private boolean isPrompt,isReprompt,isDeletePersistentAudio=false,isFailureAnnouncement=false,isSuccessAnnouncement=false,isNoSpeechReprompt=false,isNoDigitsReprompt=false;
     private boolean override = true;
-    
+
     private Text segmentsBuffer = new Text(new byte[2048], 0, 2048);
     private Text promptBuffer = new Text(new byte[2048], 0, 2048);
     private Text repromptBuffer = new Text(new byte[2048], 0, 2048);
@@ -87,7 +91,7 @@ public class Options {
     private Text noSpeechRepromptBuffer = new Text(new byte[2048], 0, 2048);
     private Text noDigitsRepromptBuffer = new Text(new byte[2048], 0, 2048);
     private Text deletePersistentAudioBuffer = new Text(new byte[2048], 0, 2048);
-    
+
     private Collection<Text> segments;
     private Collection<Text> prompt;
     private Collection<Text> reprompt;
@@ -96,43 +100,43 @@ public class Options {
     private Collection<Text> noSpeechReprompt;
     private Collection<Text> noDigitsReprompt;
     private Collection<Text> deletePersistentAudio;
-    
+
     private int cursor;
-    
+
     //max duration in milliseconds
     private long duration = -1;
-    
+
     //intial offset in milliseconds
     private long offset = 0;
-    
+
     //repeat count
     private int repeatCount;
-    
+
     private long interval;
-    
+
     private int digitsNumber,maxDigitsNumber;
     private long postSpeechTimer = -1,preSpeechTimer = -1;
-    
+
     private Text digitPattern = new Text(new byte[2048], 0, 2048);
     private Collection<Text> digitPatterns;
-    
+
     private Text name = new Text();
     private Text value = new Text();
-    
+
     private Text[] parameter = new Text[]{name, value};
-    
+
     private boolean nonInterruptable = false;
     private long recordDuration = -1;
     private boolean clearDigits = false;
     private boolean includeEndInput = false;
-    
+
     private char endInputKey='#';
-    
+
     private long firstDigitTimer=0;
     private long interDigitTimer=0;
     private int maxDuration=0;
     private int numberOfAttempts=0;
-    
+
     private Text tempSequence;
     private char tempChar;
     private boolean hasNextKey=false;
@@ -145,25 +149,29 @@ public class Options {
     private char lastKey=' ';
     private boolean hasCurrKey=false;
     private char currKey=' ';
-    
+
+    private String asrLang;
+    private String asrGoogleConfig;
+    private boolean asrGoogleUtterance = false;
+
     static
     {
     	for(int i=0;i<100;i++)
     		cache.offer(new Options(null));
     }
-    
+
     public static Options allocate(Text options)
     {
     	Options currOptions=cache.poll();
-    	
+
     	if(currOptions==null)
     		currOptions=new Options(options);
     	else
     		currOptions.init(options);
-    	
+
     	return currOptions;
     }
-    
+
     public static void recycle(Options options)
     {
     	options.isPrompt=false;
@@ -174,7 +182,7 @@ public class Options {
     	options.isNoSpeechReprompt=false;
     	options.isNoDigitsReprompt=false;
     	options.override = true;
-        
+
     	options.segments=null;
     	options.prompt=null;
     	options.reprompt=null;
@@ -183,8 +191,8 @@ public class Options {
     	options.noSpeechReprompt=null;
     	options.noDigitsReprompt=null;
     	options.deletePersistentAudio=null;
-        
-    	options.cursor=0;        
+
+    	options.cursor=0;
         options.duration = -1;
         options.offset = 0;
         options.repeatCount=0;
@@ -193,21 +201,21 @@ public class Options {
         options.maxDigitsNumber=0;
         options.postSpeechTimer = -1;
         options.preSpeechTimer = -1;
-        
+
         options.digitPatterns=null;
-        
+
         options.nonInterruptable = false;
         options.recordDuration = -1;
         options.clearDigits = false;
         options.includeEndInput = false;
-        
+
         options.endInputKey='#';
-        
+
         options.firstDigitTimer=0;
         options.interDigitTimer=0;
         options.maxDuration=0;
         options.numberOfAttempts=0;
-        
+
         options.hasNextKey=false;
         options.nextKey=' ';
         options.hasPrevKey=false;
@@ -218,31 +226,34 @@ public class Options {
         options.lastKey=' ';
         options.hasCurrKey=false;
         options.currKey=' ';
-        
+        options.asrGoogleConfig = null;
+        options.asrGoogleUtterance = false;
+        options.asrLang = null;
+
     	cache.offer(options);
     }
-    
+
     /**
      * Creates options.
-     * 
+     *
      * @param options the text representation of options.
      */
     private Options(Text options) {
     	init(options);
     }
-    
+
     private void init(Text options) {
         if (options == null || options.length() == 0) {
             return;
         }
-        
+
         Collection<Text> params = options.split(' ');
         int count;
-        
+
         for (Text param : params) {
-            param.trim();            
+            param.trim();
             count=param.divide('=', parameter);
-            
+
             if(count==2)
             {
             	if(name.length()==2)
@@ -263,12 +274,12 @@ public class Options {
     	            		{
     	            			case 'u':
     	            			case 'U':
-    	            				this.duration = value.toInteger() * 1000000L;            		            
+    	            				this.duration = value.toInteger() * 1000000L;
     	            				break;
     	            			case 'p':
     	            			case 'P':
     	            				value.duplicate(digitPattern);
-	            		            digitPatterns = digitPattern.split('|'); 
+	            		            digitPatterns = digitPattern.split('|');
     	            				break;
     	            		}
     	            		break;
@@ -278,11 +289,11 @@ public class Options {
     	            		{
     	            			case 'f':
     	            			case 'F':
-    	            				this.offset = value.toInteger() * 1000000L;            	            
+    	            				this.offset = value.toInteger() * 1000000L;
     	            				break;
     	            			case 'a':
     	            			case 'A':
-    	            				this.override = value.equals(TRUE);            		            
+    	            				this.override = value.equals(TRUE);
     	            				break;
     	            		}
     	            		break;
@@ -292,7 +303,7 @@ public class Options {
     	            		{
     	            			case 't':
     	            			case 'T':
-    	            				this.repeatCount = value.toInteger();            		            
+    	            				this.repeatCount = value.toInteger();
     	            				break;
     	            			case 'p':
     	            			case 'P':
@@ -302,8 +313,8 @@ public class Options {
     	            		        break;
     	            			case 'v':
     	            			case 'V':
-    	            				this.interval = value.toInteger() * 1000000L;            		            
-    	            				break;    	            			
+    	            				this.interval = value.toInteger() * 1000000L;
+    	            				break;
     	            		}
     	            		break;
     	            	case 'r':
@@ -318,8 +329,8 @@ public class Options {
     	            		        break;
     	            			case 'i':
     	            			case 'I':
-    	            				value.duplicate(recordID);            		                            		             
-    	            				break;    	            			
+    	            				value.duplicate(recordID);
+    	            				break;
     	            		}
     	            		break;
     	            	case 'm':
@@ -328,7 +339,7 @@ public class Options {
     	            		{
     	            			case 'n':
     	            			case 'N':
-    	            				this.digitsNumber = value.toInteger();            		            
+    	            				this.digitsNumber = value.toInteger();
     	            				break;
     	            			case 'x':
     	            			case 'X':
@@ -342,24 +353,24 @@ public class Options {
     	            		{
     	            			case 'i':
     	            			case 'I':
-    	            				this.nonInterruptable = value.equals(TRUE); 
+    	            				this.nonInterruptable = value.equals(TRUE);
     	            				break;
     	            			case 'd':
     	            			case 'D':
     	            				value.duplicate(noDigitsRepromptBuffer);
     	            				this.noDigitsReprompt = noDigitsRepromptBuffer.split(';');
-    	        		            this.isNoDigitsReprompt = true;                
+    	        		            this.isNoDigitsReprompt = true;
     	        		            break;
     	            			case 'a':
     	            			case 'A':
-    	            				this.numberOfAttempts = value.toInteger();            		            
+    	            				this.numberOfAttempts = value.toInteger();
     	            				break;
     	            			case 's':
     	            			case 'S':
     	            				value.duplicate(noSpeechRepromptBuffer);
     	            				this.noSpeechReprompt = noSpeechRepromptBuffer.split(';');
-    	        		            this.isNoSpeechReprompt = true;                
-    	        		            break;            			
+    	        		            this.isNoSpeechReprompt = true;
+    	        		            break;
     	            		}
     	            		break;
     	            	case 'f':
@@ -370,8 +381,8 @@ public class Options {
     	            			case 'A':
     	            				value.duplicate(failureAnnouncementBuffer);
     	            				this.failureAnnouncement = failureAnnouncementBuffer.split(';');
-    	            				this.isFailureAnnouncement = true;                
-    	            				break;    	            			
+    	            				this.isFailureAnnouncement = true;
+    	            				break;
     	            		}
     	            		break;
     	            	case 's':
@@ -379,16 +390,16 @@ public class Options {
     	            		if(name.charAt(1)=='a' || name.charAt(1)=='A') {
     	            			value.duplicate(successAnnouncementBuffer);
     	            			this.successAnnouncement = successAnnouncementBuffer.split(';');
-    	                    	this.isSuccessAnnouncement = true;                
-    	                    } 
+    	                    	this.isSuccessAnnouncement = true;
+    	                    }
     	            		break;
     	            	case 'c':
     	            	case 'C':
     	            		if(name.charAt(1)=='b' || name.charAt(1)=='B')
-    	                        this.clearDigits = value.equals(TRUE);                    
-    	            		break;    	            	
-    	            }  	
-            	}  
+    	                        this.clearDigits = value.equals(TRUE);
+    	            		break;
+    	            }
+            	}
             	else if(name.length()==3)
             	{
             		switch(name.charAt(0))
@@ -402,8 +413,8 @@ public class Options {
     	            				if(name.charAt(2)=='a' || name.charAt(2)=='A') {
     	            					value.duplicate(deletePersistentAudioBuffer);
     	            		            this.deletePersistentAudio = deletePersistentAudioBuffer.split(';');
-    	            		            this.isDeletePersistentAudio = true;                
-    	            		        } 
+    	            		            this.isDeletePersistentAudio = true;
+    	            		        }
     	            				break;
     	            		}
     	            		break;
@@ -414,12 +425,12 @@ public class Options {
     	            			case 'd':
     	            			case 'D':
     	            				if(name.charAt(2)=='t' || name.charAt(2)=='T')
-    	            					this.interDigitTimer = value.toInteger();            		            
+    	            					this.interDigitTimer = value.toInteger();
     	            				break;
     	            			case 'e':
     	            			case 'E':
     	            				if(name.charAt(2)=='k' || name.charAt(2)=='K')
-    	            					this.includeEndInput = value.equals(TRUE);            		            
+    	            					this.includeEndInput = value.equals(TRUE);
     	                			break;
     	            		}
     	            		break;
@@ -441,7 +452,7 @@ public class Options {
     	            			case 'd':
     	            			case 'D':
     	            				if(name.charAt(2)=='t' || name.charAt(2)=='T')
-    	            					this.firstDigitTimer = value.toInteger();            		            
+    	            					this.firstDigitTimer = value.toInteger();
     	            				break;
     	            		}
     	            		break;
@@ -455,7 +466,7 @@ public class Options {
     	                    		{
     	            					case 't':
     	            					case 'T':
-    	            						this.postSpeechTimer = value.toInteger() * 100000000L; 
+    	            						this.postSpeechTimer = value.toInteger() * 100000000L;
     	            						break;
     	            					case 'k':
     	            					case 'K':
@@ -470,7 +481,7 @@ public class Options {
     	                    			            	{
     	                    			            		this.firstKey=tempChar;
     	                    			            		this.hasFirstKey=true;
-    	                    			            	}   
+    	                    			            	}
     	            			            			break;
     	            			            		case 'l':
     	            			            		case 'L':
@@ -504,7 +515,7 @@ public class Options {
     	                    			                	this.hasPrevKey=true;
     	                    			                }
     	            			            			break;
-    	            			            	}            			            	 
+    	            			            	}
     	            						}
     	            						break;
     	                    		}
@@ -512,24 +523,31 @@ public class Options {
     	            			case 'r':
     	            			case 'R':
     	            				if(name.charAt(2)=='t' || name.charAt(2)=='T')
-    	            					this.preSpeechTimer = value.toInteger() * 100000000L;            		            
+    	            					this.preSpeechTimer = value.toInteger() * 100000000L;
     	            				break;
     	            		}
     	            		break;
     	            	case 'c':
     	            	case 'C':
     	            		if(name.charAt(1)=='b' || name.charAt(1)=='B')
-    	                        this.clearDigits = value.equals(TRUE);                    
+    	                        this.clearDigits = value.equals(TRUE);
     	            		break;
     	            	case 'e':
     	            	case 'E':
     	            		if (name.equals(eik) && value.length()==1)
-    	                        this.endInputKey = value.charAt(0);                    
-    	            		break;    	            	
-    	            }  
+    	                        this.endInputKey = value.charAt(0);
+    	            		break;
+    	            }
             	}
             	else if (name.equals(x_md))
-                    this.maxDuration = value.toInteger();        		
+                    this.maxDuration = value.toInteger();
+                else if (name.equals(x_lg))
+                    this.asrLang = value.toString();
+                else if (name.equals(x_asr_google))
+                    this.asrGoogleConfig = value.toString();
+                else if (name.equals(x_asr_google_utterance))
+                    this.asrGoogleUtterance = value.toString().toLowerCase().equals("true");
+
             }
         }
     }
@@ -537,180 +555,263 @@ public class Options {
     public Collection<Text> getSegments() {
         return segments;
     }
-    
+
     public boolean hasPrompt() {
         return this.isPrompt;
     }
-    
+
     public Collection<Text> getPrompt() {
         return prompt;
     }
-    
+
     public boolean hasReprompt() {
         return this.isReprompt;
     }
-    
+
     public Collection<Text> getReprompt() {
         return reprompt;
     }
-    
+
     public boolean hasDeletePresistentAudio() {
         return this.isDeletePersistentAudio;
     }
-    
+
     public Collection<Text> getDeletePersistentAudio() {
         return this.deletePersistentAudio;
     }
-    
+
     public boolean hasNoSpeechReprompt() {
         return this.isNoSpeechReprompt;
     }
-    
+
     public Collection<Text> getNoSpeechReprompt() {
         return this.noSpeechReprompt;
     }
-    
+
     public boolean hasNoDigitsReprompt() {
         return this.isNoDigitsReprompt;
     }
-    
+
     public Collection<Text> getNoDigitsReprompt() {
         return this.noDigitsReprompt;
     }
-    
+
     public boolean hasSuccessAnnouncement() {
         return this.isSuccessAnnouncement;
     }
-    
+
     public Collection<Text> getSuccessAnnouncement() {
         return this.successAnnouncement;
     }
-    
+
     public boolean hasFailureAnnouncement() {
         return this.isFailureAnnouncement;
     }
-    
+
     public Collection<Text> getFailureAnnouncement() {
         return this.failureAnnouncement;
     }
-    
+
     public long getDuration() {
         return duration;
     }
-    
+
     public long getOffset() {
         return offset;
     }
-    
+
     public int getRepeatCount() {
         return repeatCount;
     }
-    
+
     public long getInterval() {
         return interval;
     }
-    
+
     public int getDigitsNumber() {
         return this.digitsNumber;
     }
-    
+
     public int getMaxDigitsNumber() {
         return this.maxDigitsNumber;
     }
-    
+
     public Collection<Text> getDigitPattern() {
         return digitPatterns;
     }
-    
+
     public boolean isNonInterruptable() {
         return this.nonInterruptable;
     }
-    
+
     public Text getRecordID() {
         return this.recordID;
     }
-    
+
     public long getRecordDuration() {
         return this.recordDuration;
     }
-    
+
     public boolean isOverride() {
         return this.override;
     }
-    
+
     public long getPostSpeechTimer() {
         return this.postSpeechTimer;
     }
-    
+
     public long getPreSpeechTimer() {
         return this.preSpeechTimer;
     }
-    
+
     public long getFirstDigitTimer() {
         return this.firstDigitTimer;
     }
-    
+
     public long getInterDigitTimer() {
         return this.interDigitTimer;
     }
-    
+
     public int getMaxDuration() {
         return this.maxDuration;
     }
-    
+
     public char getEndInputKey() {
         return this.endInputKey;
     }
-    
+
     public int getNumberOfAttempts() {
         return this.numberOfAttempts;
-    }    
-    
+    }
+
     public boolean isClearDigits() {
         return clearDigits;
     }
-    
+
     public boolean isIncludeEndInputKey() {
         return includeEndInput;
     }
-    
+
     public boolean prevKeyValid() {
         return this.hasPrevKey;
     }
-    
+
     public char getPrevKey() {
         return this.prevKey;
     }
-    
+
     public boolean firstKeyValid() {
         return this.hasFirstKey;
     }
-    
+
     public char getFirstKey() {
         return this.firstKey;
     }
-    
+
     public boolean currKeyValid() {
         return this.hasCurrKey;
     }
-    
+
     public char getCurrKey() {
         return this.currKey;
     }
-    
+
     public boolean nextKeyValid() {
         return this.hasNextKey;
     }
-    
+
     public char getNextKey() {
         return this.nextKey;
     }
-    
+
     public boolean lastKeyValid() {
         return this.hasLastKey;
     }
-    
+
     public char getLastKey() {
         return this.lastKey;
     }
+
+	public String getAsrLang() {
+		return this.asrLang;
+	}
+
+	public String getASRGoogleConfig() {
+		return this.asrGoogleConfig;
+	}
+
+	public Boolean getAsrGoogleUtterance() {
+		return this.asrGoogleUtterance;
+	}
+
+	public Boolean getASREnabled() {
+    	return this.asrLang != null || this.asrGoogleConfig != null;
+	}
+
+	@Override
+	public String toString() {
+		return "Options{" +
+				"recordID=" + recordID +
+				", isPrompt=" + isPrompt +
+				", isReprompt=" + isReprompt +
+				", isDeletePersistentAudio=" + isDeletePersistentAudio +
+				", isFailureAnnouncement=" + isFailureAnnouncement +
+				", isSuccessAnnouncement=" + isSuccessAnnouncement +
+				", isNoSpeechReprompt=" + isNoSpeechReprompt +
+				", isNoDigitsReprompt=" + isNoDigitsReprompt +
+				", override=" + override +
+				", segmentsBuffer=" + segmentsBuffer +
+				", promptBuffer=" + promptBuffer +
+				", repromptBuffer=" + repromptBuffer +
+				", failureAnnouncementBuffer=" + failureAnnouncementBuffer +
+				", successAnnouncementBuffer=" + successAnnouncementBuffer +
+				", noSpeechRepromptBuffer=" + noSpeechRepromptBuffer +
+				", noDigitsRepromptBuffer=" + noDigitsRepromptBuffer +
+				", deletePersistentAudioBuffer=" + deletePersistentAudioBuffer +
+				", segments=" + segments +
+				", prompt=" + prompt +
+				", reprompt=" + reprompt +
+				", failureAnnouncement=" + failureAnnouncement +
+				", successAnnouncement=" + successAnnouncement +
+				", noSpeechReprompt=" + noSpeechReprompt +
+				", noDigitsReprompt=" + noDigitsReprompt +
+				", deletePersistentAudio=" + deletePersistentAudio +
+				", cursor=" + cursor +
+				", duration=" + duration +
+				", offset=" + offset +
+				", repeatCount=" + repeatCount +
+				", interval=" + interval +
+				", digitsNumber=" + digitsNumber +
+				", maxDigitsNumber=" + maxDigitsNumber +
+				", postSpeechTimer=" + postSpeechTimer +
+				", preSpeechTimer=" + preSpeechTimer +
+				", digitPattern=" + digitPattern +
+				", digitPatterns=" + digitPatterns +
+				", name=" + name +
+				", value=" + value +
+				", parameter=" + Arrays.toString(parameter) +
+				", nonInterruptable=" + nonInterruptable +
+				", recordDuration=" + recordDuration +
+				", clearDigits=" + clearDigits +
+				", includeEndInput=" + includeEndInput +
+				", endInputKey=" + endInputKey +
+				", firstDigitTimer=" + firstDigitTimer +
+				", interDigitTimer=" + interDigitTimer +
+				", maxDuration=" + maxDuration +
+				", numberOfAttempts=" + numberOfAttempts +
+				", tempSequence=" + tempSequence +
+				", tempChar=" + tempChar +
+				", hasNextKey=" + hasNextKey +
+				", nextKey=" + nextKey +
+				", hasPrevKey=" + hasPrevKey +
+				", prevKey=" + prevKey +
+				", hasFirstKey=" + hasFirstKey +
+				", firstKey=" + firstKey +
+				", hasLastKey=" + hasLastKey +
+				", lastKey=" + lastKey +
+				", hasCurrKey=" + hasCurrKey +
+				", currKey=" + currKey +
+				", asrLang='" + asrLang +
+				'}';
+	}
 }

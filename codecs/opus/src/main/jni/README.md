@@ -16,6 +16,12 @@ export JAVA_HOME = ...  java home directory
 
 c++ opus_jni.cpp -I $OPUS_HOME/include/ -I $JAVA_HOME/include/ -I $JAVA_HOME/include/darwin/ -lopus -Wall -fPIC -shared -o libopus_jni.dylib
 
+### OSX M1
+
+Install opus via: "brew install opus"
+
+c++ opus_jni.cpp -I $OPUS_HOME/include/opus -I $JAVA_HOME/include/ -I $JAVA_HOME/include/darwin/ -L $OPUS_HOME/lib/ -Wall -fPIC -shared -o libopus_jni.dylib -lopus
+
 ## LINUX
 
 c++ opus_jni.cpp -std=c++11 -I $JAVA_HOME/include -I $JAVA_HOME/include/linux -I $OPUS_HOME/include -lopus -Wall -fPIC -shared -o libopus_jni.so

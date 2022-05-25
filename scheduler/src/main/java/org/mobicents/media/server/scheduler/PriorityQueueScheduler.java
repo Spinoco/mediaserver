@@ -22,7 +22,6 @@
 
 package org.mobicents.media.server.scheduler;
 
-import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,7 +50,7 @@ public class PriorityQueueScheduler  {
     // Queues for RTP Tasks, real time 20ms timer
     protected OrderedTaskQueue rtpInputQ = new OrderedTaskQueue();
     protected OrderedTaskQueue rtpMixerQ = new OrderedTaskQueue();
-    protected OrderedTaskQueue rtpOuputQ = new OrderedTaskQueue();
+    protected OrderedTaskQueue rtpOutputQ = new OrderedTaskQueue();
 
     // queues for heartbeat, 100ms, nest effort
     protected OrderedTaskQueue heartbeatQ = new OrderedTaskQueue();
@@ -114,7 +113,7 @@ public class PriorityQueueScheduler  {
 
     private RealTimeScheduler rtpScheduler = new RealTimeScheduler(
             20000000 // 20 ms
-            , new OrderedTaskQueue[] { rtpInputQ, rtpMixerQ, rtpOuputQ }
+            , new OrderedTaskQueue[] { rtpInputQ, rtpMixerQ, rtpOutputQ}
             , workerExecutorV2RT
             , new NamedThreadFactory("ms-rt-rtp")
     );
@@ -199,7 +198,7 @@ public class PriorityQueueScheduler  {
                 break;
 
             case RTP_OUTPUT :
-                rtpOuputQ.accept(task);
+                rtpOutputQ.accept(task);
                 break;
 
             case RTP_MIXER :

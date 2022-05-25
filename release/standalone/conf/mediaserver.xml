@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This is free software; you can redistribute it and/or modify it under
+	the terms of the GNU Lesser General Public License as published by the Free
+	Software Foundation; either version 2.1 of the License, or (at your option)
+	any later version. This software is distributed in the hope that it will
+	be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
+	Public License for more details. You should have received a copy of the GNU
+	Lesser General Public License along with this software; if not, write to
+	the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+	MA 02110-1301 USA, or see the FSF site: http://www.fsf.org. -->
+<mediaserver>
+	<network>
+		<bindAddress>${sys:mms.bind.address}</bindAddress>
+		<externalAddress>${sys:mms.external.address}</externalAddress>
+		<webRtcAddress>${sys:mms.webrtc.address}</webRtcAddress>
+		<network>${sys:mms.local-network.address}</network>
+		<subnet>${sys:mms.local.subnet}</subnet>
+		<sbc>false</sbc>
+	</network>
+
+	<controller protocol="mgcp">
+		<address>${sys:mms.bind.address}</address>
+		<port>2427</port>
+		<endpoints>
+			<endpoint name="mobicents/bridge/" class="org.mobicents.media.server.mgcp.endpoint.BridgeEndpoint" poolSize="50" />
+			<endpoint name="mobicents/ivr/" class="org.mobicents.media.server.mgcp.endpoint.IvrEndpoint" poolSize="50" />
+			<endpoint name="mobicents/cnf/" class="org.mobicents.media.server.mgcp.endpoint.ConferenceEndpoint" poolSize="50" />
+		</endpoints>
+		<configuration>mgcp-conf.xml</configuration>
+		<poolSize>25</poolSize>
+	</controller>
+
+	<media>
+		<timeout>0</timeout>
+		<lowPort>10000</lowPort>
+		<highPort>20000</highPort>
+		<jitterBuffer size="50" />
+		<codecs>
+			<codec name="pcmu" />
+			<codec name="pcma" />
+			<codec name="opus" />
+			<codec name="l16_24" />
+		</codecs>
+	</media>
+
+	<resources>
+		<localConnection poolSize="100" />
+		<remoteConnection poolSize="100" />
+		<player poolSize="100" />
+		<recorder poolSize="100" />
+		<dtmfDetector poolSize="100" dbi="-35" rfc2833Only="true" />
+		<dtmfGenerator poolSize="100" toneVolume="-20" toneDuration="80" />
+		<signalDetector poolSize="0" />
+		<signalGenerator poolSize="0" />
+	</resources>
+</mediaserver>

@@ -26,12 +26,14 @@ import org.apache.logging.log4j.Logger;
 import org.mobicents.media.Component;
 import org.mobicents.media.ComponentFactory;
 import org.mobicents.media.ComponentType;
+import org.mobicents.media.server.impl.resource.asr.ASR;
 import org.mobicents.media.server.impl.resource.audio.AudioRecorderImpl;
 import org.mobicents.media.server.impl.resource.dtmf.DetectorImpl;
 import org.mobicents.media.server.impl.resource.dtmf.GeneratorImpl;
 import org.mobicents.media.server.impl.resource.mediaplayer.audio.AudioPlayerImpl;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalDetector;
 import org.mobicents.media.server.impl.resource.phone.PhoneSignalGenerator;
+import org.mobicents.media.server.impl.resource.asr.ASRImpl;
 import org.mobicents.media.server.mgcp.connection.LocalConnectionImpl;
 import org.mobicents.media.server.mgcp.connection.RtpConnectionImpl;
 import org.mobicents.media.server.spi.Connection;
@@ -54,6 +56,7 @@ public class ResourcesPool implements ComponentFactory {
 	private final ResourcePool<GeneratorImpl> dtmfGenerators;
 	private final ResourcePool<PhoneSignalDetector> signalDetectors;
 	private final ResourcePool<PhoneSignalGenerator> signalGenerators;
+	private final ResourcePool<ASR> asr;
 
 	// Connections
 	private final ResourcePool<LocalConnectionImpl> localConnections;
@@ -62,7 +65,8 @@ public class ResourcesPool implements ComponentFactory {
     public ResourcesPool(ResourcePool<RtpConnectionImpl> rtpConnections, ResourcePool<LocalConnectionImpl> localConnections,
             ResourcePool<AudioPlayerImpl> players, ResourcePool<AudioRecorderImpl> recorders,
             ResourcePool<DetectorImpl> dtmfDetectors, ResourcePool<GeneratorImpl> dtmfGenerators,
-            ResourcePool<PhoneSignalDetector> signalDetectors, ResourcePool<PhoneSignalGenerator> signalGenerators) {
+            ResourcePool<PhoneSignalDetector> signalDetectors, ResourcePool<PhoneSignalGenerator> signalGenerators,
+					 ResourcePool<ASR> transcribers) {
         // Media Resources
         this.players = players;
         this.recorders = recorders;
@@ -70,6 +74,7 @@ public class ResourcesPool implements ComponentFactory {
         this.dtmfGenerators = dtmfGenerators;
         this.signalDetectors = signalDetectors;
         this.signalGenerators = signalGenerators;
+        this.asr = transcribers;
 
         // Connections
         this.localConnections = localConnections;
@@ -120,6 +125,13 @@ public class ResourcesPool implements ComponentFactory {
 			result = this.signalGenerators.poll();
 			if (logger.isDebugEnabled()) {
 				logger.debug("Allocated Signal Generator [pool size:" + signalGenerators.size() + ", free:" + signalGenerators.count()+"]");
+			}
+			break;
+
+		case ASR_COLLECT:
+			result = this.asr.poll();
+			if (logger.isDebugEnabled()) {
+				logger.debug("Allocated Transcriber [pool size:" + asr.size() + ", free:" + asr.count()+"]");
 			}
 			break;
 			
@@ -173,6 +185,13 @@ public class ResourcesPool implements ComponentFactory {
 			this.signalGenerators.offer((PhoneSignalGenerator) component);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Released Signal Generator [pool size:" + signalGenerators.size() + ", free:" + signalGenerators.count()+"]");
+			}
+			break;
+
+		case ASR_COLLECT:
+			this.asr.offer((ASR) component);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Released Transcriber [pool size:" + asr.size() + ", free:" + asr.count()+"]");
 			}
 			break;
 			

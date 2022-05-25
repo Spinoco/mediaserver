@@ -42,6 +42,8 @@
 		<jitterBuffer size="50" />
 		<codecs>
 			<codec name="l16" />
+			<codec name="l16_16" />
+			<codec name="l16_24" />
 			<codec name="pcmu" />
 			<codec name="pcma" />
 			<codec name="gsm" />
@@ -65,4 +67,11 @@
 		<signalDetector poolSize="0" />
 		<signalGenerator poolSize="0" />
 	</resources>
+
+	<asr>
+		<azure>
+			<key></key>
+			<region></region>
+		</azure>
+	</asr>
 </mediaserver>
