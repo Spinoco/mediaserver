@@ -26,11 +26,13 @@ package org.mobicents.media.server.mgcp.pkg.au;
  * Triggered by EventBuffer when one of the following conditions happens:
  * - event sequence matches to one of the specified pattern;
  * - the number of detected events reaches specified value.
+ *
+ * each of the listener functions take the time when the tone / last tone occurred.
  * 
  * @author kulikov
  */
 public interface BufferListener {
-	public boolean tone(String s);    
-    public void patternMatches(int index, String s);
-    public void countMatches(String s);
+	public boolean tone(String s, long DTMFTimeStamp);
+    public void patternMatches(int index, String s, long DTMFTimeStamp);
+    public void countMatches(String s, long DTMFTimeStamp);
 }

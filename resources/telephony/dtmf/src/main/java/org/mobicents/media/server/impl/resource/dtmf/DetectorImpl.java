@@ -47,6 +47,8 @@ import org.mobicents.media.server.spi.listener.TooManyListenersException;
 import org.mobicents.media.server.spi.memory.Frame;
 import org.mobicents.media.server.spi.pooling.PooledObject;
 
+import javax.swing.*;
+
 /**
  * Implements inband DTMF detector.
  * 
@@ -103,6 +105,13 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
 
     private double[] signal;
     private double maxAmpl;
+
+    /**
+     * The timeStamp before which all DTMF events should be ignored.
+     * This is to be used when 2 detectors are registered right after each other, and we require the second one not to be
+     * triggered by still ongoing DTMF event transmission.
+     */
+    private long ignoreBeforeDTMFTimeStamp = -1;
 
     private DtmfBuffer dtmfBuffer;
 
@@ -221,7 +230,7 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
                         String tone = getTone(p, P);
 
                         if (tone != null)
-                            dtmfBuffer.push(tone);
+                            dtmfBuffer.push(tone, buffer.getDTMFTimestamp());
                     }
                 }
             }
@@ -321,8 +330,8 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
         return dtmfBuffer.getInterdigitInterval();
     }
 
-    protected void fireEvent(String tone) {
-        eventSender.events.add(new DtmfEventImpl(this, tone, 0));
+    protected void fireEvent(String tone, long DTMFTimeStamp) {
+        eventSender.events.add(new DtmfEventImpl(this, tone, 0, DTMFTimeStamp));
         // schedule event delivery
         scheduler.submit(eventSender, EventQueueType.PLAYBACK);
     }
@@ -367,6 +376,10 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
     @Override
     public void clearDigits() {
         dtmfBuffer.clear();
+    }
+
+    public void setIgnoreBefore(long DTMFTimeStamp) {
+        ignoreBeforeDTMFTimeStamp = DTMFTimeStamp;
     }
 
     public class EventSender extends Task {
@@ -424,7 +437,9 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
         @Override
         public void onMediaTransfer(Frame buffer) throws IOException {
             byte[] data = buffer.getData();
-            if (data.length != 4)
+
+            // Data has invalid length OR have DTMF timestamp before or equal to ignore stamp.
+            if (data.length != 4 || buffer.getDTMFTimestamp() <= ignoreBeforeDTMFTimeStamp)
                 return;
 
             boolean endOfEvent = false;
@@ -458,7 +473,7 @@ public class DetectorImpl extends AbstractSink implements DtmfDetector, PooledOb
 
             latestSeq = buffer.getSequenceNumber();
             currTone = data[0];
-            dtmfBuffer.push(oobEvtID[currTone]);
+            dtmfBuffer.push(oobEvtID[currTone], buffer.getDTMFTimestamp());
         }
 
         @Override

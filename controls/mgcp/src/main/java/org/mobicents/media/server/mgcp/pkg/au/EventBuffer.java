@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.logging.log4j.Logger;
+import org.apache.xml.dtm.DTM;
 import org.mobicents.media.server.spi.dtmf.DtmfDetectorListener;
 import org.mobicents.media.server.spi.dtmf.DtmfEvent;
 import org.mobicents.media.server.utils.Text;
@@ -37,6 +38,9 @@ import org.mobicents.media.server.utils.Text;
 public class EventBuffer implements DtmfDetectorListener {
     //string representation of queue;
     private String sequence = "";
+
+    // The TimeStamp of last DTMF event received.
+    private long lastDTMFTimeStamp = 0;
     
     //patterns for even detection
     private String[] patterns=new String[0];	
@@ -66,6 +70,10 @@ public class EventBuffer implements DtmfDetectorListener {
     
     public String getSequence() {
         return sequence;
+    }
+
+    public long getLastDTMFTimeStamp() {
+        return lastDTMFTimeStamp;
     }
     
     public void flush() { 
@@ -126,27 +134,28 @@ public class EventBuffer implements DtmfDetectorListener {
     public void process(DtmfEvent event) {
     	logger.info("Receive " + event.getTone() + " tone");
     	
-    	if(!listener.tone(event.getTone()))
+    	if(!listener.tone(event.getTone(), event.getDTMFTimeStamp()))
     		return;
         
     	//process event immediately if collect phase is active
         if (this.isActive) {
-            process(event.getTone());
+            process(event.getTone(), event.getDTMFTimeStamp());
         } else {
             //buffer tone if collect phase is not activated yet
             queue.offer(event);
         }                          
     }
     
-    private void process(String tone) {
+    private void process(String tone, long DTMFTimeStamp) {
     	sequence += tone;
+        lastDTMFTimeStamp = DTMFTimeStamp;
         boolean sequenceFound=false;
         
         //check pattern matching for the entire sequence
         for (int i = 0;i<patterns.length;i++) {
             if (sequence.matches(patterns[i]) || tone.matches(patterns[i]))
             {
-            	listener.patternMatches(i, sequence);
+            	listener.patternMatches(i, sequence, DTMFTimeStamp);
             	
             	//count = -1;
             	sequence = "";
@@ -158,7 +167,7 @@ public class EventBuffer implements DtmfDetectorListener {
         //check the amount of detected event and notify listener
         //if limit reached.
         if (!sequenceFound && count > 0 && sequence.length() == count) {
-        	listener.countMatches(sequence);
+        	listener.countMatches(sequence, DTMFTimeStamp);
             sequence = "";
             //count = -1;
         }

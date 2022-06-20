@@ -87,15 +87,16 @@ public class DtmfBuffer implements Serializable {
     /**
      * Handles inter digit intervals.
      * 
-     * @param symbol received digit.
+     * @param symbol        received digit.
+     * @param DTMFTimeStamp the time at which the symbol was received.
      */
-    public void push(String symbol) {
+    public void push(String symbol, long DTMFTimeStamp) {
         long now = System.currentTimeMillis();
         if (!symbol.equals(lastSymbol) || (now - lastActivity > interdigitInterval)) {            
             lastActivity = now;
             lastSymbol = symbol;
             
-            detector.fireEvent(symbol);
+            detector.fireEvent(symbol, DTMFTimeStamp);
         }
         else
         	lastActivity=now;

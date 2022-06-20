@@ -99,6 +99,15 @@ public interface DtmfDetector extends MediaSink {
      * Clears buffer content.
      */
     public void clearDigits();
+
+    /**
+     * Sets the timeStamp before which all DTMF events should be ignored.
+     * This is to be used when 2 detectors are registered right after each other, and we require the second one not to be
+     * triggered by still ongoing DTMF event transmission.
+     *
+     * @param DTMFTimeStamp The timestamp before/at which DTMF events are to be ignored.
+     */
+    public void setIgnoreBefore(long DTMFTimeStamp);
     
     public void addListener(DtmfDetectorListener listener) throws TooManyListenersException;
     public void removeListener(DtmfDetectorListener listener);

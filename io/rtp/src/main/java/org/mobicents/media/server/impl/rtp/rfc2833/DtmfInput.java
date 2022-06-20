@@ -170,6 +170,7 @@ public class DtmfInput extends AbstractSource {
             currFrame.setDuration(period);
             currFrame.setTimestamp(clock.convertToAbsoluteTime(event.getTimestamp()));
             currFrame.setMark(i == 0);
+            currFrame.setDTMFTimestamp(clock.convertToAbsoluteTime(event.getTimestamp()));
             frameBuffer.add(currFrame);
         }
         
@@ -189,9 +190,10 @@ public class DtmfInput extends AbstractSource {
             currFrame.setDuration(period);
             currFrame.setTimestamp(clock.convertToAbsoluteTime(event.getTimestamp()));
             currFrame.setMark(false);
+            currFrame.setDTMFTimestamp(clock.convertToAbsoluteTime(event.getTimestamp()));
             frameBuffer.add(currFrame);                       
         }
-        
+
         wakeup();
     }
     
