@@ -73,6 +73,7 @@ public class Options {
     private final static Text x_asr_google= new Text("x-asr-google");
     private final static Text x_asr_google_utterance= new Text("x-asr-google-utterance");
     private final static Text x_lg = new Text("x-lg");
+	private final static Text x_dtmf_ignore_stamp = new Text("x-dtmf-ignore-stamp"); // Long; Time stamp before which DTMF events should be ignored.
 
     private final static Text TRUE = new Text("true");
     private final static Text FALSE = new Text("false");
@@ -119,6 +120,8 @@ public class Options {
 
     private Text digitPattern = new Text(new byte[2048], 0, 2048);
     private Collection<Text> digitPatterns;
+
+	private long collectIgnoreBeforeDTMFTimeStamp = -1;
 
     private Text name = new Text();
     private Text value = new Text();
@@ -547,6 +550,8 @@ public class Options {
                     this.asrGoogleConfig = value.toString();
                 else if (name.equals(x_asr_google_utterance))
                     this.asrGoogleUtterance = value.toString().toLowerCase().equals("true");
+				else if (name.equals(x_dtmf_ignore_stamp))
+					this.collectIgnoreBeforeDTMFTimeStamp = value.toLong();
 
             }
         }
@@ -687,6 +692,10 @@ public class Options {
     public boolean isClearDigits() {
         return clearDigits;
     }
+
+	public long getCollectIgnoreBeforeDTMFTimeStamp() {
+		return this.collectIgnoreBeforeDTMFTimeStamp;
+	}
 
     public boolean isIncludeEndInputKey() {
         return includeEndInput;

@@ -44,6 +44,10 @@ public class Frame {
     private volatile Format format;
     private volatile String header;
     private volatile boolean mark; //marker bit
+
+    // Timestamp for the purposes of DTMF detector.
+    // this timestamp always carries the underlying RTP timestamp and MUST be never reset.
+    private volatile long dtmfTimestamp;
     
     protected Frame(byte[] data) {
         this.data = data;
@@ -83,6 +87,14 @@ public class Frame {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public long getDTMFTimestamp() {
+        return dtmfTimestamp;
+    }
+
+    public void setDTMFTimestamp(long timestamp) {
+        this.dtmfTimestamp = timestamp;
     }
 
     public long getDuration() {
@@ -138,6 +150,7 @@ public class Frame {
         frame.timestamp = timestamp;
         frame.header = header;
         frame.mark = mark;
+        frame.dtmfTimestamp = dtmfTimestamp;
         return frame;
     }
 

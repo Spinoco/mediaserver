@@ -669,13 +669,13 @@ public class PlayRecord extends Signal {
         }
 
         @Override
-        public void patternMatches(int index, String s) {
+        public void patternMatches(int index, String s, long DTMFTimeStamp) {
             if (options.hasSuccessAnnouncement()) {
-                eventContent = new Text("rc=100 dc=" + s + " pi=" + index);
+                eventContent = new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp + " pi=" + index);
                 playerMode = PlayerMode.SUCCESS;
                 startPromptPhase(options.getSuccessAnnouncement());
             } else {
-                oc.fire(signal, new Text("rc=100 dc=" + s + " pi=" + index));
+                oc.fire(signal, new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp + " pi=" + index));
                 reset();
                 isCompleted = true;
                 complete();
@@ -683,13 +683,13 @@ public class PlayRecord extends Signal {
         }
 
         @Override
-        public void countMatches(String s) {
+        public void countMatches(String s, long DTMFTimeStamp) {
             if (options.hasSuccessAnnouncement()) {
-                eventContent = new Text("rc=100 dc=" + s);
+                eventContent = new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp);
                 playerMode = PlayerMode.SUCCESS;
                 startPromptPhase(options.getSuccessAnnouncement());
             } else {
-                oc.fire(signal, new Text("rc=100 dc=" + s));
+                oc.fire(signal, new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp));
                 reset();
                 isCompleted = true;
                 complete();
@@ -697,7 +697,7 @@ public class PlayRecord extends Signal {
         }
 
         @Override
-        public boolean tone(String s) {
+        public boolean tone(String s, long DTMFTimeStamp) {
             if (options.getDigitsNumber() > 0 && s.charAt(0) == options.getEndInputKey()
                     && buffer.length() >= options.getDigitsNumber()) {
                 if (logger.isInfoEnabled()) {
@@ -706,17 +706,17 @@ public class PlayRecord extends Signal {
                 // end input key still not included in sequence
                 if (options.hasSuccessAnnouncement()) {
                     if (options.isIncludeEndInputKey()) {
-                        eventContent = new Text("rc=100 dc=" + buffer.getSequence() + s);
+                        eventContent = new Text("rc=100 dc=" + buffer.getSequence() + s + " dtmfs=" + DTMFTimeStamp);
                     } else {
-                        eventContent = new Text("rc=100 dc=" + buffer.getSequence());
+                        eventContent = new Text("rc=100 dc=" + buffer.getSequence() + " dtmfs=" + DTMFTimeStamp);
                     }
                     playerMode = PlayerMode.SUCCESS;
                     startPromptPhase(options.getSuccessAnnouncement());
                 } else {
                     if (options.isIncludeEndInputKey()) {
-                        oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + s));
+                        oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + s + " dtmfs=" + DTMFTimeStamp));
                     } else {
-                        oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence()));
+                        oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + " dtmfs=" + DTMFTimeStamp));
                     }
                     reset();
                     isCompleted = true;

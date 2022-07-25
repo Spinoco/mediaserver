@@ -34,17 +34,18 @@ public class DtmfEventImpl implements DtmfEvent {
     private DtmfDetector source;
     private int volume;
     private String tone;
+    private long dtmfTimeStamp;
     
-    public DtmfEventImpl(DtmfDetector source, String tone, int volume) {
+    public DtmfEventImpl(DtmfDetector source, String tone, int volume, long DTMFTimeStamp) {
         this.source = source;
         this.volume = volume;
         this.tone = tone;
+        this.dtmfTimeStamp = DTMFTimeStamp;
     }
     
     public int getVolume() {
         return volume;
     }
-    
 
     public DtmfDetector getSource() {
         return source;
@@ -52,5 +53,10 @@ public class DtmfEventImpl implements DtmfEvent {
 
     public String getTone() {
         return tone;
+    }
+
+    @Override
+    public long getDTMFTimeStamp() {
+        return dtmfTimeStamp;
     }
 }

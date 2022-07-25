@@ -310,6 +310,9 @@ public class PlayCollect extends Signal {
             dtmfDetector.clearDigits();
         }
 
+        // Set timeStamp before which all DTMF events will be ignored.
+        dtmfDetector.setIgnoreBefore(options.getCollectIgnoreBeforeDTMFTimeStamp());
+
         // clear local buffer
         buffer.reset();
         buffer.setListener(dtmfHandler);
@@ -761,7 +764,7 @@ public class PlayCollect extends Signal {
         }
 
         @Override
-        public void patternMatches(int index, String s) {
+        public void patternMatches(int index, String s, long DTMFTimeStamp) {
             if (logger.isInfoEnabled()) {
                 logger.info(String.format("(%s) Collect phase: pattern has been detected", getEndpoint().getLocalName()));
             }
@@ -771,18 +774,18 @@ public class PlayCollect extends Signal {
             }
 
             if (options.hasSuccessAnnouncement()) {
-                eventContent = new Text("rc=100 dc=" + s + " pi=" + index + naContent);
+                eventContent = new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp + " pi=" + index + naContent);
                 playerMode = PlayerMode.SUCCESS;
                 startPromptPhase(options.getSuccessAnnouncement());
             } else {
-                oc.fire(signal, new Text("rc=100 dc=" + s + " pi=" + index + naContent));
+                oc.fire(signal, new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp + " pi=" + index + naContent));
                 reset();
                 complete();
             }
         }
 
         @Override
-        public void countMatches(String s) {
+        public void countMatches(String s, long DTMFTimeStamp) {
             if (logger.isInfoEnabled()) {
                 logger.info(String.format("(%s) Collect phase: max number of digits detected", getEndpoint().getLocalName()));
             }
@@ -793,18 +796,18 @@ public class PlayCollect extends Signal {
             }
 
             if (options.hasSuccessAnnouncement()) {
-                eventContent = new Text("rc=100 dc=" + s + naContent);
+                eventContent = new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp + naContent);
                 playerMode = PlayerMode.SUCCESS;
                 startPromptPhase(options.getSuccessAnnouncement());
             } else {
-                oc.fire(signal, new Text("rc=100 dc=" + s + naContent));
+                oc.fire(signal, new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp + naContent));
                 reset();
                 complete();
             }
         }
 
         @Override
-        public boolean tone(String s) {
+        public boolean tone(String s, long DTMFTimeStamp) {
             if (options.getMaxDigitsNumber() > 0 && s.charAt(0) == options.getEndInputKey()
                     && buffer.length() >= options.getDigitsNumber()) {
                 String naContent = "";
@@ -819,17 +822,17 @@ public class PlayCollect extends Signal {
                 // end input key still not included in sequence
                 if (options.hasSuccessAnnouncement()) {
                     if (options.isIncludeEndInputKey()) {
-                        eventContent = new Text("rc=100 dc=" + buffer.getSequence() + s + naContent);
+                        eventContent = new Text("rc=100 dc=" + buffer.getSequence() + s + " dtmfs=" + DTMFTimeStamp + naContent);
                     } else {
-                        eventContent = new Text("rc=100 dc=" + buffer.getSequence() + naContent);
+                        eventContent = new Text("rc=100 dc=" + buffer.getSequence() + " dtmfs=" + DTMFTimeStamp + naContent);
                     }
                     playerMode = PlayerMode.SUCCESS;
                     startPromptPhase(options.getSuccessAnnouncement());
                 } else {
                     if (options.isIncludeEndInputKey()) {
-                        oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + s + naContent));
+                        oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + s + " dtmfs=" + DTMFTimeStamp + naContent));
                     } else {
-                        oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + naContent));
+                        oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + " dtmfs=" + DTMFTimeStamp + naContent));
                     }
 
                     heartbeat.disable();
@@ -981,25 +984,25 @@ public class PlayCollect extends Signal {
                     int length = buffer.getSequence().length();
                     if (options.getDigitsNumber() > 0 && length >= options.getDigitsNumber()) {
                         if (options.hasSuccessAnnouncement()) {
-                            eventContent = new Text("rc=100 dc=" + buffer.getSequence() + naContent);
+                            eventContent = new Text("rc=100 dc=" + buffer.getSequence() + " dtmfs=" + buffer.getLastDTMFTimeStamp() + naContent);
                             playerMode = PlayerMode.SUCCESS;
                             startPromptPhase(options.getSuccessAnnouncement());
                         } else {
-                            oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + naContent));
+                            oc.fire(signal, new Text("rc=100 dc=" + buffer.getSequence() + " dtmfs=" + buffer.getLastDTMFTimeStamp() + naContent));
                             reset();
                             complete();
                         }
                     } else if (length > 0) {
                         if (options.hasNoDigitsReprompt()) {
-                            eventContent = new Text("rc=326 dc=" + buffer.getSequence() + naContent);
+                            eventContent = new Text("rc=326 dc=" + buffer.getSequence() + " dtmfs=" + buffer.getLastDTMFTimeStamp() + naContent);
                             playerMode = PlayerMode.FAILURE;
                             startPromptPhase(options.getNoDigitsReprompt());
                         } else if (options.hasFailureAnnouncement()) {
-                            eventContent = new Text("rc=326 dc=" + buffer.getSequence() + naContent);
+                            eventContent = new Text("rc=326 dc=" + buffer.getSequence() + " dtmfs=" + buffer.getLastDTMFTimeStamp() + naContent);
                             playerMode = PlayerMode.FAILURE;
                             startPromptPhase(options.getFailureAnnouncement());
                         } else {
-                            oc.fire(signal, new Text("rc=326 dc=" + buffer.getSequence() + naContent));
+                            oc.fire(signal, new Text("rc=326 dc=" + buffer.getSequence() + " dtmfs=" + buffer.getLastDTMFTimeStamp() + naContent));
                             reset();
                             complete();
                         }

@@ -49,4 +49,5 @@ public interface DtmfEvent extends Event<DtmfDetector> {
 
     public int getVolume();
     public String getTone();
+    public long getDTMFTimeStamp();
 }
