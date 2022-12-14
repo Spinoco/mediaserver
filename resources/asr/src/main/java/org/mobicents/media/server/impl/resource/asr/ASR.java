@@ -13,8 +13,11 @@ public abstract class ASR extends AbstractSink implements PooledObject {
      * Configure ASR with data from MGCP request.
      *
      * @param asrLang   The language in which the ASR should detect.
+     * @param endOfSpeechSilence    The silence amount that is required for us to decide input is recognized.
+     * @param  initialSilence       The amount of initial silence that is allowed before we terminate the recognition
+     *                              with no speech recognized.
      */
-    public abstract void configure(String asrLang);
+    public abstract void configure(String asrLang, long endOfSpeechSilence, long initialSilence);
 
     /**
      * Add listener for detected speech.

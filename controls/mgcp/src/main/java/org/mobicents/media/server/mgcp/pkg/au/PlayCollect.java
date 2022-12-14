@@ -82,6 +82,11 @@ public class PlayCollect extends Signal {
     private ASRHandler asrHandler;
     private Options options;
     private final EventBuffer buffer;
+
+    // When play collect has ASR enabled, this stores partial recognitions.
+    // If the collect is terminated before ASR can fully "recognize" the speech, we return the partial recognition.
+    private String partialRecognition;
+
     private final PromptHandler promptHandler;
     private final DtmfHandler dtmfHandler;
 
@@ -130,6 +135,7 @@ public class PlayCollect extends Signal {
         this.dtmfHandler = new DtmfHandler(this);
         this.promptHandler = new PromptHandler(this);
         this.buffer = new EventBuffer();
+        this.partialRecognition = "";
         this.asrHandler = new ASRHandler(this);
 
         // PlayCollect Status
@@ -328,9 +334,12 @@ public class PlayCollect extends Signal {
 
     // prepares ASR shall the ASR be used in collect phase
     private void prepareASRPhase(Options options) {
+        // Clear previously existing partial recognitions.
+        partialRecognition = "";
+
         if (options.getASREnabled()) {
             asr = (ASR) getEndpoint().getResource(MediaType.AUDIO, ComponentType.ASR_COLLECT);
-            this.asr.configure(options.getAsrLang());
+            this.asr.configure(options.getAsrLang(), options.getAsrEndOfSpeechSilence(), options.getAsrInitialSilence());
         }
     }
 
@@ -414,6 +423,8 @@ public class PlayCollect extends Signal {
             dtmfDetector = null;
         }
         if (this.asr != null) {
+            partialRecognition = "";
+
             this.asr.deactivate();
             this.asr = null;
         }
@@ -735,15 +746,26 @@ public class PlayCollect extends Signal {
 
         @Override
         public void notifySpeechRecognition(String fragment) {
-            // we have to encode the text to base64 utf8
-            try {
-                String encoded = BaseEncoding.base64().encode(fragment.getBytes());
-                // this event is fired manually, as it has no control over the Signal.
-                signal.sendEvent(this.signal.getPackage().getName(), asrEvent.getName(), new Text("asr=" + encoded));
-            } catch (Throwable t) {
-                t.printStackTrace();
+            // Empty fragment signals no match on voice input.
+            if (fragment.isEmpty()) {
+                signal.sendEvent(this.signal.getPackage().getName(), asrEvent.getName(), new Text(""));
+            } else {
+                try {
+                    // we have to encode the text to base64 utf8
+                    String encoded = BaseEncoding.base64().encode(fragment.getBytes());
+                    // this event is fired manually, as it has no control over the Signal.
+                    signal.sendEvent(this.signal.getPackage().getName(), asrEvent.getName(), new Text("asr=" + encoded));
+                } catch (Throwable t) {
+                    t.printStackTrace();
+                }
             }
         }
+
+        @Override
+        public void notifySpeechRecognizing(String fragment) {
+            signal.partialRecognition = fragment;
+        }
+
     }
 
     /**
@@ -1031,12 +1053,19 @@ public class PlayCollect extends Signal {
                         playerMode = PlayerMode.FAILURE;
                         startPromptPhase(options.getFailureAnnouncement());
                     } else {
-                        oc.fire(signal, new Text("rc=330" + naContent));
+                        String partialSpeech = "";
+                        if (!partialRecognition.isEmpty()) {
+                            String encoded = BaseEncoding.base64().encode(partialRecognition.getBytes());
+                            partialSpeech = " asr=" + encoded;
+                        }
+
+                        oc.fire(signal, new Text("rc=330" + partialSpeech + naContent));
                         reset();
                         complete();
                     }
                 }
             } else {
+                partialRecognition = "";
                 buffer.reset();
                 decreaseNa();
             }
