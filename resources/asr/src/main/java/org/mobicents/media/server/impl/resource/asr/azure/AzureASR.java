@@ -43,17 +43,32 @@ public class AzureASR extends ASR {
         output.join(this);
     }
 
-    public void configure(String asrLang) {
+    public void configure(String asrLang, long endOfSpeechSilence, long initialSilence) {
         // Create new push stream to which we will be writing data for recognition.
         push = PushAudioInputStream.createPushStream(AudioStreamFormat.getWaveFormatPCM(8000L, (short) 16, (short) 1));
 
         config = SpeechConfig.fromSubscription(azureKey, azureRegion);
         audioConfig = AudioConfig.fromStreamInput(push);
+
+        if (endOfSpeechSilence >= 0) {
+            config.setProperty(PropertyId.Speech_SegmentationSilenceTimeoutMs, String.valueOf(endOfSpeechSilence));
+        }
+
+        if (initialSilence >= 0) {
+            config.setProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, String.valueOf(initialSilence));
+        }
+
         recognizer = new SpeechRecognizer(config, asrLang, audioConfig);
 
         recognizer.recognized.addEventListener((o, e) -> {
             for (ASRListener listener: AzureASR.this.listeners) {
                 listener.notifySpeechRecognition(e.getResult().getText());
+            }
+        });
+
+        recognizer.recognizing.addEventListener((o, e) -> {
+            for (ASRListener listener: AzureASR.this.listeners) {
+                listener.notifySpeechRecognizing(e.getResult().getText());
             }
         });
     }
@@ -68,7 +83,7 @@ public class AzureASR extends ASR {
     @Override
     public void activate() {
         if (recognizer != null && !active.get()) {
-            recognizer.recognizeOnceAsync();
+            recognizer.startContinuousRecognitionAsync();
             active.set(true);
             output.start();
         }
@@ -78,10 +93,10 @@ public class AzureASR extends ASR {
 
     @Override
     public void deactivate() {
-        active.set(false);
+        boolean wasActive = active.getAndSet(false);
         this.output.stop();
 
-        if (recognizer != null && active.get()) {
+        if (recognizer != null && wasActive) {
             try {
                 recognizer.stopContinuousRecognitionAsync().get();
             } catch (InterruptedException | ExecutionException e) {

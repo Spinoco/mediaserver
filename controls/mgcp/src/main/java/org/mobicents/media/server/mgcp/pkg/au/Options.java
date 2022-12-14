@@ -73,6 +73,8 @@ public class Options {
     private final static Text x_asr_google= new Text("x-asr-google");
     private final static Text x_asr_google_utterance= new Text("x-asr-google-utterance");
     private final static Text x_lg = new Text("x-lg");
+    private final static Text x_asr_end_speech = new Text("x-asr-end-speech");
+    private final static Text x_asr_initial_silence = new Text("x-asr-initial-silence");
 	private final static Text x_dtmf_ignore_stamp = new Text("x-dtmf-ignore-stamp"); // Long; Time stamp before which DTMF events should be ignored.
 
     private final static Text TRUE = new Text("true");
@@ -154,6 +156,10 @@ public class Options {
     private char currKey=' ';
 
     private String asrLang;
+
+	private long asrEndOfSpeechSilence = -1;
+	private long asrInitialSilence = -1;
+
     private String asrGoogleConfig;
     private boolean asrGoogleUtterance = false;
 
@@ -546,6 +552,10 @@ public class Options {
                     this.maxDuration = value.toInteger();
                 else if (name.equals(x_lg))
                     this.asrLang = value.toString();
+				else if (name.equals(x_asr_end_speech))
+					this.asrEndOfSpeechSilence = value.toLong();
+				else if (name.equals(x_asr_initial_silence))
+					this.asrInitialSilence = value.toLong();
                 else if (name.equals(x_asr_google))
                     this.asrGoogleConfig = value.toString();
                 else if (name.equals(x_asr_google_utterance))
@@ -745,6 +755,14 @@ public class Options {
 		return this.asrLang;
 	}
 
+	public long getAsrEndOfSpeechSilence() {
+		return this.asrEndOfSpeechSilence;
+	}
+
+	public long getAsrInitialSilence() {
+		return this.asrInitialSilence;
+	}
+
 	public String getASRGoogleConfig() {
 		return this.asrGoogleConfig;
 	}
@@ -820,7 +838,9 @@ public class Options {
 				", lastKey=" + lastKey +
 				", hasCurrKey=" + hasCurrKey +
 				", currKey=" + currKey +
-				", asrLang='" + asrLang +
+				", asrLang=" + asrLang +
+				", asrEndOfSpeechSilence=" + asrEndOfSpeechSilence +
+				", asrInitialSilence=" + asrInitialSilence +
 				'}';
 	}
 }
