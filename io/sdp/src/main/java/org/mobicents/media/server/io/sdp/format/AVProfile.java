@@ -54,15 +54,19 @@ public class AVProfile {
     private final static RTPFormat ilbc = new RTPFormat(102, FormatFactory.createAudioFormat("ilbc", 8000, 16, 1), 8000);
     private final static RTPFormat linear = new RTPFormat(150, FormatFactory.createAudioFormat("linear", 8000, 16, 1), 8000);
     private final static RTPFormat opus = new RTPFormat(111, FormatFactory.createAudioFormat("opus", 48000, 8, 2), 48000);
+    private final static RTPFormat amr_nb = new RTPFormat(105, FormatFactory.createAudioFormat("amr", 8000, 8, 1), 8000);
+    private final static RTPFormat amr_wb = new RTPFormat(106, FormatFactory.createAudioFormat("amr-wb", 16000, 8, 1), 16000);
 
     private final static RTPFormat H261 = new RTPFormat(45, FormatFactory.createVideoFormat("h261"));
     private final static RTPFormat H263 = new RTPFormat(34, FormatFactory.createVideoFormat("h263"));
     private final static RTPFormat MP4V_ES = new RTPFormat(96, FormatFactory.createVideoFormat("mp4v-es"));
 
     static {
+        audio.add(opus);
         audio.add(pcma);
         audio.add(pcmu);
-        audio.add(opus);
+        audio.add(amr_wb);
+        audio.add(amr_nb);
 //        audio.add(gsm);
 //        audio.add(g729);
 //        audio.add(l16);
@@ -90,6 +94,31 @@ public class AVProfile {
     		res = video.find(p);    		
     	}
     	return res;
+    }
+
+    /**
+     * Resolve RTP format, this will try to resolve dynamic format in case we are in dynamic payload range.
+     *
+     * @param payloadType   The id of the payload which is being negotiated.
+     * @param codecName     The name of the offered codec.
+     * @param sampleRate    The sample rate of the offered codec.
+     * @param mediaType     The type of media for which we are resolving.
+     */
+    public static RTPFormat formatForParameters(
+        int payloadType
+        , String codecName
+        , int sampleRate
+        , Text mediaType
+    ) {
+        // https://datatracker.ietf.org/doc/html/rfc3551#section-3
+        // Only 96 - 127 allows dynamic resolution, otherwise we should carry on with static.
+        if (payloadType >= 96 && payloadType <= 127) {
+            if (mediaType.equals(AUDIO)) return audio.findByParams(codecName, sampleRate);
+            else if (mediaType.equals(VIDEO)) return video.findByParams(codecName, sampleRate);
+            else return null;
+        } else {
+            return getFormat(payloadType, mediaType);
+        }
     }
     
     public static boolean isDtmf(RTPFormat format) {

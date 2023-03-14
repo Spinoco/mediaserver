@@ -131,6 +131,16 @@ public class RTPFormats {
         }
         return null;
     }
+
+    public RTPFormat findByParams(String codecName, int sampleRate) {
+        for (RTPFormat format : rtpFormats) {
+            if (format.getFormat().getName().toString().equalsIgnoreCase(codecName) && format.getClockRate() == sampleRate) {
+                return format;
+            }
+        }
+
+        return null;
+    }
     
     public boolean contains(int p) {
     	return this.find(p) != null;

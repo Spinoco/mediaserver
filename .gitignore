@@ -31,3 +31,6 @@ client/jsr-309/tck/tck-run
 *.iml
 
 .idea
+*.log
+*.dylib
+.vscode

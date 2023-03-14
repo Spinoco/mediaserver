@@ -34,6 +34,7 @@ import org.mobicents.media.server.impl.rtp.RtpClock;
 import org.mobicents.media.server.impl.rtp.SsrcGenerator;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
 import org.mobicents.media.server.io.network.BindType;
+import org.mobicents.media.server.io.sdp.attributes.RtpMapAttribute;
 import org.mobicents.media.server.io.sdp.fields.MediaDescriptionField;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
@@ -46,6 +47,7 @@ import org.mobicents.media.server.spi.dsp.Processor;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.format.Formats;
+import org.mobicents.media.server.utils.Text;
 
 /**
  * Abstract representation of a media channel with RTP and RTCP components.
@@ -654,9 +656,24 @@ public abstract class MediaChannel {
 		
 		// Map payload types tp RTP Format
 		for (int payloadType : media.getPayloadTypes()) {
-			RTPFormat format = AVProfile.getFormat(payloadType, AVProfile.AUDIO);
-			if(format != null) {
-				this.offeredFormats.add(format);
+			RtpMapAttribute sdpFormat = media.getFormat(payloadType);
+
+			if (sdpFormat != null) {
+				RTPFormat format = AVProfile.formatForParameters(payloadType, sdpFormat.getCodec(), sdpFormat.getClockRate(), AVProfile.AUDIO);
+
+				if (format != null) {
+					RTPFormat formatThisMedia = format.clone();
+
+					// Ensure the format has is marked the same as in the SDP.
+					formatThisMedia.setID(payloadType);
+
+					if (sdpFormat.getParameters() != null) {
+						formatThisMedia.getFormat().setOptions(new Text(sdpFormat.getParameters().getParams()));
+					}
+
+					this.offeredFormats.add(formatThisMedia);
+				}
+
 			}
 		}
 		

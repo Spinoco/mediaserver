@@ -103,6 +103,11 @@
 			<artifactId>opus</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.mobicents.media.codecs</groupId>
+			<artifactId>amr</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.mobicents.media.resources</groupId>
