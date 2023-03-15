@@ -36,6 +36,7 @@ import org.mobicents.media.server.mgcp.params.LocalConnectionOptions;
 import org.mobicents.media.server.mgcp.tx.Action;
 import org.mobicents.media.server.mgcp.tx.Transaction;
 import org.mobicents.media.server.scheduler.*;
+import org.mobicents.media.server.spi.ConnectionKind;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.ConnectionType;
 import org.mobicents.media.server.spi.ModeNotSupportedException;
@@ -280,6 +281,17 @@ public class CreateConnectionCmd extends Action {
             	    e.printStackTrace();
                     throw new MgcpCommandException(MgcpResponseCode.ENDPOINT_NOT_AVAILABLE, new Text("Problem with connection" + e.getMessage()));
                 }
+
+                // Modes to be set before we start generating sdp, this can affect how the sdp is generated
+                // and which media are supported
+                connections[0].setConnectionKind(lcOptions.getKind());
+
+                // Mode has to be set before we start generating sdp
+                try {
+                    connections[0].setMode(mode.getValue());
+                } catch (ModeNotSupportedException e) {
+                    throw new MgcpCommandException(MgcpResponseCode.INVALID_OR_UNSUPPORTED_MODE, new Text("Not supported mode"));
+                }
                 
                 if (sdp != null) {
                     try {
@@ -296,11 +308,7 @@ public class CreateConnectionCmd extends Action {
 					}
                 }
                 
-                try {
-                    connections[0].setMode(mode.getValue());
-                } catch (ModeNotSupportedException e) {
-                    throw new MgcpCommandException(MgcpResponseCode.INVALID_OR_UNSUPPORTED_MODE, new Text("Not supported mode"));
-                }
+
                 
                 connections[0].setDtmfClamp(lcOptions.getDtmfClamp());                
             }

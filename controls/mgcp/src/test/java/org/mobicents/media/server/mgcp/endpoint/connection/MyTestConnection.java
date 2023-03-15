@@ -33,6 +33,7 @@ import org.mobicents.media.server.component.audio.AudioComponent;
 import org.mobicents.media.server.component.oob.OOBComponent;
 import org.mobicents.media.server.mgcp.connection.BaseConnection;
 import org.mobicents.media.server.spi.Connection;
+import org.mobicents.media.server.spi.ConnectionKind;
 import org.mobicents.media.server.spi.MediaType;
 import org.mobicents.media.server.utils.Text;
 import org.mobicents.media.server.spi.ConnectionFailureListener;
@@ -135,6 +136,10 @@ public class MyTestConnection extends BaseConnection {
     @Override
     protected void onCreated() throws Exception {
         this.created = true;
+    }
+
+    @Override
+    public void setConnectionKind(ConnectionKind kind) {
     }
 
     public boolean isCreated() {

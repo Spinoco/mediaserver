@@ -43,6 +43,10 @@ public class AVProfile {
     public final static RTPFormats audio = new RTPFormats();
     public final static RTPFormats video = new RTPFormats();
     public final static RTPFormats application = new RTPFormats();
+
+    // Audio formats for when connection (media) is of siprec kind.
+    // Note some codecs in these RTP formats can be decoded only, no encoder.
+    public final static RTPFormats audioSipRec = new RTPFormats();
     
     private final static RTPFormat pcmu = new RTPFormat(0, FormatFactory.createAudioFormat("pcmu", 8000, 8, 1), 8000);
     private final static RTPFormat pcma = new RTPFormat(8, FormatFactory.createAudioFormat("pcma", 8000, 8, 1), 8000);
@@ -62,17 +66,35 @@ public class AVProfile {
     private final static RTPFormat MP4V_ES = new RTPFormat(96, FormatFactory.createVideoFormat("mp4v-es"));
 
     static {
+        // This is list of codecs which are offed via normal sdp
+        // if you want to test some codecs via softphone or hardwarephone
+        // uncomment / add codecs here.
         audio.add(opus);
         audio.add(pcma);
         audio.add(pcmu);
-        audio.add(amr_wb);
-        audio.add(amr_nb);
+//        audio.add(amr_wb);
+//        audio.add(amr_nb);
 //        audio.add(gsm);
 //        audio.add(g729);
 //        audio.add(l16);
 //        audio.add(ilbc);
         audio.add(dtmf);
         audio.add(dtmf126);
+    }
+
+    static  {
+        // This is a list of codecs which can be recorded via siprec.
+        audioSipRec.add(opus);
+        audioSipRec.add(amr_wb);
+        audioSipRec.add(amr_nb);
+        audioSipRec.add(pcma);
+        audioSipRec.add(pcmu);
+//        audio.add(gsm);
+//        audio.add(g729);
+//        audio.add(l16);
+//        audio.add(ilbc);
+        audioSipRec.add(dtmf);
+        audioSipRec.add(dtmf126);
     }
 
     static {

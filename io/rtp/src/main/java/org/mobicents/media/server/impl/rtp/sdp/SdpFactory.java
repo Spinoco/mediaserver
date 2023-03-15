@@ -46,6 +46,8 @@ import org.mobicents.media.server.io.sdp.ice.attributes.IcePwdAttribute;
 import org.mobicents.media.server.io.sdp.ice.attributes.IceUfragAttribute;
 import org.mobicents.media.server.io.sdp.rtcp.attributes.RtcpAttribute;
 import org.mobicents.media.server.io.sdp.rtcp.attributes.RtcpMuxAttribute;
+import org.mobicents.media.server.spi.ConnectionKind;
+import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.format.AudioFormat;
 
 /**
@@ -124,12 +126,18 @@ public class SdpFactory {
 	 */
 	public static MediaDescriptionField buildMediaDescription(MediaChannel channel, boolean offer, String originAddress) {
 		MediaDescriptionField md = new MediaDescriptionField();
-		
+
 		md.setMedia(channel.getMediaType());
 		md.setPort(channel.getRtpPort());
 		MediaProfile profile = channel.isDtlsEnabled() ? MediaProfile.RTP_SAVPF : MediaProfile.RTP_AVP;
 		md.setProtocol(profile.getProfile());
-        md.setConnection(new ConnectionField("IN", "IP4", originAddress));
+
+		if (channel.getConnectionKind() != ConnectionKind.SIPREC) {
+			// In sip rec we currently require to only have the global connection flag.
+			// as such we only set the connection if the current kind is not sip rec.
+			md.setConnection(new ConnectionField("IN", "IP4", originAddress));
+		}
+
 		md.setPtime(new PacketTimeAttribute(20));
         md.setRtcp(new RtcpAttribute(channel.getRtcpPort(), "IN", "IP4", originAddress));
 		if (channel.isRtcpMux()) {
@@ -244,11 +252,20 @@ public class SdpFactory {
 			String fingerprintValue = fingerprint.substring(whitespace + 1);
 			md.setFingerprint(new FingerprintAttribute(fingerprintHash, fingerprintValue));
 		}
-		
-		md.setConnectionMode(new ConnectionModeAttribute(ConnectionModeAttribute.SENDRECV));
-		SsrcAttribute ssrcAttribute = new SsrcAttribute(Long.toString(channel.getSsrc()));
-		ssrcAttribute.addAttribute("cname", channel.getCname());
-		md.setSsrc(ssrcAttribute);
+
+		ConnectionModeAttribute conMode = channel.getConnectionMode() != null ?
+				new ConnectionModeAttribute(channel.getConnectionMode().toString()) :
+				new ConnectionModeAttribute(ConnectionModeAttribute.SENDRECV);
+
+		md.setConnectionMode(conMode);
+
+		if (channel.getConnectionKind() != ConnectionKind.SIPREC) {
+			// In sip rec we do not want ssrc hinting in sdp.
+			// Only include if currently not sip rec.
+			SsrcAttribute ssrcAttribute = new SsrcAttribute(Long.toString(channel.getSsrc()));
+			ssrcAttribute.addAttribute("cname", channel.getCname());
+			md.setSsrc(ssrcAttribute);
+		}
 		
 		return md;
 	}

@@ -47,6 +47,7 @@ import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.format.Formats;
 import org.mobicents.media.server.utils.Text;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -99,11 +100,15 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     private IceHandler stunHandler;
     private RtcpHandler rtcpHandler; // only used when rtcp-mux is enabled
 
+    // The connection mode under which we currently operate.
+    private ConnectionMode connectionMode;
+
     // Media components
     private AudioComponent audioComponent;
     private OOBComponent oobComponent;
 
     private AtomicBoolean active = new AtomicBoolean(false);
+
 
     // Media formats
     protected final static AudioFormat LINEAR_FORMAT = FormatFactory.createAudioFormat("LINEAR", 8000, 16, 1);
@@ -223,6 +228,11 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         return this.rtpHandler.getFormatMap();
     }
 
+    @Nullable
+    public ConnectionMode getConnectionMode() {
+        return this.connectionMode;
+    }
+
     /**
      * Sets the connection mode of the channel.<br>
      * Possible modes: send_only, recv_only, inactive, send_recv, conference, network_loopback.
@@ -230,6 +240,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
      * @param connectionMode the new connection mode adopted by the channel
      */
     public void updateMode(ConnectionMode connectionMode) {
+        this.connectionMode = connectionMode;
         switch (connectionMode) {
             case SEND_ONLY:
                 this.rtpHandler.setReceivable(false);
