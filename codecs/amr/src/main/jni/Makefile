@@ -1,6 +1,7 @@
 CXX=c++
 CPPFLAGS= -Wall -fPIC -shared
 CPPFLAGS += -I "$$JAVA_HOME/include/"
+OUT_NAME=libffmpeg_jni.so
 
 
 OS := $(shell uname)
@@ -8,6 +9,7 @@ ifeq ($(OS),Darwin)
   # Run MacOS commands
 	CPPFLAGS += -I "$$JAVA_HOME/include/darwin/"
 	CXX := clang++
+	OUT_NAME := libffmpeg_jni.dylib
 else
   # check for Linux and run other commands
 	CPPFLAGS += -I "$$JAVA_HOME/include/linux/"
@@ -22,4 +24,4 @@ CPPFLAGS += $(shell pkg-config --libs $(FFMPEG_LIBS))
 
 
 buildlib: ffmpeg_jni.cpp ffmpeg_jni.h 
-	$(CXX) $(CPPFLAGS) -o libffmpeg_jni.dylib ffmpeg_jni.cpp 
+	$(CXX) $(CPPFLAGS) -o $(OUT_NAME) ffmpeg_jni.cpp 
