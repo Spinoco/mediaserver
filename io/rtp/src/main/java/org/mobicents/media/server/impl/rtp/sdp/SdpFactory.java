@@ -132,6 +132,8 @@ public class SdpFactory {
 		MediaProfile profile = channel.isDtlsEnabled() ? MediaProfile.RTP_SAVPF : MediaProfile.RTP_AVP;
 		md.setProtocol(profile.getProfile());
 
+		System.out.println("XXX XKIND? " + channel.getConnectionKind());
+
 		if (channel.getConnectionKind() != ConnectionKind.SIPREC) {
 			// In sip rec we currently require to only have the global connection flag.
 			// as such we only set the connection if the current kind is not sip rec.

@@ -173,6 +173,8 @@ public class RtpHandler implements PacketHandler {
 	}
 	
 	public boolean canHandle(byte[] packet, int dataLength, int offset) {
+		System.out.println("XXXX STARTING RTP CAN HANDLE: ");
+
 		/*
 		 * The RTP header has the following format:
 		 *
@@ -240,6 +242,7 @@ public class RtpHandler implements PacketHandler {
     }
 
 	public byte[] handle(byte[] packet, int dataLength, int offset, InetSocketAddress localPeer, InetSocketAddress remotePeer) throws PacketHandlerException {
+		System.out.println("XXXX TARTING RTP HANDLE: " + remotePeer.toString());
 		try {
 			// Do not handle data while DTLS handshake is ongoing. WebRTC calls only.
 			if (this.secure && !this.dtlsHandler.isHandshakeComplete()) {
