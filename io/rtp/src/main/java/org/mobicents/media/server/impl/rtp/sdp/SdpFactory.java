@@ -254,7 +254,7 @@ public class SdpFactory {
 		}
 
 		ConnectionModeAttribute conMode = channel.getConnectionMode() != null ?
-				new ConnectionModeAttribute(channel.getConnectionMode().toString()) :
+				new ConnectionModeAttribute(channel.getConnectionMode().getDescription().toString()) :
 				new ConnectionModeAttribute(ConnectionModeAttribute.SENDRECV);
 
 		md.setConnectionMode(conMode);
