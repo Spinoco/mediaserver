@@ -124,7 +124,7 @@ static int resample(
   ret = swr_convert_frame(data -> swr_ctx, data -> resample, data -> frame);
   if (ret < 0) {
  
-    fprintf(stderr, "Error while converting %s \n", av_err2str(ret));
+    fprintf(stderr, "Error while converting %d \n", ret);
     return ret;
   }
 
@@ -149,7 +149,7 @@ static int resample(
 
     int ret = swr_convert(data -> swr_ctx, &flushData, flushSize, NULL, 0);
     if (ret < 0) {
-      fprintf(stderr, "Error while flushing from conversion %s \n", av_err2str(ret));
+      fprintf(stderr, "Error while flushing from conversion %d \n", ret);
     }
 
     RemainingData *flush = new RemainingData();
