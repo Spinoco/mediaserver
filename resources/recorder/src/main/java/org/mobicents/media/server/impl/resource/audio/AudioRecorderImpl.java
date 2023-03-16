@@ -242,6 +242,8 @@ public class AudioRecorderImpl extends AbstractSink implements Recorder, PooledO
     @Override
     public void onMediaTransfer(Frame frame) throws IOException {
 
+        System.out.println("XXXX RECORDER received frame");
+
         RecorderFileSink snk = sink.get();
         ConcurrentLinkedQueue<Frame> wb = writeBuff.get();
 

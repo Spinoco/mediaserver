@@ -226,6 +226,9 @@ public class AudioSplitter {
 
 		@Override
 		public long perform() {
+
+			System.out.println("XXXXX PERFORMING AUDIO SPLITTER OUT: ");
+
 			// summarize all
 			boolean first = true;
 
@@ -279,6 +282,8 @@ public class AudioSplitter {
 			// get data for each component
 			final Iterator<AudioComponent> insideSIterator = insideComponents.valuesIterator();
 			while (insideSIterator.hasNext()) {
+				System.out.println("XXXXX OFFERING TO INSIDE COMPOENENT: ");
+
 				AudioComponent component = insideSIterator.next();
 				component.offer(total);
 			}

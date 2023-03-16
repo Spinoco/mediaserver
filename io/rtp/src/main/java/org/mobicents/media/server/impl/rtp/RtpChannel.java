@@ -253,8 +253,8 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
             case RECV_ONLY:
                 this.rtpHandler.setReceivable(true);
                 this.rtpHandler.setLoopable(false);
-                audioComponent.updateMode(true, true);
-                oobComponent.updateMode(true, true);
+                audioComponent.updateMode(true, false);
+                oobComponent.updateMode(true, false);
                 this.rtpHandler.activate();
                 this.transmitter.deactivate();
                 break;

@@ -718,6 +718,14 @@ public abstract class MediaChannel {
 					this.offeredFormats.add(formatThisMedia);
 				}
 
+			} else {
+				// In case there is no format hint with the SDP,
+				// this means we are one of profile formats, as such try to resolve format simple
+				// by searching for payload id.
+				RTPFormat format = AVProfile.getFormat(payloadType);
+				if (format != null) {
+					this.offeredFormats.add(format);
+				}
 			}
 		}
 		

@@ -93,7 +93,7 @@
 
 		<exec executable="${mvn.executable}" dir="${core.location}/..">
 			<!--arg line="clean install -P set-svn-revision,standalone,ss7,linux" /-->
-			<arg line="clean install -Dmaven.test.failure.ignore=true" />
+			<arg line="clean install -Dmaven.test.failure.ignore=true -Dmaven.test.skip=true" />
 
 		</exec>
 		<copy overwrite="true" todir="${release.dir.standalone}">

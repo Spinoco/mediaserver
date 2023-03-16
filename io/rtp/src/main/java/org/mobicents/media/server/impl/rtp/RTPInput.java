@@ -107,6 +107,8 @@ public class RTPInput extends AbstractSource implements BufferListener {
     @Override
     public Frame evolve(long timestamp) {
     	Frame currFrame=rxBuffer.read(timestamp);
+
+        System.out.println("XXXX EVOLVING RTP INPUT!");
     	
     	if(currFrame!=null)
         {
