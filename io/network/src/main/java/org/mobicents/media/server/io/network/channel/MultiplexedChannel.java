@@ -156,8 +156,6 @@ public class MultiplexedChannel implements Channel {
 	
 	@Override
 	public void receive() throws IOException {
-		System.out.println("XXXX MULTIPLED CHANNEL CHCEK? ");
-
 		// Get buffer ready to read new data
 		this.receiveBuffer.clear();
 

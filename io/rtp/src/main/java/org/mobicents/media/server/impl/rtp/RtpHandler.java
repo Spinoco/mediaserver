@@ -286,7 +286,6 @@ public class RtpHandler implements PacketHandler {
 						if (RtpChannel.DTMF_FORMAT.matches(format.getFormat())) {
 							dtmfInput.write(receivedRtp);
 						} else {
-							System.out.println("XXXX RECEIVED frame from: " + remotePeer.toString());
 							jitterBuffer.write(receivedRtp, format);
 						}
 					} else {

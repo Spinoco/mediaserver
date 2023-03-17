@@ -311,6 +311,7 @@ public class UdpManager {
     }
 
     public void bind(DatagramChannel channel, int port, BindType bindType) throws IOException {
+        System.out.println("XXXX BIND TO TYPE: " + bindType + "  --- " + port);
         switch(bindType) {
             case Local:
                 bindTo(this.localPortManager, getLocalBindAddress(), channel, port);
@@ -329,6 +330,8 @@ public class UdpManager {
         if (port == PORT_ANY) {
             port = portManager.next();
         }
+
+        System.out.println("XXXX BIND TO ADDRESS" + bindToAddress);
 
         // try bind
         IOException ex = null;

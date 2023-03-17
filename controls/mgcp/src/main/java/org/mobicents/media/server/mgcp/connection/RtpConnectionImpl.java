@@ -228,6 +228,9 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
 
 		boolean isWebRtc = this.remoteSdp.containsIce();
 
+
+		System.out.println("XXXXX SET OHTER PARTY INBOUND: " + isWebRtc + " --- " + this.local);
+
 		// Generate SDP answer
 		String bindAddress = this.local ? this.channelsManager
 				.getLocalBindAddress() : this.channelsManager.getBindAddress();
@@ -328,6 +331,7 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
 			bindType = BindType.WebRtc;
 		}
 
+
         // Bind audio channel to an address provided by UdpManager
         this.audioChannel.bind(bindType, remoteAudio.isRtcpMux());
 
@@ -346,7 +350,10 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
             FingerprintAttribute fingerprint = this.remoteSdp.getFingerprint(audioChannel.getMediaType());
             this.audioChannel.enableDTLS(fingerprint.getHashFunction(), fingerprint.getFingerprint());
         }
-    }
+
+		System.out.println("XXXX SETTING UP AUDIO INBOUND: " + bindType + " --- ice? : " + enableIce + " --- dtls? : " + enableDtls);
+
+	}
 
 	/**
 	 * Reads the remote SDP answer and sets up the proper media channels.
