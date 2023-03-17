@@ -298,6 +298,7 @@ public abstract class MediaChannel {
 	public void close() throws IllegalStateException {
 		if (this.open) {
 			// Close channels
+			System.out.println("XXXX CLOSING CHANNEL" );
 			this.rtpChannel.close();
 			if (!this.rtcpMux) {
 				this.rtcpChannel.close();

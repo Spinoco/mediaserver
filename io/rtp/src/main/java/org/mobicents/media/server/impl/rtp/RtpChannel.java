@@ -514,6 +514,7 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
             this.rtcpHandler.leaveRtpSession();
         }
 
+        System.out.println("XXXX CLOSING CHANNEL 1" );
         super.close();
         reset();
         this.bound = false;

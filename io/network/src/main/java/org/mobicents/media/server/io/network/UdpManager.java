@@ -447,6 +447,7 @@ public class UdpManager {
                     // Select channels enabled for reading operation (without blocking!)
                     localSelector.selectNow();
                 } catch (IOException e) {
+                    System.out.println("XXXX ERROR WHEN SLECTING UDP MANAGER:" + e.getMessage());
                     logger.error("Could not select channels from Selector!");
                 }
 

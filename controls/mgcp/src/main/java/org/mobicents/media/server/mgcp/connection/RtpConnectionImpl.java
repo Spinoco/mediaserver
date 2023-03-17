@@ -505,6 +505,7 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
 	 * connection.
 	 */
 	private void closeResources() {
+		System.out.println("XXXXX CLOSING CONNECTION" + toString());
 		if (this.audioChannel.isOpen()) {
 			this.audioChannel.close();
 		}

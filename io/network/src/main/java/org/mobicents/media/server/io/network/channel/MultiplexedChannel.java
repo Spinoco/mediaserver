@@ -170,6 +170,7 @@ public class MultiplexedChannel implements Channel {
 
 			System.out.println("XXXXX RECEIVING DATA from: " + remotePeer + " --- " + dataLength);
 		} catch (IOException e) {
+			System.out.println("XXXX EXCEPTION WHEN READING  IN MULTIPLESED.." + e.getMessage());
 			dataLength = -1;
 		}
 
