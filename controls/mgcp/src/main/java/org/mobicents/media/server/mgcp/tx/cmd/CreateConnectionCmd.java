@@ -178,6 +178,8 @@ public class CreateConnectionCmd extends Action {
             if (mode == null) {
                 throw new MgcpCommandException(MgcpResponseCode.PROTOCOL_ERROR, MODE_MISSING);
             }
+
+            System.out.println(getEvent().getEventID() + "] XXXX LOG MODE: " + mode);
             
             //getting endpoint name
             request.getEndpoint().divide('@', endpointName);
@@ -272,11 +274,8 @@ public class CreateConnectionCmd extends Action {
                 }
                 
                 connections[0].setDtmfClamp(lcOptions.getDtmfClamp());                
-            } else if (endpoint.getName().contains("bridge")) {
+            } else {
                 //create one RTP connection
-                // These should only be created for bridge connections
-                // No need to open for ivrs and such...
-
             	try {
                     connections[0] = endpoint.createConnection(call, ConnectionType.RTP,lcOptions.getIsLocal());
                     connections[0].setCallAgent(getEvent().getAddress());                

@@ -340,6 +340,8 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
             this.audioChannel.enableICE(this.channelsManager.getExternalAddress(), remoteAudio.isRtcpMux());
         } else {
             String remoteAddr = remoteAudio.getConnection().getAddress();
+
+			System.out.println("XXXX SETTING UP AUDIO " + remoteAddr);
             this.audioChannel.connectRtp(remoteAddr, remoteAudio.getPort());
             this.audioChannel.connectRtcp(remoteAddr, remoteAudio.getRtcpPort());
         }

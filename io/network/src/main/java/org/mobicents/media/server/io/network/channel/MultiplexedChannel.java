@@ -254,6 +254,7 @@ public class MultiplexedChannel implements Channel {
 	@Override
 	public void disconnect() throws IOException {
 		if(isConnected()) {
+			System.out.println("XXXX DISCODEC ROUTND 1");
 			this.dataChannel.disconnect();
 		}
 	}
@@ -272,6 +273,7 @@ public class MultiplexedChannel implements Channel {
 		if (isOpen()) {
 			if (isConnected()) {
 				try {
+					System.out.println("XXXX DISCODEC ROUTND 2");
 					dataChannel.disconnect();
 				} catch (IOException e) {
 					logger.warn(e.getMessage(), e);
@@ -285,6 +287,8 @@ public class MultiplexedChannel implements Channel {
 				 * 
 				 * https://telestax.atlassian.net/browse/MEDIA-53
 				 */
+				System.out.println("XXXX CLOSE ROUTND32");
+
 				this.selectionKey.cancel();
 				this.dataChannel.socket().close();
 				this.dataChannel.close();

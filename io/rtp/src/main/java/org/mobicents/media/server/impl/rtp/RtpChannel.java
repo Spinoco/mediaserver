@@ -371,7 +371,9 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
         this.remotePeer = address;
         boolean connectImmediately = false;
         if (this.dataChannel != null) {
+            System.out.println("XXXXXX SETTING REMOTE, CHECK IF CONNECTED?" + this.dataChannel.isConnected());
             if (this.dataChannel.isConnected()) {
+                System.out.println("XXXX DISCONECT! NO GOOD");
                 try {
                     disconnect();
                 } catch (IOException e) {
@@ -381,9 +383,12 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
 
             connectImmediately = udpManager.connectImmediately((InetSocketAddress) address);
             if (connectImmediately) {
+                System.out.println("XXXXTRY TO CONNECT.");
+
                 try {
                     this.dataChannel.connect(address);
                 } catch (IOException e) {
+                    System.out.println("XXXX FAILED TO CONNECT IN SET REMOTE");
                     logger.info("Can not connect to remote address , please check that you are not using local address - 127.0.0.X to connect to remote");
                     logger.error(e.getMessage(), e);
                 }

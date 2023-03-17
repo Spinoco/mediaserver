@@ -477,6 +477,7 @@ public class RtcpHandler implements PacketHandler {
         if (this.channel != null) {
             if (this.channel.isConnected()) {
                 try {
+                    System.out.println("XXXX DISCODEC ROUTND 4");
                     this.channel.disconnect();
                 } catch (IOException e) {
                     logger.warn(e.getMessage(), e);
@@ -485,6 +486,7 @@ public class RtcpHandler implements PacketHandler {
 
             if (this.channel.isOpen()) {
                 try {
+                    System.out.println("XXXX CLOSE ROUTND 2");
                     this.channel.close();
                 } catch (IOException e) {
                     logger.warn(e.getMessage(), e);

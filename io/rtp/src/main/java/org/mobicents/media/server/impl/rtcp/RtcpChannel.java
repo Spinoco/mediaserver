@@ -98,6 +98,7 @@ public class RtcpChannel extends MultiplexedChannel implements DtlsListener, Ice
 		if (this.dataChannel != null) {
 			if (this.dataChannel.isConnected()) {
 				try {
+					System.out.println("XXXX DISCODEC ROUTND 3");
 					this.dataChannel.disconnect();
 				} catch (IOException e) {
 					logger.error(e.getMessage(), e);

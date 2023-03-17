@@ -132,6 +132,7 @@ public class RtpTransmitter {
 	
 	private void disconnect() throws IOException {
 		if(this.channel != null) {
+			System.out.println("XXXX DISCODEC ROUTND 5");
 			this.channel.disconnect();
 		}
 	}

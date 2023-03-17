@@ -332,12 +332,13 @@ public class UdpManager {
             port = portManager.next();
         }
 
-        System.out.println("XXXX BIND TO ADDRESS" + bindToAddress);
 
         // try bind
         IOException ex = null;
         for (int q = 0; q < 100; q++) {
             try {
+                System.out.println("XXXX BIND TO ADDRESS" + bindToAddress + " --- " + port);
+
                 channel.bind(new InetSocketAddress(bindToAddress, port));
                 ex = null;
                 break;
@@ -347,6 +348,8 @@ public class UdpManager {
                 port = portManager.next();
             }
         }
+
+        System.out.println("XXXX OPENED CHANNEL? " + " --- addr" + channel.getLocalAddress() + " ----- " + channel.isOpen() + " --- reg: " + channel.isRegistered() + " --- conn" + channel.isConnected() );
 
         if (ex != null) {
             throw ex;
@@ -376,6 +379,8 @@ public class UdpManager {
             Selector selector = this.selectors.get(i);
             if (selector != null && selector.isOpen()) {
                 try {
+                    System.out.println("XXXX CLOSE ROUND 1");
+
                     selector.close();
                 } catch (Exception e) {
                     logger.error("Could not close selector " + i, e);
@@ -494,6 +499,7 @@ public class UdpManager {
                                     }
                                 }
                             } else {
+                                System.out.println("XXXX CLOSING CONNECTION, channel is already closed?? " + key);
                                 // Close data channel if datagram channel is closed
                                 channel.close();
                             }
