@@ -272,8 +272,11 @@ public class CreateConnectionCmd extends Action {
                 }
                 
                 connections[0].setDtmfClamp(lcOptions.getDtmfClamp());                
-            } else {            	
-                //create one RTP connection            	                             
+            } else if (endpoint.getName().contains("bridge")) {
+                //create one RTP connection
+                // These should only be created for bridge connections
+                // No need to open for ivrs and such...
+
             	try {
                     connections[0] = endpoint.createConnection(call, ConnectionType.RTP,lcOptions.getIsLocal());
                     connections[0].setCallAgent(getEvent().getAddress());                

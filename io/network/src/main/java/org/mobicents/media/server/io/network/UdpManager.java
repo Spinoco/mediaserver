@@ -306,6 +306,7 @@ public class UdpManager {
         dataChannel.configureBlocking(false);
         int index = currSelectorIndex.getAndIncrement();
         SelectionKey key = dataChannel.register(selectors.get(index % selectors.size()), SelectionKey.OP_READ);
+        System.out.println("XXXXX REGISTERED KEY: " + key);
         key.attach(channel);
         return key;
     }
@@ -454,9 +455,16 @@ public class UdpManager {
                     DatagramChannel udpChannel = (DatagramChannel) key.channel();
                     Object attachment = key.attachment();
 
+
+
                     if (attachment == null) {
+                        System.out.println("XXXXX UDP MANAGER SELECTIIN KEY:" + key + " -- attachment -- null");
+
                         continue;
                     }
+
+                    System.out.println("XXXXX UDP MANAGER SELECTIIN KEY:" + key + " -- attachment -- " + attachment);
+
 
                     try {
                         if (attachment instanceof ProtocolHandler) {

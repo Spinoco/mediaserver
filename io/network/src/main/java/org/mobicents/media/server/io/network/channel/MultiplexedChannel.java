@@ -167,6 +167,8 @@ public class MultiplexedChannel implements Channel {
 				connect(remotePeer);
 			}
 			dataLength = this.receiveBuffer.position();
+
+			System.out.println("XXXXX RECEIVING DATA from: " + remotePeer + " --- " + dataLength);
 		} catch (IOException e) {
 			dataLength = -1;
 		}
