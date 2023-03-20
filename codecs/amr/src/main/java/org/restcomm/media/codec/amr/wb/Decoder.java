@@ -8,9 +8,10 @@ import org.restcomm.media.codec.amr.AMRDecoder;
 public class Decoder extends AMRDecoder {
     private final static Format amr_wb = FormatFactory.createAudioFormat("amr-wb", 16000, 8, 1);
     private final static int AMR_WB_CODEC_ID = 73729;
+    private final static int AMR_WB_SAMPLE_RATE = 16000;
 
     public Decoder() {
-        super(AMR_WB_CODEC_ID);
+        super(AMR_WB_CODEC_ID, AMR_WB_SAMPLE_RATE);
     }
 
     @Override

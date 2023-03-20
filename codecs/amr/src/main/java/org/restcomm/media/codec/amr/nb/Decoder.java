@@ -9,9 +9,10 @@ public class Decoder extends AMRDecoder {
     private final static Format amr = FormatFactory.createAudioFormat("amr", 8000, 8, 1);
 
     private final static int AMR_CODEC_ID = 73728;
+    private final static int AMR_SAMPLE_RATE= 8000;
 
     public Decoder() {
-        super(AMR_CODEC_ID);
+        super(AMR_CODEC_ID, AMR_SAMPLE_RATE);
     }
 
     @Override

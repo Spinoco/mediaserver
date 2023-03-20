@@ -20,7 +20,6 @@ struct RemainingData {
 struct DecoderData {
   AVCodec const *codec;
   AVCodecContext *context;
-  AVCodecParserContext *parser;
   AVPacket *packet;
   AVFrame *frame;
   AVFrame *resample;
@@ -39,14 +38,15 @@ const int DEST_SAMPLES_PER_MS = 8;
 
 
 /*
- * Class:     org_restcomm_media_codec_amr_FFMPEGNative
+ * Class:     org_restcomm_media_codec_ffmpeg_FFMPEGNative
  * Method:    createDecoder
  * Signature: (I)J
  */
-JNIEXPORT jlong JNICALL Java_org_restcomm_media_codec_amr_FFMPEGNative_createDecoder (
+JNIEXPORT jlong JNICALL Java_org_restcomm_media_codec_ffmpeg_FFMPEGNative_createDecoder (
   JNIEnv *env
   , jclass
   , jint codecId
+  , jint defaultSampleRate
 ) {
 
   struct DecoderData *data = new DecoderData();
@@ -60,12 +60,6 @@ JNIEXPORT jlong JNICALL Java_org_restcomm_media_codec_amr_FFMPEGNative_createDec
   data -> codec = avcodec_find_decoder(codecFromId);
   if (!data -> codec) {
       fprintf(stderr, "Codec not found\n");
-      return ((jlong) -1);
-  }
-
-  data -> parser = av_parser_init(data -> codec -> id);
-  if (!data -> parser) {
-      fprintf(stderr, "Parser not found\n");
       return ((jlong) -1);
   }
 
@@ -85,6 +79,11 @@ JNIEXPORT jlong JNICALL Java_org_restcomm_media_codec_amr_FFMPEGNative_createDec
   if (!data -> swr_ctx) {
       fprintf(stderr, "Could not allocate resampler context\n");
       return ((jlong) -1);
+  }
+
+  // In case the codec did not provide default sample rate, populate the expected sample rate from java.
+  if (!data -> context -> sample_rate) {
+    data -> context -> sample_rate = defaultSampleRate;
   }
 
   av_opt_set_chlayout(data -> swr_ctx, "in_chlayout", &data -> context -> ch_layout , 0);
@@ -202,11 +201,11 @@ static int decode(
 }
 
 /*
- * Class:     org_restcomm_media_codec_amr_FFMPEGNative
+ * Class:     org_restcomm_media_codec_ffmpeg_FFMPEGNative
  * Method:    decode
  * Signature: (J[S[B)I
  */
-JNIEXPORT jint JNICALL Java_org_restcomm_media_codec_amr_FFMPEGNative_decode(
+JNIEXPORT jint JNICALL Java_org_restcomm_media_codec_ffmpeg_FFMPEGNative_decode(
   JNIEnv *env
   , jclass
   , jlong decoder
@@ -214,62 +213,40 @@ JNIEXPORT jint JNICALL Java_org_restcomm_media_codec_amr_FFMPEGNative_decode(
   , jbyteArray sourceArray
 ) {
 
-  int ret;
   int frameSize = -1;
   struct DecoderData *data = ((DecoderData *) decoder);
 
   jbyte *sourceData = env->GetByteArrayElements(sourceArray, NULL);
   jsize sourceDataLength = env->GetArrayLength(sourceArray);
 
-  ret = av_parser_parse2(
-    data -> parser
-    , data -> context
-    , &data->packet->data
-    , &data->packet->size
-    , ((const uint8_t*) sourceData)
-    , sourceDataLength
-    , AV_NOPTS_VALUE, AV_NOPTS_VALUE
-    , 0
-  );
+  data->packet->data = (uint8_t*) sourceData;
+  data->packet->size = sourceDataLength;
 
+  // Decode all data and keep the last frame from the output.
+  // TODO if we ever have a need to handle multiple frames, this needs to change.
+  frameSize = decode(data);
 
-  if (ret < 0) {
-      fprintf(stderr, "Error while parsing\n");
-      
-      // Failed parsing, release data nd return
-      env->ReleaseByteArrayElements(sourceArray, sourceData, 0);
-      return -1;
+  if (frameSize < 0) {
+    fprintf(stderr, "Error while decoding\n");
+    env->ReleaseByteArrayElements(sourceArray, sourceData, 0);
+    return -1;
   }
 
-  if (
-    data->packet->size
-  ) {
-    // Decode all data and keep the last frame from the output.
-    // TODO if we ever have a need to handle multiple frames, this needs to change.
-    frameSize = decode(data);
+  env->SetByteArrayRegion(pcmArray, 0, frameSize, (const jbyte*)(data -> resample -> extended_data[0]));
 
-    if (frameSize < 0) {
-      fprintf(stderr, "Error while decoding\n");
-      env->ReleaseByteArrayElements(sourceArray, sourceData, 0);
-      return -1;
-    }
+  // Do we have flushed data?
+  if (data -> flush) {
+    env->SetByteArrayRegion(pcmArray, frameSize, data -> flush -> flushSize, (const jbyte*)(data -> flush -> flushData));
 
-    env->SetByteArrayRegion(pcmArray, 0, frameSize, (const jbyte*)(data -> resample -> extended_data[0]));
+    // Add flushed data size to returned data.
+    frameSize += data -> flush -> flushSize; 
 
-    // Do we have flushed data?
-    if (data -> flush) {
-      env->SetByteArrayRegion(pcmArray, frameSize, data -> flush -> flushSize, (const jbyte*)(data -> flush -> flushData));
+    // clean up flush memory
+    delete[] data -> flush ->flushData;
+    delete data -> flush;
 
-      // Add flushed data size to returned data.
-      frameSize += data -> flush -> flushSize; 
-
-      // clean up flush memory
-      delete[] data -> flush ->flushData;
-      delete data -> flush;
-
-      // Remove flush from data.
-      data -> flush = NULL; 
-    }
+    // Remove flush from data.
+    data -> flush = NULL; 
   }
 
   // Needs to be at the end of the file
@@ -280,11 +257,11 @@ JNIEXPORT jint JNICALL Java_org_restcomm_media_codec_amr_FFMPEGNative_decode(
 }
 
 /*
- * Class:     org_restcomm_media_codec_amr_FFMPEGNative
+ * Class:     org_restcomm_media_codec_ffmpeg_FFMPEGNative
  * Method:    destroyDecoder
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_restcomm_media_codec_amr_FFMPEGNative_destroyDecoder(
+JNIEXPORT void JNICALL Java_org_restcomm_media_codec_ffmpeg_FFMPEGNative_destroyDecoder(
   JNIEnv *
   , jclass
   , jlong decoder
@@ -293,7 +270,6 @@ JNIEXPORT void JNICALL Java_org_restcomm_media_codec_amr_FFMPEGNative_destroyDec
   struct DecoderData *data = ((DecoderData *) decoder);
 
   avcodec_free_context(&(data -> context));
-  av_parser_close(data -> parser);
   av_frame_free(&(data -> frame));
   av_packet_free(&(data -> packet));
   av_frame_free(&(data -> resample));

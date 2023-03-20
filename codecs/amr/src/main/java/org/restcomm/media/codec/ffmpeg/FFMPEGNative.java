@@ -1,4 +1,4 @@
-package org.restcomm.media.codec.amr;
+package org.restcomm.media.codec.ffmpeg;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,8 +26,10 @@ public class FFMPEGNative {
      * Otherwise this will memory leak.
      *
      * @param codecKind The FFMPEG id of coded to use for decoding.
+     * @param defaultSampleRate The sample rate of the codec that we assume.
+     *                          This can be overridden if ffmpeg has sample rate in the decoder.
      */
-    public static native long createDecoder(int codecKind);
+    public static native long createDecoder(int codecKind, int defaultSampleRate);
 
     /**
      * Decodes chuck of encoded data with given decoder.

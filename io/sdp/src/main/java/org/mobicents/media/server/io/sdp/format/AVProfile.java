@@ -51,8 +51,11 @@ public class AVProfile {
     private final static RTPFormat pcmu = new RTPFormat(0, FormatFactory.createAudioFormat("pcmu", 8000, 8, 1), 8000);
     private final static RTPFormat pcma = new RTPFormat(8, FormatFactory.createAudioFormat("pcma", 8000, 8, 1), 8000);
     private final static RTPFormat gsm = new RTPFormat(3, FormatFactory.createAudioFormat("gsm", 8000), 8000);
+
+    // NOTE! In SDP we specify clock rate 8000, but in reality the sample rate is 16000. This is due to issue with registration of the profile to IANA....
+    private final static RTPFormat g722 = new RTPFormat(9, FormatFactory.createAudioFormat("g722", 16000), 8000);
     private final static RTPFormat g729 = new RTPFormat(18, FormatFactory.createAudioFormat("g729", 8000), 8000);
-    private final static RTPFormat l16 = new RTPFormat(97, FormatFactory.createAudioFormat("l16", 8000, 16, 1), 8000);    
+    private final static RTPFormat l16 = new RTPFormat(97, FormatFactory.createAudioFormat("l16", 8000, 16, 1), 8000);
     private final static RTPFormat dtmf = new RTPFormat(telephoneEventsID, telephoneEvent, 8000);
     private final static RTPFormat dtmf126 = new RTPFormat(telephoneEvent126, telephoneEvent, 8000);
     private final static RTPFormat ilbc = new RTPFormat(102, FormatFactory.createAudioFormat("ilbc", 8000, 16, 1), 8000);
@@ -74,6 +77,7 @@ public class AVProfile {
         audio.add(pcmu);
 //        audio.add(amr_wb);
 //        audio.add(amr_nb);
+//        audio.add(g722);
 //        audio.add(gsm);
 //        audio.add(g729);
 //        audio.add(l16);
@@ -89,6 +93,7 @@ public class AVProfile {
         audioSipRec.add(amr_nb);
         audioSipRec.add(pcma);
         audioSipRec.add(pcmu);
+        audioSipRec.add(g722);
 //        audio.add(gsm);
 //        audio.add(g729);
 //        audio.add(l16);

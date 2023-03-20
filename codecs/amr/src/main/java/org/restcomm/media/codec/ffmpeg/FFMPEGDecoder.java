@@ -1,4 +1,4 @@
-package org.restcomm.media.codec.amr;
+package org.restcomm.media.codec.ffmpeg;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,12 +24,21 @@ abstract public class FFMPEGDecoder implements Codec {
 
     private volatile long decoderId = 0;
     private final int ffmpeg_codec_id;
+    private final int ffmpeg_sample_rate;
 
     // 320 bytes required to contain single linear codec.
     private final byte[] decodedBuff = new byte[320];
 
-    public FFMPEGDecoder(int codecId) {
+    /**
+     * Create a FFMPEG decoder. This is a decoder which is backed by FFMPEG.
+     *
+     * @param codecId       The id of the codec for which to create a decoder.
+     * @param sampleRate    The sample rate of the codec that we assume.
+     *                      This can be overridden if ffmpeg has sample rate in the decoder.
+     */
+    public FFMPEGDecoder(int codecId, int sampleRate) {
         this.ffmpeg_codec_id = codecId;
+        this.ffmpeg_sample_rate = sampleRate;
     }
 
     @Override
@@ -51,7 +60,7 @@ abstract public class FFMPEGDecoder implements Codec {
         // and then recycled without doing any work at all.
         if (this.decoderId == 0) {
             try {
-                this.decoderId = FFMPEGNative.createDecoder(ffmpeg_codec_id);
+                this.decoderId = FFMPEGNative.createDecoder(ffmpeg_codec_id, ffmpeg_sample_rate);
             } catch (Throwable t) {
                 log.error("Failed to instantiate amr decoder", t);
             }

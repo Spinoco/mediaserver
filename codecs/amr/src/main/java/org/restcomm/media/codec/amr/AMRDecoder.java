@@ -1,6 +1,7 @@
 package org.restcomm.media.codec.amr;
 
 import org.mobicents.media.server.spi.memory.Frame;
+import org.restcomm.media.codec.ffmpeg.FFMPEGDecoder;
 
 /**
  * AMR decoder for RTP payload specified in
@@ -69,8 +70,8 @@ abstract public class AMRDecoder extends FFMPEGDecoder {
         return retData;
     }
 
-    public AMRDecoder(int codecId) {
-        super(codecId);
+    public AMRDecoder(int codecId, int sampleRate) {
+        super(codecId, sampleRate);
     }
 
     @Override

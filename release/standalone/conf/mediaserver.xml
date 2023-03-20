@@ -43,6 +43,7 @@
 			<codec name="pcma" />
 			<codec name="opus" />
 			<codec name="l16_24" />
+			<codec name="g722" />
 		</codecs>
 	</media>
 
