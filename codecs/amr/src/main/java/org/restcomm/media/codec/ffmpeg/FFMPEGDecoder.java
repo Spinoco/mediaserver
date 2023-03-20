@@ -95,7 +95,7 @@ abstract public class FFMPEGDecoder implements Codec {
             // and continue. This may improve compatibility, i.e. for unsupported packets
             // assume 160 samples in silent frame
             Frame res = Memory.allocate(360);
-            Arrays.fill(res.getData(), (byte)0xFF);
+            Arrays.fill(res.getData(), (byte)0);
             res.setOffset(0);
             res.setLength(360);
             res.setTimestamp(frame.getTimestamp());
