@@ -703,7 +703,7 @@ public abstract class MediaChannel {
 			RtpMapAttribute sdpFormat = media.getFormat(payloadType);
 
 			if (sdpFormat != null) {
-				RTPFormat format = AVProfile.formatForParameters(payloadType, sdpFormat.getCodec(), sdpFormat.getClockRate(), AVProfile.AUDIO);
+				RTPFormat format = AVProfile.formatForParameters(payloadType, sdpFormat.getCodec(), sdpFormat.getClockRate(), AVProfile.AUDIO, getConnectionKind());
 
 				if (format != null) {
 					RTPFormat formatThisMedia = format.clone();
@@ -720,7 +720,7 @@ public abstract class MediaChannel {
 			} else {
 				// In case the format is not specified by rtpMap, try to search by the id of the payload.
 				// This search should only return formats with a registered profile, not for dynamic resolution.
-				RTPFormat format = AVProfile.getFormat(payloadType, AVProfile.AUDIO);
+				RTPFormat format = AVProfile.getFormat(payloadType, AVProfile.AUDIO, getConnectionKind());
 				if(format != null) {
 					this.offeredFormats.add(format);
 				}

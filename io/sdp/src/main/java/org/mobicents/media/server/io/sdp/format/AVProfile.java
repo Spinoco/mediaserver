@@ -22,9 +22,12 @@
 
 package org.mobicents.media.server.io.sdp.format;
 
+import org.mobicents.media.server.spi.ConnectionKind;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.utils.Text;
+
+import javax.annotation.Nullable;
 
 /**
  *
@@ -113,14 +116,25 @@ public class AVProfile {
         return res == null ? video.find(p) : res;
     }    
     
-    public static RTPFormat getFormat(int p,Text mediaType) {
+    public static RTPFormat getFormat(int p, Text mediaType, @Nullable ConnectionKind kind) {
     	RTPFormat res=null;
     	if(mediaType.equals(AUDIO)) {
-    		res = audio.find(p);    		
+    		res = audioFormatForKind(kind).find(p);
     	} else if(mediaType.equals(VIDEO)) {
     		res = video.find(p);    		
     	}
     	return res;
+    }
+
+    /**
+     * Get the formats which are supported by given kind of connection.
+     *
+     * @param kind  The kind of connection for which to get the formats.
+     *              This may be null in case of no specific connection.
+     */
+    public static RTPFormats audioFormatForKind(@Nullable ConnectionKind kind) {
+        if (kind == ConnectionKind.SIPREC) return audioSipRec;
+        else return audio;
     }
 
     /**
@@ -130,21 +144,23 @@ public class AVProfile {
      * @param codecName     The name of the offered codec.
      * @param sampleRate    The sample rate of the offered codec.
      * @param mediaType     The type of media for which we are resolving.
+     * @param kind          The kid of the connection for which we are resolving the codecs.
      */
     public static RTPFormat formatForParameters(
         int payloadType
         , String codecName
         , int sampleRate
         , Text mediaType
+        , @Nullable ConnectionKind kind
     ) {
         // https://datatracker.ietf.org/doc/html/rfc3551#section-3
         // Only 96 - 127 allows dynamic resolution, otherwise we should carry on with static.
         if (payloadType >= 96 && payloadType <= 127) {
-            if (mediaType.equals(AUDIO)) return audio.findByParams(codecName, sampleRate);
+            if (mediaType.equals(AUDIO)) return audioFormatForKind(kind).findByParams(codecName, sampleRate);
             else if (mediaType.equals(VIDEO)) return video.findByParams(codecName, sampleRate);
             else return null;
         } else {
-            return getFormat(payloadType, mediaType);
+            return getFormat(payloadType, mediaType, kind);
         }
     }
     

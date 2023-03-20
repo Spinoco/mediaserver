@@ -25,6 +25,8 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.mobicents.media.server.io.sdp.SdpException;
 import org.mobicents.media.server.io.sdp.attributes.RtpMapAttribute;
+import org.mobicents.media.server.io.sdp.format.AVProfile;
+import org.mobicents.media.server.spi.ConnectionKind;
 
 /**
  * 
