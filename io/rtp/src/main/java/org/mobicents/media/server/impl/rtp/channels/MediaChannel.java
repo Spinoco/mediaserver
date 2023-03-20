@@ -717,7 +717,13 @@ public abstract class MediaChannel {
 
 					this.offeredFormats.add(formatThisMedia);
 				}
-
+			} else {
+				// In case the format is not specified by rtpMap, try to search by the id of the payload.
+				// This search should only return formats with a registered profile, not for dynamic resolution.
+				RTPFormat format = AVProfile.getFormat(payloadType, AVProfile.AUDIO);
+				if(format != null) {
+					this.offeredFormats.add(format);
+				}
 			}
 		}
 		

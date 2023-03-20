@@ -398,6 +398,8 @@ public class MediaDescriptionField implements SdpField {
 		if (this.formats != null && !this.formats.isEmpty()) {
 			for (RtpMapAttribute format : this.formats.values()) {
 				appendField(format);
+				// Append parameters of the media as well.
+				appendField(format.getParameters());
 			}
 		}
 		
