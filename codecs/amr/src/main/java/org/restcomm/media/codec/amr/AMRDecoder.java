@@ -127,7 +127,7 @@ abstract public class AMRDecoder extends FFMPEGDecoder {
             res.setOffset(0);
             res.setLength(320);
             res.setTimestamp(frame.getTimestamp());
-            res.setDuration(160);
+            res.setDuration(frame.getDuration());
             res.setSequenceNumber(frame.getSequenceNumber());
             res.setEOM(frame.isEOM());
             res.setFormat(getSupportedOutputFormat());

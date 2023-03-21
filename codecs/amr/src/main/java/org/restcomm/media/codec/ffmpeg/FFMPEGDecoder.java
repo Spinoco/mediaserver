@@ -76,7 +76,7 @@ abstract public class FFMPEGDecoder implements Codec {
             res.setOffset(0);
             res.setLength(frameSize);
             res.setTimestamp(frame.getTimestamp());
-            res.setDuration(160);
+            res.setDuration(frame.getDuration());
             res.setSequenceNumber(frame.getSequenceNumber());
             res.setEOM(frame.isEOM());
             res.setFormat(linear);
@@ -99,7 +99,7 @@ abstract public class FFMPEGDecoder implements Codec {
             res.setOffset(0);
             res.setLength(320);
             res.setTimestamp(frame.getTimestamp());
-            res.setDuration(160);
+            res.setDuration(frame.getDuration());
             res.setSequenceNumber(frame.getSequenceNumber());
             res.setEOM(frame.isEOM());
             res.setFormat(linear);

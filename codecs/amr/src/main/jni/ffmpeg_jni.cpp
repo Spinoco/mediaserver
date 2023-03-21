@@ -188,15 +188,8 @@ static int decode(
 
     /* read all the output frames (in general there may be any number of them */
     while (ret >= 0) {
-        fprintf(stdout, "Decoding frame %d\n", ret);
-        fflush(stdout);
-
-
         ret = avcodec_receive_frame(data -> context, data -> frame);
         if (ret == 0) {
-          fprintf(stdout, "Decoding got frame %d\n", data -> frame -> nb_samples);
-          fflush(stdout);
-
 
           // Resample current frame.
           // Memorieze the amount of samples
@@ -232,9 +225,6 @@ JNIEXPORT jint JNICALL Java_org_restcomm_media_codec_ffmpeg_FFMPEGNative_decode(
 
   jbyte *sourceData = env->GetByteArrayElements(sourceArray, NULL);
   jsize sourceDataLength = env->GetArrayLength(sourceArray);
-
-  fprintf(stdout, "Decoding amount %d\n", sourceDataLength);
-  fflush(stdout);
 
   data->packet->data = (uint8_t*) sourceData;
   data->packet->size = sourceDataLength;
