@@ -45,23 +45,29 @@ const int DEST_SAMPLES_PER_MS = 8;
 JNIEXPORT jlong JNICALL Java_org_restcomm_media_codec_ffmpeg_FFMPEGNative_createDecoder (
   JNIEnv *env
   , jclass
-  , jint codecId
+  , jstring codecName
   , jint defaultSampleRate
 ) {
 
   struct DecoderData *data = new DecoderData();
-  enum AVCodecID codecFromId = (AVCodecID) (int) codecId;
+  // enum AVCodecID codecFromId = (AVCodecID) (int) codecId;
+
+  const char * codecNameC = (env -> GetStringUTFChars(codecName, NULL));
 
   data -> packet = av_packet_alloc();
   data -> frame = av_frame_alloc();
   data -> resample = av_frame_alloc();
 
+  //"libopencore_amrwb"
+
   /* find the required audio decoder */
-  data -> codec = avcodec_find_decoder(codecFromId);
+  data -> codec = avcodec_find_decoder_by_name(codecNameC);
   if (!data -> codec) {
       fprintf(stderr, "Codec not found\n");
+      env -> ReleaseStringUTFChars(codecName, codecNameC);
       return ((jlong) -1);
   }
+  env -> ReleaseStringUTFChars(codecName, codecNameC);
 
   data -> context = avcodec_alloc_context3(data -> codec);
   if (!data -> context) {
@@ -182,8 +188,16 @@ static int decode(
 
     /* read all the output frames (in general there may be any number of them */
     while (ret >= 0) {
+        fprintf(stdout, "Decoding frame %d\n", ret);
+        fflush(stdout);
+
+
         ret = avcodec_receive_frame(data -> context, data -> frame);
         if (ret == 0) {
+          fprintf(stdout, "Decoding got frame %d\n", data -> frame -> nb_samples);
+          fflush(stdout);
+
+
           // Resample current frame.
           // Memorieze the amount of samples
           sizeInData = resample(data);
@@ -218,6 +232,9 @@ JNIEXPORT jint JNICALL Java_org_restcomm_media_codec_ffmpeg_FFMPEGNative_decode(
 
   jbyte *sourceData = env->GetByteArrayElements(sourceArray, NULL);
   jsize sourceDataLength = env->GetArrayLength(sourceArray);
+
+  fprintf(stdout, "Decoding amount %d\n", sourceDataLength);
+  fflush(stdout);
 
   data->packet->data = (uint8_t*) sourceData;
   data->packet->size = sourceDataLength;

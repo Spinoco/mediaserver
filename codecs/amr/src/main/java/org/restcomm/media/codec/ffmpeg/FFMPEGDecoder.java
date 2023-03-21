@@ -23,7 +23,7 @@ abstract public class FFMPEGDecoder implements Codec {
     private final static Format linear = FormatFactory.createAudioFormat("linear", 8000, 16, 1);
 
     private volatile long decoderId = 0;
-    private final int ffmpeg_codec_id;
+    private final String ffmpeg_codec_name;
     private final int ffmpeg_sample_rate;
 
     // 320 bytes required to contain single linear codec.
@@ -32,12 +32,12 @@ abstract public class FFMPEGDecoder implements Codec {
     /**
      * Create a FFMPEG decoder. This is a decoder which is backed by FFMPEG.
      *
-     * @param codecId       The id of the codec for which to create a decoder.
+     * @param codecName     The name of the codec for which to create a decoder.
      * @param sampleRate    The sample rate of the codec that we assume.
      *                      This can be overridden if ffmpeg has sample rate in the decoder.
      */
-    public FFMPEGDecoder(int codecId, int sampleRate) {
-        this.ffmpeg_codec_id = codecId;
+    public FFMPEGDecoder(String codecName, int sampleRate) {
+        this.ffmpeg_codec_name = codecName;
         this.ffmpeg_sample_rate = sampleRate;
     }
 
@@ -60,7 +60,7 @@ abstract public class FFMPEGDecoder implements Codec {
         // and then recycled without doing any work at all.
         if (this.decoderId == 0) {
             try {
-                this.decoderId = FFMPEGNative.createDecoder(ffmpeg_codec_id, ffmpeg_sample_rate);
+                this.decoderId = FFMPEGNative.createDecoder(ffmpeg_codec_name, ffmpeg_sample_rate);
             } catch (Throwable t) {
                 log.error("Failed to instantiate amr decoder", t);
             }
@@ -94,10 +94,10 @@ abstract public class FFMPEGDecoder implements Codec {
             // to make sure the call still takes next samples lets make this sample a silence
             // and continue. This may improve compatibility, i.e. for unsupported packets
             // assume 160 samples in silent frame
-            Frame res = Memory.allocate(360);
+            Frame res = Memory.allocate(320);
             Arrays.fill(res.getData(), (byte)0);
             res.setOffset(0);
-            res.setLength(360);
+            res.setLength(320);
             res.setTimestamp(frame.getTimestamp());
             res.setDuration(160);
             res.setSequenceNumber(frame.getSequenceNumber());

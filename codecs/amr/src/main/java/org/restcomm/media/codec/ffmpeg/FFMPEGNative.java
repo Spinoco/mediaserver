@@ -25,11 +25,11 @@ public class FFMPEGNative {
      * The user of this function has to call `destroyDecoder`, once they are done using this.
      * Otherwise this will memory leak.
      *
-     * @param codecKind The FFMPEG id of coded to use for decoding.
+     * @param codecName         The name of the codec which to use.
      * @param defaultSampleRate The sample rate of the codec that we assume.
      *                          This can be overridden if ffmpeg has sample rate in the decoder.
      */
-    public static native long createDecoder(int codecKind, int defaultSampleRate);
+    public static native long createDecoder(String codecName, int defaultSampleRate);
 
     /**
      * Decodes chuck of encoded data with given decoder.

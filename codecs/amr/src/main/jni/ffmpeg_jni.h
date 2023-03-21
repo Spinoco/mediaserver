@@ -13,7 +13,7 @@ extern "C" {
  * Signature: (I)J
  */
 JNIEXPORT jlong JNICALL Java_org_restcomm_media_codec_ffmpeg_FFMPEGNative_createDecoder
-  (JNIEnv *, jclass, jint, jint);
+  (JNIEnv *, jclass, jstring, jint);
 
 /*
  * Class:     org_restcomm_media_codec_ffmpeg_FFMPEGNative
