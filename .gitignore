@@ -35,3 +35,5 @@ client/jsr-309/tck/tck-run
 *.dylib
 .vscode
 
+#codecs
+codecs/amr/src/main/jni/libffmpeg_jni.so
