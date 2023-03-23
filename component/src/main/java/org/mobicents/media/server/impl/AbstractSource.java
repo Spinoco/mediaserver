@@ -443,13 +443,6 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         			completed();
             		return -1;
             	}
-
-            	//check synchronization
-            	if (frameDuration <= 0) {
-            		//loss of synchronization
-                	isSynchronized = false;
-                	return 0;
-            	}            
         	}
         	
         	scheduler.submit(this,queueNumber);
