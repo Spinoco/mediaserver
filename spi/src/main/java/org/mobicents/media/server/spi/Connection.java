@@ -25,6 +25,8 @@ package org.mobicents.media.server.spi;
 import java.io.IOException;
 import org.mobicents.media.server.utils.Text;
 
+import javax.annotation.Nullable;
+
 /**
  *
  * @author Yulian Oifa
@@ -83,6 +85,14 @@ public interface Connection {
 	 *            the new mode of the connection.
 	 */
 	public void setMode(ConnectionMode mode) throws ModeNotSupportedException;
+
+	/**
+	 * Sets the kind of the connection.
+	 * Different kinds may support different codecs and have different requirements for SDP generation.
+	 *
+	 * @param kind	The kind of connection this connection represents.
+	 */
+	public abstract void setConnectionKind(@Nullable ConnectionKind kind);
 
 	/**
 	 * Sets the endpoint which executes this connection.

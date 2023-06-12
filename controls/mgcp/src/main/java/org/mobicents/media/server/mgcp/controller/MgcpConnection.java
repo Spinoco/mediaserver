@@ -29,11 +29,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.mobicents.media.server.mgcp.MgcpEvent;
 import org.mobicents.media.server.mgcp.message.MgcpRequest;
 import org.mobicents.media.server.mgcp.message.Parameter;
-import org.mobicents.media.server.spi.Connection;
-import org.mobicents.media.server.spi.ConnectionFailureListener;
-import org.mobicents.media.server.spi.ConnectionMode;
-import org.mobicents.media.server.spi.ModeNotSupportedException;
+import org.mobicents.media.server.spi.*;
 import org.mobicents.media.server.utils.Text;
+
+import javax.annotation.Nullable;
+
 /**
  * Represents the connection activity.
  * 
@@ -99,6 +99,10 @@ public class MgcpConnection implements ConnectionFailureListener {
 
     public void setMode(ConnectionMode mode) throws ModeNotSupportedException {
         connection.setMode(mode);
+    }
+
+    public void setConnectionKind(@Nullable ConnectionKind kind) {
+        connection.setConnectionKind(kind);
     }
     
     public void setDtmfClamp(boolean dtmfClamp) {

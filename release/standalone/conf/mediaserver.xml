@@ -37,10 +37,13 @@
 		<highPort>20000</highPort>
 		<jitterBuffer size="50" />
 		<codecs>
+			<codec name="amr-wb" />
+			<codec name="amr" />
 			<codec name="pcmu" />
 			<codec name="pcma" />
 			<codec name="opus" />
 			<codec name="l16_24" />
+			<codec name="g722" />
 		</codecs>
 	</media>
 
@@ -54,4 +57,11 @@
 		<signalDetector poolSize="0" />
 		<signalGenerator poolSize="0" />
 	</resources>
+
+	<asr>
+		<azure>
+			<key>${sys:mms.asr.azure.key}</key>
+			<region>${sys:mms.asr.azure.region}</region>
+		</azure>
+	</asr>
 </mediaserver>

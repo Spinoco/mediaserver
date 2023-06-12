@@ -81,6 +81,10 @@ public class Frame {
         return data;
     }
 
+    public void setData(byte[] newData) {
+        this.data = newData;
+    }
+
     public long getTimestamp() {
         return timestamp;
     }

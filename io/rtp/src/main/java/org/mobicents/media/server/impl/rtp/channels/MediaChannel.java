@@ -34,11 +34,13 @@ import org.mobicents.media.server.impl.rtp.RtpClock;
 import org.mobicents.media.server.impl.rtp.SsrcGenerator;
 import org.mobicents.media.server.impl.rtp.statistics.RtpStatistics;
 import org.mobicents.media.server.io.network.BindType;
+import org.mobicents.media.server.io.sdp.attributes.RtpMapAttribute;
 import org.mobicents.media.server.io.sdp.fields.MediaDescriptionField;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
 import org.mobicents.media.server.io.sdp.format.RTPFormats;
 import org.mobicents.media.server.scheduler.Clock;
+import org.mobicents.media.server.spi.ConnectionKind;
 import org.mobicents.media.server.spi.ConnectionMode;
 import org.mobicents.media.server.spi.FormatNotSupportedException;
 import org.mobicents.media.server.spi.dsp.Codec;
@@ -46,6 +48,9 @@ import org.mobicents.media.server.spi.dsp.Processor;
 import org.mobicents.media.server.spi.format.AudioFormat;
 import org.mobicents.media.server.spi.format.FormatFactory;
 import org.mobicents.media.server.spi.format.Formats;
+import org.mobicents.media.server.utils.Text;
+
+import javax.annotation.Nullable;
 
 /**
  * Abstract representation of a media channel with RTP and RTCP components.
@@ -84,6 +89,11 @@ public abstract class MediaChannel {
 	
 	// ICE components
 	private final IceAuthenticatorImpl iceAuthenticator;
+
+	// Kind of connection in which this meda channel exists.
+	// this can affect offered meda by this channel.
+	@Nullable
+	protected ConnectionKind kind;
 
 	/**
 	 * Constructs a new media channel containing both RTP and RTCP components.
@@ -175,6 +185,15 @@ public abstract class MediaChannel {
 	public void setCname(String cname) {
 		this.cname = cname;
 		this.statistics.setCname(cname);
+	}
+
+	/**
+	 * Gets the current connection mode of the media channel.
+	 * This can be null before the mode is initially set.
+	 */
+	@Nullable
+	public ConnectionMode getConnectionMode() {
+		return this.rtpChannel.getConnectionMode();
 	}
 	
     public String getExternalAddress() {
@@ -399,6 +418,33 @@ public abstract class MediaChannel {
 	 */
 	public void setConnectionMode(ConnectionMode mode) {
 		this.rtpChannel.updateMode(mode);
+	}
+
+	/**
+	 * Gets under which kind the channel operates.
+	 * See 'setConnectionKind' for more details.
+	 *
+	 * NOTE this can return null if no special kind is active.
+	 */
+	@Nullable
+	public ConnectionKind getConnectionKind() {
+		return this.kind;
+	}
+
+	/**
+	 * Sets the kind of the connection underlying this media channel.
+	 * Different kinds may support different codecs and have different requirements for SDP generation.
+	 *
+	 * @param kind	The kind of connection this connection represents.
+	 */
+	public void setConnectionKind(@Nullable ConnectionKind kind) {
+		this.kind = kind;
+
+		// Update supported audio codecs for this media channel.
+		if (kind == ConnectionKind.SIPREC) {
+			this.supportedFormats = AVProfile.audioSipRec;
+			this.setFormats(this.supportedFormats);
+		}
 	}
 
 	/**
@@ -654,9 +700,30 @@ public abstract class MediaChannel {
 		
 		// Map payload types tp RTP Format
 		for (int payloadType : media.getPayloadTypes()) {
-			RTPFormat format = AVProfile.getFormat(payloadType, AVProfile.AUDIO);
-			if(format != null) {
-				this.offeredFormats.add(format);
+			RtpMapAttribute sdpFormat = media.getFormat(payloadType);
+
+			if (sdpFormat != null) {
+				RTPFormat format = AVProfile.formatForParameters(payloadType, sdpFormat.getCodec(), sdpFormat.getClockRate(), AVProfile.AUDIO, getConnectionKind());
+
+				if (format != null) {
+					RTPFormat formatThisMedia = format.clone();
+
+					// Ensure the format has is marked the same as in the SDP.
+					formatThisMedia.setID(payloadType);
+
+					if (sdpFormat.getParameters() != null) {
+						formatThisMedia.getFormat().setOptions(new Text(sdpFormat.getParameters().getParams()));
+					}
+
+					this.offeredFormats.add(formatThisMedia);
+				}
+			} else {
+				// In case the format is not specified by rtpMap, try to search by the id of the payload.
+				// This search should only return formats with a registered profile, not for dynamic resolution.
+				RTPFormat format = AVProfile.getFormat(payloadType, AVProfile.AUDIO, getConnectionKind());
+				if(format != null) {
+					this.offeredFormats.add(format);
+				}
 			}
 		}
 		

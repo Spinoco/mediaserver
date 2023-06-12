@@ -31,3 +31,9 @@ client/jsr-309/tck/tck-run
 *.iml
 
 .idea
+*.log
+*.dylib
+.vscode
+
+#codecs
+codecs/amr/src/main/jni/libffmpeg_jni.so

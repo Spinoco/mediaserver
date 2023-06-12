@@ -28,11 +28,7 @@ import org.mobicents.media.server.component.audio.AudioComponent;
 import org.mobicents.media.server.component.oob.OOBComponent;
 import org.mobicents.media.server.impl.rtp.ChannelsManager;
 import org.mobicents.media.server.impl.rtp.LocalDataChannel;
-import org.mobicents.media.server.spi.Connection;
-import org.mobicents.media.server.spi.ConnectionFailureListener;
-import org.mobicents.media.server.spi.ConnectionMode;
-import org.mobicents.media.server.spi.ConnectionType;
-import org.mobicents.media.server.spi.ModeNotSupportedException;
+import org.mobicents.media.server.spi.*;
 import org.mobicents.media.server.spi.pooling.PooledObject;
 import org.mobicents.media.server.utils.Text;
 
@@ -147,7 +143,9 @@ public class LocalConnectionImpl extends BaseConnection implements PooledObject 
     	localAudioChannel.updateMode(mode);    	
     	super.setMode(mode);
     }
-    
+    public void setConnectionKind(ConnectionKind kind) {
+    }
+
     @Override
     protected void onOpened() throws Exception {
     }

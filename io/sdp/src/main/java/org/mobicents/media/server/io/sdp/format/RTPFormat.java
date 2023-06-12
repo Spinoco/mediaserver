@@ -73,10 +73,12 @@ public class RTPFormat implements Cloneable {
 
     /**
      * Modifies payload number.
+     * This may be necessary when we are in dynamic payload id range.
+     * In such case we need to respect the offered ids.
      *
      * @param id the new payload number.
      */
-    protected void setID(int id) {
+    public void setID(int id) {
         this.id = id;
     }
 

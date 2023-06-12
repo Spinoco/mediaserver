@@ -20,6 +20,7 @@
         <module>l16</module>
         <module>ilbc</module>
         <module>opus</module>
+        <module>amr</module>
     </modules>
 	
 

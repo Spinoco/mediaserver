@@ -21,10 +21,6 @@
                 <docs.bookid>MediaServer</docs.bookid>
         </properties>
 
-        <modules>
-                <module>sources-asciidoc</module>
-        </modules>
-
         <profiles>
                 <!--profile>
                         <id>mobicents</id>

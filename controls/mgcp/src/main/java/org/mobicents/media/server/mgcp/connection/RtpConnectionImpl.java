@@ -40,14 +40,12 @@ import org.mobicents.media.server.io.sdp.SessionDescriptionParser;
 import org.mobicents.media.server.io.sdp.dtls.attributes.FingerprintAttribute;
 import org.mobicents.media.server.io.sdp.fields.MediaDescriptionField;
 import org.mobicents.media.server.io.sdp.rtcp.attributes.RtcpAttribute;
-import org.mobicents.media.server.spi.Connection;
-import org.mobicents.media.server.spi.ConnectionFailureListener;
-import org.mobicents.media.server.spi.ConnectionMode;
-import org.mobicents.media.server.spi.ConnectionType;
-import org.mobicents.media.server.spi.ModeNotSupportedException;
+import org.mobicents.media.server.spi.*;
 import org.mobicents.media.server.spi.dsp.DspFactory;
 import org.mobicents.media.server.spi.pooling.PooledObject;
 import org.mobicents.media.server.utils.Text;
+
+import javax.annotation.Nullable;
 
 /**
  * 
@@ -406,6 +404,10 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
 	public void setMode(ConnectionMode mode) throws ModeNotSupportedException {
 		this.audioChannel.setConnectionMode(mode);
 		super.setMode(mode);
+	}
+
+	public void setConnectionKind(@Nullable ConnectionKind kind) {
+		this.audioChannel.setConnectionKind(kind);
 	}
 
 	@Override

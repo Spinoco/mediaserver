@@ -22,7 +22,11 @@
 package org.mobicents.media.server.mgcp.params;
 
 import java.util.Collection;
+
+import org.mobicents.media.server.spi.ConnectionKind;
 import org.mobicents.media.server.utils.Text;
+
+import javax.annotation.Nullable;
 
 /**
  * Represents local connection options parameter
@@ -42,6 +46,7 @@ public class LocalConnectionOptions {
     public final static Text ENCRYPTION_KEY = new Text("k");
     public final static Text DTMF_CLAMP = new Text("x-dc");    
     public final static Text WEBRTC = new Text("webrtc");
+    public final static Text KIND = new Text("kind");
     public final static Text LOCAL_NETWORK = new Text("LOCAL");
     public final static Text TRUE = new Text("true");
     
@@ -55,7 +60,8 @@ public class LocalConnectionOptions {
             resourceReservation = new Text(),
             encryptionKey = new Text(),
             dtmfclamp=new Text(), 
-            webrtc=new Text();
+            webrtc=new Text(),
+			kind = new Text();
     
     private Text keyword = new Text();
     private Text value = new Text();
@@ -142,6 +148,9 @@ public class LocalConnectionOptions {
                     		break;                		
                     }	
             	}
+				else if (keyword.equals(KIND)) {
+					value.copy(this.kind);
+				}
             	else if (keyword.equals(DTMF_CLAMP)) {
             	    value.copy(this.dtmfclamp);                            			
             	}
@@ -173,4 +182,9 @@ public class LocalConnectionOptions {
     public boolean isWebRTC() {
         return this.isValid && this.webrtc.equals(TRUE);
     }
+
+	@Nullable
+	public ConnectionKind getKind() {
+		return ConnectionKind.valueOf(this.kind);
+	}
 }
