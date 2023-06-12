@@ -43,7 +43,12 @@ public class AzureASR extends ASR {
         output.join(this);
     }
 
-    public void configure(String asrLang, long endOfSpeechSilence, long initialSilence) {
+    public void configure(
+        String asrLang
+        , long endOfSpeechSilence
+        , long initialSilence
+        , boolean allowProfanity
+    ) {
         // Create new push stream to which we will be writing data for recognition.
         push = PushAudioInputStream.createPushStream(AudioStreamFormat.getWaveFormatPCM(8000L, (short) 16, (short) 1));
 
@@ -56,6 +61,10 @@ public class AzureASR extends ASR {
 
         if (initialSilence >= 0) {
             config.setProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, String.valueOf(initialSilence));
+        }
+
+        if (allowProfanity) {
+            config.setProfanity(ProfanityOption.Raw);
         }
 
         recognizer = new SpeechRecognizer(config, asrLang, audioConfig);
