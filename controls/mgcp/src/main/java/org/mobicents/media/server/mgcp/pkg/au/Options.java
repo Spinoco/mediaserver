@@ -75,6 +75,7 @@ public class Options {
     private final static Text x_lg = new Text("x-lg");
     private final static Text x_asr_end_speech = new Text("x-asr-end-speech");
     private final static Text x_asr_initial_silence = new Text("x-asr-initial-silence");
+    private final static Text x_asr_allow_profanity = new Text("x-asr-allow-profanity");
 	private final static Text x_dtmf_ignore_stamp = new Text("x-dtmf-ignore-stamp"); // Long; Time stamp before which DTMF events should be ignored.
 
     private final static Text TRUE = new Text("true");
@@ -159,6 +160,8 @@ public class Options {
 
 	private long asrEndOfSpeechSilence = -1;
 	private long asrInitialSilence = -1;
+
+	private boolean allowProfanity = false;
 
     private String asrGoogleConfig;
     private boolean asrGoogleUtterance = false;
@@ -556,6 +559,8 @@ public class Options {
 					this.asrEndOfSpeechSilence = value.toLong();
 				else if (name.equals(x_asr_initial_silence))
 					this.asrInitialSilence = value.toLong();
+				else if (name.equals(x_asr_allow_profanity))
+					this.allowProfanity = value.toString().toLowerCase().equals("true");
                 else if (name.equals(x_asr_google))
                     this.asrGoogleConfig = value.toString();
                 else if (name.equals(x_asr_google_utterance))
@@ -763,6 +768,10 @@ public class Options {
 		return this.asrInitialSilence;
 	}
 
+	public boolean getAllowProfanity() {
+		return this.allowProfanity;
+	}
+
 	public String getASRGoogleConfig() {
 		return this.asrGoogleConfig;
 	}
@@ -841,6 +850,7 @@ public class Options {
 				", asrLang=" + asrLang +
 				", asrEndOfSpeechSilence=" + asrEndOfSpeechSilence +
 				", asrInitialSilence=" + asrInitialSilence +
+				", allowProfanity=" + allowProfanity +
 				'}';
 	}
 }

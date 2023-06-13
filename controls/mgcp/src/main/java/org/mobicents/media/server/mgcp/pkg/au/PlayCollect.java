@@ -339,7 +339,7 @@ public class PlayCollect extends Signal {
 
         if (options.getASREnabled()) {
             asr = (ASR) getEndpoint().getResource(MediaType.AUDIO, ComponentType.ASR_COLLECT);
-            this.asr.configure(options.getAsrLang(), options.getAsrEndOfSpeechSilence(), options.getAsrInitialSilence());
+            this.asr.configure(options.getAsrLang(), options.getAsrEndOfSpeechSilence(), options.getAsrInitialSilence(), options.getAllowProfanity());
         }
     }
 
@@ -759,6 +759,9 @@ public class PlayCollect extends Signal {
                     t.printStackTrace();
                 }
             }
+
+            reset();
+            complete();
         }
 
         @Override
