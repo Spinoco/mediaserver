@@ -70,14 +70,32 @@ public class AzureASR extends ASR {
         recognizer = new SpeechRecognizer(config, asrLang, audioConfig);
 
         recognizer.recognized.addEventListener((o, e) -> {
-            for (ASRListener listener: AzureASR.this.listeners) {
-                listener.notifySpeechRecognition(e.getResult().getText());
+            String speechData = e.getResult().getText();
+
+            // Only when we collect some data we can notify about the recognition.
+            if (!speechData.isEmpty()) {
+                for (ASRListener listener: AzureASR.this.listeners) {
+                    listener.notifySpeechRecognition(e.getResult().getText());
+                }
             }
         });
 
         recognizer.recognizing.addEventListener((o, e) -> {
-            for (ASRListener listener: AzureASR.this.listeners) {
-                listener.notifySpeechRecognizing(e.getResult().getText());
+            String speechData = e.getResult().getText();
+
+            // Only when we collect some data we can notify about the recognition.
+            if (!speechData.isEmpty()) {
+                for (ASRListener listener: AzureASR.this.listeners) {
+                    listener.notifySpeechRecognizing(speechData);
+                }
+            }
+        });
+
+        recognizer.speechEndDetected.addEventListener((o, e) -> {
+            if (initialSilence >= 0) {
+                for (ASRListener listener: AzureASR.this.listeners) {
+                    listener.notifyEarlyTimeout();
+                }
             }
         });
     }
