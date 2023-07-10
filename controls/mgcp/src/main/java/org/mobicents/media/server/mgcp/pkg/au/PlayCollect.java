@@ -746,27 +746,46 @@ public class PlayCollect extends Signal {
 
         @Override
         public void notifySpeechRecognition(String fragment) {
-            // Empty fragment signals no match on voice input.
-            if (fragment.isEmpty()) {
-                signal.sendEvent(this.signal.getPackage().getName(), asrEvent.getName(), new Text(""));
-            } else {
-                try {
-                    // we have to encode the text to base64 utf8
-                    String encoded = BaseEncoding.base64().encode(fragment.getBytes());
-                    // this event is fired manually, as it has no control over the Signal.
-                    signal.sendEvent(this.signal.getPackage().getName(), asrEvent.getName(), new Text("asr=" + encoded));
-                } catch (Throwable t) {
-                    t.printStackTrace();
+            // Synchronizing here since this method can be called from other threads
+            // and we need to ensure that we are not in termination when singling.
+            synchronized (signal.LOCK) {
+                if (!signal.terminated.get()) {
+
+                    // Empty fragment signals no match on voice input.
+                    if (fragment.isEmpty()) {
+                        signal.sendEvent(this.signal.getPackage().getName(), asrEvent.getName(), new Text(""));
+                    } else {
+                        try {
+                            // we have to encode the text to base64 utf8
+                            String encoded = BaseEncoding.base64().encode(fragment.getBytes());
+                            // this event is fired manually, as it has no control over the Signal.
+                            signal.sendEvent(this.signal.getPackage().getName(), asrEvent.getName(), new Text("asr=" + encoded));
+                        } catch (Throwable t) {
+                            t.printStackTrace();
+                        }
+                    }
+
+                    reset();
+                    complete();
                 }
             }
-
-            reset();
-            complete();
         }
 
         @Override
         public void notifySpeechRecognizing(String fragment) {
             signal.partialRecognition = fragment;
+        }
+
+        public void notifyEarlyTimeout() {
+            // Synchronizing here since this method can be called from other threads
+            // and we need to ensure that we are not in termination when singling.
+            synchronized (signal.LOCK) {
+                if (!signal.terminated.get()) {
+                    signal.sendEvent(this.signal.getPackage().getName(), oc.getName(), new Text("rc=330"));
+                    reset();
+                    complete();
+                }
+            }
         }
 
     }
