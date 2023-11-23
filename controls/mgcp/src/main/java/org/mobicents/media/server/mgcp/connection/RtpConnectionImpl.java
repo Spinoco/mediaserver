@@ -222,7 +222,6 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
 		MediaDescriptionField remoteAudio = this.remoteSdp
 				.getMediaDescription("audio");
 		if (remoteAudio != null) {
-			this.audioChannel.open();
 			setupAudioChannelInbound(remoteAudio);
 		}
 
@@ -321,15 +320,18 @@ public class RtpConnectionImpl extends BaseConnection implements RtpListener, Po
 
 		boolean enableIce = remoteAudio.containsIce();
 
-		BindType bindType = BindType.Default;
-		if (this.local) {
-			bindType = BindType.Local;
-		} else if(enableIce) {
-			bindType = BindType.WebRtc;
-		}
+		if (!this.audioChannel.isOpen()) {
+			BindType bindType = BindType.Default;
+			if (this.local) {
+				bindType = BindType.Local;
+			} else if(enableIce) {
+				bindType = BindType.WebRtc;
+			}
 
-        // Bind audio channel to an address provided by UdpManager
-        this.audioChannel.bind(bindType, remoteAudio.isRtcpMux());
+			// Bind audio channel to an address provided by UdpManager
+			this.audioChannel.open();
+			this.audioChannel.bind(bindType, remoteAudio.isRtcpMux());
+		}
 
         if (enableIce) {
             // Enable ICE. Wait for ICE handshake to finish before connecting RTP/RTCP channels

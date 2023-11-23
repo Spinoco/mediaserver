@@ -27,6 +27,7 @@ package org.mobicents.media.server.impl.resource.mediaplayer.audio;
  * @author kulikov
  */
 public interface Extension {
+    public final static String SILENCE = "silence";
     public final static String WAV = "wav";
     public final static String GSM = "gsm";
     public final static String TXT = "txt";

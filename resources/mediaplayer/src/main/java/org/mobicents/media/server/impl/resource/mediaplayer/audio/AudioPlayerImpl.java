@@ -166,7 +166,9 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
         // get configuration and prepare for buffered read in near future
         try {
             // check scheme, if its file, we should try to create dirs
-            if (ext.matches(Extension.WAV)) {
+            if (ext.matches(Extension.SILENCE)) {
+                track = null; // Just generate silence in "evolve".
+            } else if (ext.matches(Extension.WAV)) {
                 track = new WavTrackImpl(targetURL);
             } else if (ext.matches(Extension.GSM)) {
                 track = new GsmTrackImpl(targetURL);
@@ -183,15 +185,20 @@ public class AudioPlayerImpl extends AbstractSource implements Player, TTSEngine
             throw new ResourceUnavailableException(e);
         }
 
-        // set track and set buffers.
-        this.track.set(track);
-        ConcurrentLinkedQueue<Frame> buff = new ConcurrentLinkedQueue<Frame>();
-        this.buff.set(buff);
+        if (track != null) {
+            // set track and set buffers.
+            // only in case a track was created.
+            this.track.set(track);
+            ConcurrentLinkedQueue<Frame> buff = new ConcurrentLinkedQueue<Frame>();
+            this.buff.set(buff);
 
-        this.scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK);
+            this.scheduler.submit(new ReadToBuffer(track, buff, getDsp(), this.readLock), EventQueueType.PLAYBACK);
 
-        // update duration
-        this.duration = track.getDuration();
+            // update duration
+            this.duration = track.getDuration();
+        } else {
+            this.duration = -1;
+        }
     }
 
     @Override
