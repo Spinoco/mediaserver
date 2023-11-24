@@ -361,6 +361,19 @@ public class SRTPCryptoContext {
 	 */
 	public RawPacket transformPacket(RawPacket decrypted) {
 		RawPacket encrypted = null;
+
+		int seqNo = decrypted.getSequenceNumber();
+
+		// Setup current seqNum if required.
+		if (!seqNumSet) {
+			seqNumSet = true;
+			seqNum = seqNo;
+		}
+
+		// Guess the SRTP index (48 bit), see rFC 3711, 3.3.1
+		// Stores the guessed roc in this.guessedROC
+		long guessedIndex = guessIndex(seqNo);
+
 		/* Encrypt the packet using Counter Mode encryption */
 		if (policy.getEncType() == SRTPPolicy.AESCM_ENCRYPTION || policy.getEncType() == SRTPPolicy.TWOFISH_ENCRYPTION) {
 			encrypted = processPacketAESCM(decrypted);
@@ -371,15 +384,12 @@ public class SRTPCryptoContext {
 
 		/* Authenticate the packet */
 		if (policy.getAuthType() != SRTPPolicy.NULL_AUTHENTICATION) {
-			byte[] tag = authenticatePacketHMCSHA1(encrypted, roc);
+			byte[] tag = authenticatePacketHMCSHA1(encrypted, guessedROC);
 			encrypted = encrypted.append(tag, policy.getAuthTagLength());
 		}
 
 		/* Update the ROC if necessary */
-		int seqNo = decrypted.getSequenceNumber();
-		if (seqNo == 0xFFFF) {
-			roc++;
-		}
+		update(seqNo, guessedIndex);
 		return encrypted;
 	}
 
