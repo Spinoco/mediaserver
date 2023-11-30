@@ -844,6 +844,7 @@ public class PlayCollect extends Signal {
                 playerMode = PlayerMode.SUCCESS;
                 startPromptPhase(options.getSuccessAnnouncement());
             } else {
+                System.out.println(">>>>>> COLLECTED MATCH COUNT: " +s+ " TS " + DTMFTimeStamp + " NAC " + naContent);
                 oc.fire(signal, new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp + naContent));
                 reset();
                 complete();
@@ -921,6 +922,7 @@ public class PlayCollect extends Signal {
                     if (logger.isInfoEnabled()) {
                         logger.info(String.format("(%s) Tone '%s' detected: collected", getEndpoint().getLocalName(), s));
                     }
+                    System.out.println("COLLECTED: " + s);
                 }
             } else {
                 if (isPromptActive) {
@@ -1038,40 +1040,50 @@ public class PlayCollect extends Signal {
                         }
                     } else if (length > 0) {
                         if (options.hasNoDigitsReprompt()) {
+                            // RC 326 No digits
                             eventContent = new Text("rc=326 dc=" + buffer.getSequence() + " dtmfs=" + buffer.getLastDTMFTimeStamp() + naContent);
                             playerMode = PlayerMode.FAILURE;
                             startPromptPhase(options.getNoDigitsReprompt());
                         } else if (options.hasFailureAnnouncement()) {
+                            // RC 326 No digits
                             eventContent = new Text("rc=326 dc=" + buffer.getSequence() + " dtmfs=" + buffer.getLastDTMFTimeStamp() + naContent);
                             playerMode = PlayerMode.FAILURE;
                             startPromptPhase(options.getFailureAnnouncement());
                         } else {
+                            // RC 326 No digits
                             oc.fire(signal, new Text("rc=326 dc=" + buffer.getSequence() + " dtmfs=" + buffer.getLastDTMFTimeStamp() + naContent));
                             reset();
                             complete();
                         }
                     } else {
                         if (options.hasNoDigitsReprompt()) {
+                            // RC 326 No digits
                             eventContent = new Text("rc=326" + naContent);
                             playerMode = PlayerMode.FAILURE;
                             startPromptPhase(options.getNoDigitsReprompt());
                         } else if (options.hasFailureAnnouncement()) {
+                            // RC 326 No digits
                             eventContent = new Text("rc=326" + naContent);
                             playerMode = PlayerMode.FAILURE;
                             startPromptPhase(options.getFailureAnnouncement());
                         } else {
+                            // RC 326 No digits
                             oc.fire(signal, new Text("rc=326" + naContent));
                             reset();
                             complete();
                         }
                     }
                 } else {
+                    String digits = " dc=" + buffer.getSequence() + " dtmfs=" + buffer.getLastDTMFTimeStamp();
+
                     if (options.hasNoDigitsReprompt()) {
-                        eventContent = new Text("rc=330" + naContent);
+                        // RC 330 Max attempts exceeded
+                        eventContent = new Text("rc=330" + digits + naContent);
                         playerMode = PlayerMode.FAILURE;
                         startPromptPhase(options.getNoDigitsReprompt());
                     } else if (options.hasFailureAnnouncement()) {
-                        eventContent = new Text("rc=330" + naContent);
+                        // RC 330 Max attempts exceeded
+                        eventContent = new Text("rc=330" + digits + naContent);
                         playerMode = PlayerMode.FAILURE;
                         startPromptPhase(options.getFailureAnnouncement());
                     } else {
@@ -1081,7 +1093,8 @@ public class PlayCollect extends Signal {
                             partialSpeech = " asr=" + encoded;
                         }
 
-                        oc.fire(signal, new Text("rc=330" + partialSpeech + naContent));
+                        // RC 330 Max attempts exceeded
+                        oc.fire(signal, new Text("rc=330 " + digits + partialSpeech + naContent));
                         reset();
                         complete();
                     }
