@@ -844,7 +844,6 @@ public class PlayCollect extends Signal {
                 playerMode = PlayerMode.SUCCESS;
                 startPromptPhase(options.getSuccessAnnouncement());
             } else {
-                System.out.println(">>>>>> COLLECTED MATCH COUNT: " +s+ " TS " + DTMFTimeStamp + " NAC " + naContent);
                 oc.fire(signal, new Text("rc=100 dc=" + s + " dtmfs=" + DTMFTimeStamp + naContent));
                 reset();
                 complete();
@@ -922,7 +921,6 @@ public class PlayCollect extends Signal {
                     if (logger.isInfoEnabled()) {
                         logger.info(String.format("(%s) Tone '%s' detected: collected", getEndpoint().getLocalName(), s));
                     }
-                    System.out.println("COLLECTED: " + s);
                 }
             } else {
                 if (isPromptActive) {
