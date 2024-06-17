@@ -32,7 +32,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.logging.log4j.Logger;
 import org.mobicents.media.server.io.sdp.format.RTPFormat;
-import org.mobicents.media.server.io.sdp.format.RTPFormats;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.memory.Frame;
 
@@ -64,7 +63,7 @@ public class JitterBuffer implements Serializable {
 	private final double JC_GAMMA = .01d;
 
 	//The underlying buffer size
-    private static final int QUEUE_SIZE = 10;
+    private static final int QUEUE_SIZE = 20;
     //the underlying buffer
     private ArrayList<Frame> queue = new ArrayList<Frame>(QUEUE_SIZE);
     
@@ -73,9 +72,6 @@ public class JitterBuffer implements Serializable {
     //first received sequence number
     private long isn = -1;
 
-    //allowed jitter
-    private long jitterBufferSize;
-    
     //packet arrival dead line measured on RTP clock.
     //initial value equals to infinity
     private long arrivalDeadLine = 0;
@@ -106,10 +102,7 @@ public class JitterBuffer implements Serializable {
      * continuously updated value of network jitter 
      */
     private long currentJitter = 0;
-    
-    //transmission formats
-    private RTPFormats rtpFormats = new RTPFormats();
-    
+
     //currently used format
     private RTPFormat format;
     
@@ -138,7 +131,6 @@ public class JitterBuffer implements Serializable {
      */
     public JitterBuffer(RtpClock clock, int jitterBufferSize, PriorityQueueScheduler scheduler, Path dumpDir) {
         this.rtpClock = clock;
-        this.jitterBufferSize = jitterBufferSize;
         this.scheduler = scheduler;
         if (dumpDir != null) {
 			this.dumpDir = dumpDir;
@@ -149,44 +141,44 @@ public class JitterBuffer implements Serializable {
 		}
     }
 
-    private void initJitter(RtpPacket firstPacket) {
-        long arrival = rtpClock.getLocalRtpTime();
-        long firstPacketTimestamp = firstPacket.getTimestamp();
-        currentTransit = arrival - firstPacketTimestamp;
-        currentJitter = 0;
-        clockOffset = currentTransit;
-    }
-    
-	/**
-	 * Calculates the current network jitter, which is an estimate of the
-	 * statistical variance of the RTP data packet interarrival time:
-	 * http://tools.ietf.org/html/rfc3550#appendix-A.8
-	 */
-	private void estimateJitter(RtpPacket newPacket) {
-		long arrival = rtpClock.getLocalRtpTime();
-		long newPacketTimestamp = newPacket.getTimestamp();
-		long transit = arrival - newPacketTimestamp;
-		long d = transit - currentTransit;
-		if (d < 0) {
-			d = -d;
-		}
-
-		currentTransit = transit;
-		currentJitter += d - ((currentJitter + 8) >> 4);
-
-		long diff = newPacketTimestamp - arrival;
-    	double slide = (double)clockOffset*(1-JC_BETA) + (diff*JC_BETA);
-		double gap = diff - slide;
-
-    	gap = gap < 0 ? -gap : 0;
-    	jitter = jitter*(1-JC_GAMMA) + (gap*JC_GAMMA);
-
-		if (newPacket.getSeqNumber()%50 == 0) {
-			adaptJittCompTimestamp = Math.max((int)jittCompTimestamp, (int)(2*jitter));
-		}
-
-		clockOffset = (long)slide;
-	}
+//    private void initJitter(RtpPacket firstPacket) {
+//        long arrival = rtpClock.getLocalRtpTime();
+//        long firstPacketTimestamp = firstPacket.getTimestamp();
+//        currentTransit = arrival - firstPacketTimestamp;
+//        currentJitter = 0;
+//        clockOffset = currentTransit;
+//    }
+//
+//	/**
+//	 * Calculates the current network jitter, which is an estimate of the
+//	 * statistical variance of the RTP data packet interarrival time:
+//	 * http://tools.ietf.org/html/rfc3550#appendix-A.8
+//	 */
+//	private void estimateJitter(RtpPacket newPacket) {
+//		long arrival = rtpClock.getLocalRtpTime();
+//		long newPacketTimestamp = newPacket.getTimestamp();
+//		long transit = arrival - newPacketTimestamp;
+//		long d = transit - currentTransit;
+//		if (d < 0) {
+//			d = -d;
+//		}
+//
+//		currentTransit = transit;
+//		currentJitter += d - ((currentJitter + 8) >> 4);
+//
+//		long diff = newPacketTimestamp - arrival;
+//    	double slide = (double)clockOffset*(1-JC_BETA) + (diff*JC_BETA);
+//		double gap = diff - slide;
+//
+//    	gap = gap < 0 ? -gap : 0;
+//    	jitter = jitter*(1-JC_GAMMA) + (gap*JC_GAMMA);
+//
+//		if (newPacket.getSeqNumber()%50 == 0) {
+//			adaptJittCompTimestamp = Math.max((int)jittCompTimestamp, (int)(2*jitter));
+//		}
+//
+//		clockOffset = (long)slide;
+//	}
     
     /**
      * 
@@ -198,11 +190,7 @@ public class JitterBuffer implements Serializable {
             // logger.info(String.format("Jitter estimated at %d. Current transit time is %d.", jitterEstimate, currentTransit));
             return jitterEstimate;
     }
-    
-    public void setFormats(RTPFormats rtpFormats) {
-        this.rtpFormats = rtpFormats;
-    }
-    
+
     /**
      * Gets the interarrival jitter.
      *
@@ -213,26 +201,12 @@ public class JitterBuffer implements Serializable {
     }
 
     /**
-     * Gets the maximum interarrival jitter.
-     *
-     * @return the jitter value.
-     */
-    public double getMaxJitter() {
-        return 0;
-    }
-    
-    /**
      * Get the number of dropped packets.
      * 
      * @return the number of dropped packets.
      */
     public int getDropped() {
         return dropCount;
-    }
-    
-    public boolean bufferInUse()
-    {
-    	return this.useBuffer;
     }
     
     public void setBufferInUse(boolean useBuffer)
@@ -249,10 +223,10 @@ public class JitterBuffer implements Serializable {
         this.listener = listener;
     }
 
-	private long compensatedTimestamp(long userTimestamp) {
-    	return userTimestamp+clockOffset-adaptJittCompTimestamp;
-	}
-
+//	private long compensatedTimestamp(long userTimestamp) {
+//    	return userTimestamp+clockOffset-adaptJittCompTimestamp;
+//	}
+//
     /**
      * Accepts specified packet
      *
@@ -291,10 +265,11 @@ public class JitterBuffer implements Serializable {
 			if (isn == -1) {
 				rtpClock.synchronize(packet.getTimestamp());
 				isn = packet.getSeqNumber();
-				initJitter(packet);
-			} else {
-				estimateJitter(packet);
+//				initJitter(packet);
 			}
+//			else {
+//				estimateJitter(packet);
+//			}
 
 			// drop outstanding packets
 			// packet is outstanding if its timestamp of arrived packet is less
@@ -308,19 +283,20 @@ public class JitterBuffer implements Serializable {
 							", format=" + this.format.toString() +
 							", csrc: " + packet.getContributingSource()
 				);
-				dropCount++;
-
-				// checking if not dropping too much
-				droppedInRaw++;
-				if (droppedInRaw == QUEUE_SIZE / 2 || queue.size() == 0) {
-					arrivalDeadLine = 0;
-				} else {
-					return;
-				}
+//				dropCount++;
+//
+//				// checking if not dropping too much
+//				droppedInRaw++;
+//				if (droppedInRaw == QUEUE_SIZE / 2 || queue.size() == 0) {
+//					arrivalDeadLine = 0;
+//				} else {
+//					return;
+//				}
+				return;
 			}
 
 			Frame f = packet.toFrame(rtpClock, this.format);
-f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
+			f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
 
 			// dump the packet to capture if enabled so
 			if (this.dumpConfig != null) {
@@ -373,20 +349,20 @@ f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
 				return;
 			}
 
-			// overflow?
-			// only now remove packet if overflow , possibly the same packet we just received
-			if (queue.size() > QUEUE_SIZE) {
-				logger.warn("Buffer overflow!" +
-						" queue: " + queue.size() +
-						", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
-						", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
-						", seq: " + packet.getSeqNumber() +
-						", timestamp: " + packet.getTimestamp() +
-						", csrc: " + packet.getContributingSource()
-				);
-				dropCount++;
-				queue.remove(0);
-			}
+//			// overflow?
+//			// only now remove packet if overflow , possibly the same packet we just received
+//			if (queue.size() > QUEUE_SIZE) {
+//				logger.warn("Buffer overflow!" +
+//						" queue: " + queue.size() +
+//						", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
+//						", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
+//						", seq: " + packet.getSeqNumber() +
+//						", timestamp: " + packet.getTimestamp() +
+//						", csrc: " + packet.getContributingSource()
+//				);
+//				dropCount++;
+//				queue.remove(0);
+//			}
 
 			// check if this buffer already full
 			if (!ready) {
@@ -415,19 +391,19 @@ f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
 				return null;
 			}
 
-			Frame frame = null;
-			long rtpTime;
+			Frame frame = queue.remove(0);
+//			long rtpTime;
 
-			long comp = compensatedTimestamp(rtpClock.getLocalRtpTime());
-
-			while (queue.size() != 0) {
-				frame = queue.remove(0);
-				rtpTime = rtpClock.convertToRtpTime(frame.getTimestamp());
-
-				if (comp <= rtpTime) {
-					break;
-				}
-			}
+//			long comp = compensatedTimestamp(rtpClock.getLocalRtpTime());
+//
+//			while (queue.size() != 0) {
+//				frame = queue.remove(0);
+//				rtpTime = rtpClock.convertToRtpTime(frame.getTimestamp());
+//
+//				if (comp <= rtpTime) {
+//					break;
+//				}
+//			}
 
 			if (this.dumpConfig != null) {
 				JitterBufferRTPDump dump = rtpDump.get();
@@ -437,11 +413,12 @@ f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
 				}
 			}
 
-			if (frame == null) {
-				return null;
-			}
+//			if (frame == null) {
+//				this.ready = false;
+//				return null;
+//			}
 
-			//buffer empty now? - change ready flag.
+//			//buffer empty now? - change ready flag.
 			if (queue.size() == 0) {
 				this.ready = false;
 			}

@@ -132,7 +132,6 @@ public class RtpHandler implements PacketHandler {
 	 */
 	public void setFormatMap(final RTPFormats rtpFormats) {
 		this.rtpFormats = rtpFormats;
-		this.jitterBuffer.setFormats(rtpFormats);
 	}
 	
 	public RTPFormats getFormatMap() {

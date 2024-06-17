@@ -64,7 +64,6 @@ public class JitterBufferTest {
 
     @Before
     public void setUp() {
-        jitterBuffer.setFormats(AVProfile.audio);
         rtpClock.setClockRate(8000);
         jitterBuffer.reset();
     }
