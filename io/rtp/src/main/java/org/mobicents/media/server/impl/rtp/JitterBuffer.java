@@ -60,9 +60,6 @@ public class JitterBuffer implements Serializable {
 	
 	private final ReentrantLock LOCK = new ReentrantLock();
 
-	private final double JC_BETA = .01d;
-	private final double JC_GAMMA = .01d;
-
     private final int BUFFER_SIZE_MAX = 6;
     private final int BUFFER_SIZE_NOR = 3;
     private final int BUFFER_SIZE_MIN = 1;
@@ -73,6 +70,7 @@ public class JitterBuffer implements Serializable {
 	private final int NUM_FRAME_TIME_HISTORY = 60;
 	private double avgFrameRate;
 	private double lastFrameRate;
+	private double minFrameRate;
 	private LinkedList<Long> decodedFrameTime = new LinkedList<>();
 
 	//The underlying buffer size
@@ -89,9 +87,6 @@ public class JitterBuffer implements Serializable {
     //initial value equals to infinity
     private long arrivalDeadLine = 0;
 
-    //packet arrival dead line measured on RTP clock.
-    //initial value equals to infinity
-    private long droppedInRaw = 0;
     
     //The number of dropped packets
     private int dropCount;
@@ -105,13 +100,6 @@ public class JitterBuffer implements Serializable {
     private volatile boolean ready;
     
     /**
-     * used to calculate network jitter.
-     * currentTransit measures the relative time it takes for an RTP packet 
-     * to arrive from the remote server to MMS
-     */
-    private long currentTransit = 0;
-    
-    /**
      * continuously updated value of network jitter 
      */
     private long currentJitter = 0;
@@ -122,11 +110,6 @@ public class JitterBuffer implements Serializable {
     private Boolean useBuffer=true;
     
     private final static Logger logger = org.apache.logging.log4j.LogManager.getLogger(JitterBuffer.class);
-
-    private long clockOffset = 0;
-    private int adaptJittCompTimestamp = 0;
-	private long jittCompTimestamp = 0;
-	private double jitter = 0d;
 
 	private PriorityQueueScheduler scheduler;
 
@@ -147,6 +130,7 @@ public class JitterBuffer implements Serializable {
         this.scheduler = scheduler;
 		this.lastFrameRate = 1.0f;
 		this.avgFrameRate = 1.0f;
+		this.minFrameRate = 50;
 
 		this.decodedFrameTime.push(System.currentTimeMillis());
         if (dumpDir != null) {
@@ -158,45 +142,6 @@ public class JitterBuffer implements Serializable {
 		}
     }
 
-//    private void initJitter(RtpPacket firstPacket) {
-//        long arrival = rtpClock.getLocalRtpTime();
-//        long firstPacketTimestamp = firstPacket.getTimestamp();
-//        currentTransit = arrival - firstPacketTimestamp;
-//        currentJitter = 0;
-//        clockOffset = currentTransit;
-//    }
-//
-//	/**
-//	 * Calculates the current network jitter, which is an estimate of the
-//	 * statistical variance of the RTP data packet interarrival time:
-//	 * http://tools.ietf.org/html/rfc3550#appendix-A.8
-//	 */
-//	private void estimateJitter(RtpPacket newPacket) {
-//		long arrival = rtpClock.getLocalRtpTime();
-//		long newPacketTimestamp = newPacket.getTimestamp();
-//		long transit = arrival - newPacketTimestamp;
-//		long d = transit - currentTransit;
-//		if (d < 0) {
-//			d = -d;
-//		}
-//
-//		currentTransit = transit;
-//		currentJitter += d - ((currentJitter + 8) >> 4);
-//
-//		long diff = newPacketTimestamp - arrival;
-//    	double slide = (double)clockOffset*(1-JC_BETA) + (diff*JC_BETA);
-//		double gap = diff - slide;
-//
-//    	gap = gap < 0 ? -gap : 0;
-//    	jitter = jitter*(1-JC_GAMMA) + (gap*JC_GAMMA);
-//
-//		if (newPacket.getSeqNumber()%50 == 0) {
-//			adaptJittCompTimestamp = Math.max((int)jittCompTimestamp, (int)(2*jitter));
-//		}
-//
-//		clockOffset = (long)slide;
-//	}
-    
     /**
      * 
      * @return the current value of the network RTP jitter. The value is in normalized form as specified in RFC 3550 
@@ -206,15 +151,6 @@ public class JitterBuffer implements Serializable {
             long jitterEstimate = currentJitter >> 4; 
             // logger.info(String.format("Jitter estimated at %d. Current transit time is %d.", jitterEstimate, currentTransit));
             return jitterEstimate;
-    }
-
-    /**
-     * Gets the interarrival jitter.
-     *
-     * @return the current jitter value.
-     */
-    public double getJitter() {
-        return 0;
     }
 
     /**
@@ -240,10 +176,6 @@ public class JitterBuffer implements Serializable {
         this.listener = listener;
     }
 
-//	private long compensatedTimestamp(long userTimestamp) {
-//    	return userTimestamp+clockOffset-adaptJittCompTimestamp;
-//	}
-//
     /**
      * Accepts specified packet
      *
@@ -277,18 +209,13 @@ public class JitterBuffer implements Serializable {
 
 				// update clock rate
 				rtpClock.setClockRate(this.format.getClockRate());
-				jittCompTimestamp = rtpClock.convertToRtpTime(60);
 			}
 
 			// if this is first packet then synchronize clock
 			if (isn == -1) {
 				rtpClock.synchronize(packet.getTimestamp());
 				isn = packet.getSeqNumber();
-//				initJitter(packet);
 			}
-//			else {
-//				estimateJitter(packet);
-//			}
 
 			// drop outstanding packets
 			// packet is outstanding if its timestamp of arrived packet is less
@@ -302,15 +229,7 @@ public class JitterBuffer implements Serializable {
 							", format=" + this.format.toString() +
 							", csrc: " + packet.getContributingSource()
 				);
-//				dropCount++;
-//
-//				// checking if not dropping too much
-//				droppedInRaw++;
-//				if (droppedInRaw == QUEUE_SIZE / 2 || queue.size() == 0) {
-//					arrivalDeadLine = 0;
-//				} else {
-//					return;
-//				}
+
 				return;
 			}
 
@@ -322,8 +241,6 @@ public class JitterBuffer implements Serializable {
 				JitterBufferRTPDump dump = rtpDump.get();
 				if (dump != null) dump.dump(packet, queue.size());
 			}
-
-			droppedInRaw = 0;
 
 			// find correct position to insert a packet
 			// use timestamp since its always positive
@@ -353,13 +270,6 @@ public class JitterBuffer implements Serializable {
 				duration = queue.get(queue.size() - 1).getTimestamp() - queue.get(0).getTimestamp();
 			}
 
-//			for (int i = 0; i < queue.size() - 1; i++) {
-//				// duration measured by wall clock
-//				long d = queue.get(i + 1).getTimestamp() - queue.get(i).getTimestamp();
-//				// in case of RFC2833 event timestamp remains same
-//				queue.get(i).setDuration(d > 0 ? d : 0);
-//			}
-
 			// if overall duration is negative we have some mess here,try to
 			// reset
 			if (duration < 0 && queue.size() > 1) {
@@ -367,21 +277,6 @@ public class JitterBuffer implements Serializable {
 				reset();
 				return;
 			}
-
-//			// overflow?
-//			// only now remove packet if overflow , possibly the same packet we just received
-//			if (queue.size() > QUEUE_SIZE) {
-//				logger.warn("Buffer overflow!" +
-//						" queue: " + queue.size() +
-//						", localPeer: " + (packet.getLocalPeer() != null ? packet.getLocalPeer().toString() : "null") +
-//						", remotePeer: " + (packet.getRemotePeer() != null ? packet.getRemotePeer().toString() : "null") +
-//						", seq: " + packet.getSeqNumber() +
-//						", timestamp: " + packet.getTimestamp() +
-//						", csrc: " + packet.getContributingSource()
-//				);
-//				dropCount++;
-//				queue.remove(0);
-//			}
 
 			// check if this buffer already full
 			if (!ready) {
@@ -424,7 +319,7 @@ public class JitterBuffer implements Serializable {
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
 
 			if (size < BUFFER_SIZE_NOR) {
-				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_SLOW / avgFrameRate))
+				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_SLOW / minFrameRate))
 				{
 //					System.out.println("XXXX NULL 2 ");
 
@@ -436,7 +331,7 @@ public class JitterBuffer implements Serializable {
 
 			if (size < BUFFER_SIZE_MAX)
 			{
-				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / avgFrameRate) &&
+				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / minFrameRate) &&
 						(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR  / lastFrameRate))
 				{
 //					System.out.println("XXXX NULL 3 ");
@@ -449,7 +344,7 @@ public class JitterBuffer implements Serializable {
 			if (size >= BUFFER_SIZE_MAX)
 			{
 				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST/ lastFrameRate) &&
-						(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST  / avgFrameRate))
+						(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST  / minFrameRate))
 				{
 //					System.out.println("XXXX NULL 4 ");
 
@@ -459,18 +354,6 @@ public class JitterBuffer implements Serializable {
 			}
 
 			Frame frame = queue.remove(0);
-//			long rtpTime;
-
-//			long comp = compensatedTimestamp(rtpClock.getLocalRtpTime());
-//
-//			while (queue.size() != 0) {
-//				frame = queue.remove(0);
-//				rtpTime = rtpClock.convertToRtpTime(frame.getTimestamp());
-//
-//				if (comp <= rtpTime) {
-//					break;
-//				}
-//			}
 
 			if (this.dumpConfig != null) {
 				JitterBufferRTPDump dump = rtpDump.get();
@@ -479,11 +362,6 @@ public class JitterBuffer implements Serializable {
 					dump.suppliedDump(seq, queue.size());
 				}
 			}
-
-//			if (frame == null) {
-//				this.ready = false;
-//				return null;
-//			}
 
 //			//buffer empty now? - change ready flag.
 			if (size == 1) {
@@ -503,6 +381,7 @@ public class JitterBuffer implements Serializable {
 			lastFrameRate = 1000.0 / (currentTime - decodedFrameTime.peekFirst());
 			decodedFrameTime.push(currentTime);
 			avgFrameRate = decodedFrameTime.size() * 1000.0 / (currentTime - decodedFrameTime.peekLast());
+			minFrameRate = Math.min(minFrameRate, lastFrameRate);
 
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + avgFrameRate + " " + lastFrameRate);
 
@@ -548,17 +427,12 @@ public class JitterBuffer implements Serializable {
     	this.ready=false;
     	arrivalDeadLine = 0;
     	dropCount=0;
-    	droppedInRaw=0;
     	format=null;
     	isn=-1;
 
-    	//
-		clockOffset = 0;
-		adaptJittCompTimestamp = 0;
-		jittCompTimestamp = 0;
-		jitter = 0d;
 		lastFrameRate = 1.0f;
 		avgFrameRate = 1.0f;
+		minFrameRate = 50;
 
 		decodedFrameTime.push(System.currentTimeMillis());
 
