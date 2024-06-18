@@ -25,6 +25,7 @@ package org.mobicents.media.server.impl.rtp;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,6 +62,18 @@ public class JitterBuffer implements Serializable {
 
 	private final double JC_BETA = .01d;
 	private final double JC_GAMMA = .01d;
+
+    private final int BUFFER_SIZE_MAX = 10;
+    private final int BUFFER_SIZE_NOR = 5;
+    private final int BUFFER_SIZE_MIN = 1;
+
+	private final double SPEED_FAST = 0.3;
+    private final double SPEED_NOR = 0.8;
+    private final double SPEED_SLOW = 1.5;
+	private final int NUM_FRAME_TIME_HISTORY = 60;
+	private double avgFrameRate;
+	private double lastFrameRate;
+	private LinkedList<Long> decodedFrameTime = new LinkedList<>();
 
 	//The underlying buffer size
     private static final int QUEUE_SIZE = 20;
@@ -132,6 +145,10 @@ public class JitterBuffer implements Serializable {
     public JitterBuffer(RtpClock clock, int jitterBufferSize, PriorityQueueScheduler scheduler, Path dumpDir) {
         this.rtpClock = clock;
         this.scheduler = scheduler;
+		this.lastFrameRate = 1.0f;
+		this.avgFrameRate = 1.0f;
+
+		this.decodedFrameTime.push(0L);
         if (dumpDir != null) {
 			this.dumpDir = dumpDir;
 			this.dumpConfig = JitterBufferRTPDump.getDumpConfig(dumpDir);
@@ -386,9 +403,43 @@ public class JitterBuffer implements Serializable {
     public Frame read(long timestamp) {
 		try {
 			LOCK.lock();
-			if (queue.size() == 0) {
+
+			int size = queue.size();
+
+			long currentTime = rtpClock.getLocalRtpTime();
+
+			if (size < BUFFER_SIZE_MIN) {
 				this.ready = false;
 				return null;
+			}
+
+			if (size < BUFFER_SIZE_NOR) {
+				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_SLOW / avgFrameRate))
+				{
+					this.ready = false;
+					return null;
+				}
+
+			}
+
+			if (size < BUFFER_SIZE_MAX)
+			{
+				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / avgFrameRate) &&
+						(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR  / lastFrameRate))
+				{
+					this.ready = false;
+					return null;
+				}
+			}
+
+			if (size >= BUFFER_SIZE_MAX)
+			{
+				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST/ lastFrameRate) &&
+						(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST  / avgFrameRate))
+				{
+					this.ready = false;
+					return null;
+				}
 			}
 
 			Frame frame = queue.remove(0);
@@ -419,7 +470,7 @@ public class JitterBuffer implements Serializable {
 //			}
 
 //			//buffer empty now? - change ready flag.
-			if (queue.size() == 0) {
+			if (size == 1) {
 				this.ready = false;
 			}
 
@@ -428,6 +479,15 @@ public class JitterBuffer implements Serializable {
 			//convert duration to nanoseconds
 			frame.setDuration(frame.getDuration() * 1000000L);
 			frame.setTimestamp(frame.getTimestamp() * 1000000L);
+
+			lastFrameRate = 1000.0 / (currentTime - decodedFrameTime.peekFirst());
+			decodedFrameTime.push(currentTime);
+			avgFrameRate = decodedFrameTime.size() * 1000.0 / (currentTime - decodedFrameTime.peekLast());
+
+			if (decodedFrameTime.size() >= NUM_FRAME_TIME_HISTORY)
+			{
+				decodedFrameTime.removeLast();
+			}
 
 			return frame;
 		} finally {
@@ -474,6 +534,10 @@ public class JitterBuffer implements Serializable {
 		adaptJittCompTimestamp = 0;
 		jittCompTimestamp = 0;
 		jitter = 0d;
+		lastFrameRate = 1.0f;
+		avgFrameRate = 1.0f;
+
+		decodedFrameTime.push(0L);
 
 		restartRecording();
     }
