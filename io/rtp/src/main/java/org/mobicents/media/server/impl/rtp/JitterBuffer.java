@@ -148,7 +148,7 @@ public class JitterBuffer implements Serializable {
 		this.lastFrameRate = 1.0f;
 		this.avgFrameRate = 1.0f;
 
-		this.decodedFrameTime.push(0L);
+		this.decodedFrameTime.push(System.currentTimeMillis());
         if (dumpDir != null) {
 			this.dumpDir = dumpDir;
 			this.dumpConfig = JitterBufferRTPDump.getDumpConfig(dumpDir);
@@ -258,6 +258,8 @@ public class JitterBuffer implements Serializable {
 				return;
 			}
 
+
+//			System.out.println("XXXX WRITING PACKET: ");
 
 
 			if (this.format == null || this.format.getID() != format.getID()) {
@@ -406,16 +408,26 @@ public class JitterBuffer implements Serializable {
 
 			int size = queue.size();
 
-			long currentTime = rtpClock.getLocalRtpTime();
+			long currentTime = System.currentTimeMillis();
+
+//			System.out.println("XXXX READING PACKET: " + timestamp);
+
+
 
 			if (size < BUFFER_SIZE_MIN) {
 				this.ready = false;
+//				System.out.println("XXXX NULL 1 ");
 				return null;
 			}
+
+
+//			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
 
 			if (size < BUFFER_SIZE_NOR) {
 				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_SLOW / avgFrameRate))
 				{
+//					System.out.println("XXXX NULL 2 ");
+
 					this.ready = false;
 					return null;
 				}
@@ -427,6 +439,8 @@ public class JitterBuffer implements Serializable {
 				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / avgFrameRate) &&
 						(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR  / lastFrameRate))
 				{
+//					System.out.println("XXXX NULL 3 ");
+
 					this.ready = false;
 					return null;
 				}
@@ -437,6 +451,8 @@ public class JitterBuffer implements Serializable {
 				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST/ lastFrameRate) &&
 						(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST  / avgFrameRate))
 				{
+//					System.out.println("XXXX NULL 4 ");
+
 					this.ready = false;
 					return null;
 				}
@@ -474,6 +490,10 @@ public class JitterBuffer implements Serializable {
 				this.ready = false;
 			}
 
+//			System.out.println("XXXX READING AND WILL RETURN: ");
+
+
+
 			arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
 
 			//convert duration to nanoseconds
@@ -483,6 +503,9 @@ public class JitterBuffer implements Serializable {
 			lastFrameRate = 1000.0 / (currentTime - decodedFrameTime.peekFirst());
 			decodedFrameTime.push(currentTime);
 			avgFrameRate = decodedFrameTime.size() * 1000.0 / (currentTime - decodedFrameTime.peekLast());
+
+//			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + avgFrameRate + " " + lastFrameRate);
+
 
 			if (decodedFrameTime.size() >= NUM_FRAME_TIME_HISTORY)
 			{
@@ -537,7 +560,7 @@ public class JitterBuffer implements Serializable {
 		lastFrameRate = 1.0f;
 		avgFrameRate = 1.0f;
 
-		decodedFrameTime.push(0L);
+		decodedFrameTime.push(System.currentTimeMillis());
 
 		restartRecording();
     }
