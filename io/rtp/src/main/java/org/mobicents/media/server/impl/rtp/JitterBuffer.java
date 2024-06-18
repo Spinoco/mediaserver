@@ -64,9 +64,9 @@ public class JitterBuffer implements Serializable {
     private final int BUFFER_SIZE_NOR = 3;
     private final int BUFFER_SIZE_MIN = 1;
 
-	private final double SPEED_FAST = 0.3;
-    private final double SPEED_NOR = 0.8;
-    private final double SPEED_SLOW = 1.5;
+	private final double SPEED_FAST = 0.02;
+    private final double SPEED_NOR = 0.05;
+    private final double SPEED_SLOW = 0.3;
 	private final int NUM_FRAME_TIME_HISTORY = 60;
 	private double avgFrameRate;
 	private double lastFrameRate;
@@ -312,6 +312,8 @@ public class JitterBuffer implements Serializable {
 				long currentTime = System.currentTimeMillis();
 
 //			System.out.println("XXXX READING PACKET: " + timestamp);
+
+//				System.out.println(this.hashCode() + "-- XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
 
 
 				if (size < BUFFER_SIZE_MIN) {
