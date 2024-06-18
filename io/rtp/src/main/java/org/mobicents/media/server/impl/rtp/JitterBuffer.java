@@ -300,98 +300,107 @@ public class JitterBuffer implements Serializable {
     public Frame read(long timestamp) {
 		try {
 			LOCK.lock();
+			if (!useBuffer) {
+				if (queue.isEmpty()) {
+					return null;
+				} else {
+					Frame frame = queue.remove(0);
 
-			int size = queue.size();
+					arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
 
-			long currentTime = System.currentTimeMillis();
+					//convert duration to nanoseconds
+					frame.setDuration(frame.getDuration() * 1000000L);
+					frame.setTimestamp(frame.getTimestamp() * 1000000L);
+
+					return frame;
+				}
+
+			} else {
+
+				int size = queue.size();
+
+				long currentTime = System.currentTimeMillis();
 
 //			System.out.println("XXXX READING PACKET: " + timestamp);
 
 
-
-			if (size < BUFFER_SIZE_MIN) {
-				this.ready = false;
+				if (size < BUFFER_SIZE_MIN) {
+					this.ready = false;
 //				System.out.println("XXXX NULL 1 ");
-				return null;
-			}
+					return null;
+				}
 
 
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
 
-			if (size < BUFFER_SIZE_NOR) {
-				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_SLOW / minFrameRate))
-				{
+				if (size < BUFFER_SIZE_NOR) {
+					if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_SLOW / minFrameRate)) {
 //					System.out.println("XXXX NULL 2 ");
 
-					this.ready = false;
-					return null;
+						this.ready = false;
+						return null;
+					}
+
 				}
 
-			}
-
-			if (size < BUFFER_SIZE_MAX)
-			{
-				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / minFrameRate) &&
-						(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR  / lastFrameRate))
-				{
+				if (size < BUFFER_SIZE_MAX) {
+					if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / minFrameRate) &&
+							(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / lastFrameRate)) {
 //					System.out.println("XXXX NULL 3 ");
 
-					this.ready = false;
-					return null;
+						this.ready = false;
+						return null;
+					}
 				}
-			}
 
-			if (size >= BUFFER_SIZE_MAX)
-			{
-				if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST/ lastFrameRate) &&
-						(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST  / minFrameRate))
-				{
+				if (size >= BUFFER_SIZE_MAX) {
+					if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST / lastFrameRate) &&
+							(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST / minFrameRate)) {
 //					System.out.println("XXXX NULL 4 ");
 
-					this.ready = false;
-					return null;
+						this.ready = false;
+						return null;
+					}
 				}
-			}
 
-			Frame frame = queue.remove(0);
+				Frame frame = queue.remove(0);
 
-			if (this.dumpConfig != null) {
-				JitterBufferRTPDump dump = rtpDump.get();
-				if (dump != null) {
-					long seq = frame != null ? frame.getSequenceNumber() : -1;
-					dump.suppliedDump(seq, queue.size());
+				if (this.dumpConfig != null) {
+					JitterBufferRTPDump dump = rtpDump.get();
+					if (dump != null) {
+						long seq = frame != null ? frame.getSequenceNumber() : -1;
+						dump.suppliedDump(seq, queue.size());
+					}
 				}
-			}
 
 //			//buffer empty now? - change ready flag.
-			if (size == 1) {
-				this.ready = false;
-			}
+				if (size == 1) {
+					this.ready = false;
+				}
 
 //			System.out.println("XXXX READING AND WILL RETURN: ");
 
 
+				arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
 
-			arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
+				//convert duration to nanoseconds
+				frame.setDuration(frame.getDuration() * 1000000L);
+				frame.setTimestamp(frame.getTimestamp() * 1000000L);
 
-			//convert duration to nanoseconds
-			frame.setDuration(frame.getDuration() * 1000000L);
-			frame.setTimestamp(frame.getTimestamp() * 1000000L);
-
-			lastFrameRate = 1000.0 / (currentTime - decodedFrameTime.peekFirst());
-			decodedFrameTime.push(currentTime);
-			avgFrameRate = decodedFrameTime.size() * 1000.0 / (currentTime - decodedFrameTime.peekLast());
-			minFrameRate = Math.min(minFrameRate, lastFrameRate);
+				lastFrameRate = 1000.0 / (currentTime - decodedFrameTime.peekFirst());
+				decodedFrameTime.push(currentTime);
+				avgFrameRate = decodedFrameTime.size() * 1000.0 / (currentTime - decodedFrameTime.peekLast());
+				minFrameRate = Math.min(minFrameRate, lastFrameRate);
 
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + avgFrameRate + " " + lastFrameRate);
 
 
-			if (decodedFrameTime.size() >= NUM_FRAME_TIME_HISTORY)
-			{
-				decodedFrameTime.removeLast();
-			}
+				if (decodedFrameTime.size() >= NUM_FRAME_TIME_HISTORY) {
+					decodedFrameTime.removeLast();
+				}
 
-			return frame;
+				return frame;
+			}
 		} finally {
 			LOCK.unlock();
 		}
