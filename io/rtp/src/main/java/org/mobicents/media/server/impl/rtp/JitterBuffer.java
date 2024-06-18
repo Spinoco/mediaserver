@@ -63,8 +63,8 @@ public class JitterBuffer implements Serializable {
 	private final double JC_BETA = .01d;
 	private final double JC_GAMMA = .01d;
 
-    private final int BUFFER_SIZE_MAX = 10;
-    private final int BUFFER_SIZE_NOR = 5;
+    private final int BUFFER_SIZE_MAX = 6;
+    private final int BUFFER_SIZE_NOR = 3;
     private final int BUFFER_SIZE_MIN = 1;
 
 	private final double SPEED_FAST = 0.3;
