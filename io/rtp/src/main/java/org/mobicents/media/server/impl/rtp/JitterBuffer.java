@@ -97,8 +97,6 @@ public class JitterBuffer implements Serializable {
     //buffer's monitor
     private BufferListener listener;
 
-    private volatile boolean ready;
-    
     /**
      * continuously updated value of network jitter 
      */
@@ -278,14 +276,6 @@ public class JitterBuffer implements Serializable {
 				return;
 			}
 
-			// check if this buffer already full
-			if (!ready) {
-				ready = !useBuffer || (queue.size() > 1);
-				if (ready && listener != null) {
-					listener.onFill();
-				}
-			}
-
 		} finally {
 			LOCK.unlock();
 		}
@@ -325,7 +315,6 @@ public class JitterBuffer implements Serializable {
 
 
 				if (size < BUFFER_SIZE_MIN) {
-					this.ready = false;
 //				System.out.println("XXXX NULL 1 ");
 					return null;
 				}
@@ -336,8 +325,6 @@ public class JitterBuffer implements Serializable {
 				if (size < BUFFER_SIZE_NOR) {
 					if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_SLOW / minFrameRate)) {
 //					System.out.println("XXXX NULL 2 ");
-
-						this.ready = false;
 						return null;
 					}
 
@@ -347,8 +334,6 @@ public class JitterBuffer implements Serializable {
 					if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / minFrameRate) &&
 							(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / lastFrameRate)) {
 //					System.out.println("XXXX NULL 3 ");
-
-						this.ready = false;
 						return null;
 					}
 				}
@@ -357,8 +342,6 @@ public class JitterBuffer implements Serializable {
 					if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST / lastFrameRate) &&
 							(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST / minFrameRate)) {
 //					System.out.println("XXXX NULL 4 ");
-
-						this.ready = false;
 						return null;
 					}
 				}
@@ -371,11 +354,6 @@ public class JitterBuffer implements Serializable {
 						long seq = frame != null ? frame.getSequenceNumber() : -1;
 						dump.suppliedDump(seq, queue.size());
 					}
-				}
-
-//			//buffer empty now? - change ready flag.
-				if (size == 1) {
-					this.ready = false;
 				}
 
 //			System.out.println("XXXX READING AND WILL RETURN: ");
@@ -433,7 +411,6 @@ public class JitterBuffer implements Serializable {
     
     public void restart() {
     	reset();
-    	this.ready=false;
     	arrivalDeadLine = 0;
     	dropCount=0;
     	format=null;
