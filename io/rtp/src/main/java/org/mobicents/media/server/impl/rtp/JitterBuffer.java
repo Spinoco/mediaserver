@@ -352,7 +352,7 @@ public class JitterBuffer implements Serializable {
 				}
 
 				if (size < BUFFER_SIZE_MAX) {
-					if (currentTimeFrameRate > (SPEED_NOR*avgFrameRate)) {
+					if (currentTimeFrameRate > (SPEED_NOR*avgFrameRate) && currentTimeFrameRate > (SPEED_NOR*lastFrameRate)) {
 //					System.out.println("XXXX NULL 2 ");
 						return null;
 					}
@@ -364,7 +364,7 @@ public class JitterBuffer implements Serializable {
 				}
 
 				if (size >= BUFFER_SIZE_MAX) {
-					if (currentTimeFrameRate > SPEED_FAST*avgFrameRate) {
+					if (currentTimeFrameRate > SPEED_FAST*avgFrameRate && currentTimeFrameRate > (SPEED_NOR*lastFrameRate)) {
 //					System.out.println("XXXX NULL 2 ");
 						return null;
 					}
