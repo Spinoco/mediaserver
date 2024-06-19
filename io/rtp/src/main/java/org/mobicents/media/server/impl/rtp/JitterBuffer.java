@@ -307,13 +307,12 @@ public class JitterBuffer implements Serializable {
 				int size = queue.size();
 
 
-				if (size < BUFFER_SIZE_MIN) {
-//				System.out.println("XXXX NULL 1 ");
-					return null;
-				}
 
-				long currentTime = System.currentTimeMillis();
+
+				long currentTime = timestamp / 1000000 + 20;
 				long currentTimeDiff = 20;
+
+//				System.out.println(this.hashCode() + "--- XXXX CURR time frames " + decodedFrameTime.toString());
 
 				if (!decodedFrameTime.isEmpty()) {
 					currentTimeDiff = currentTime - decodedFrameTime.peekFirst();
@@ -325,12 +324,22 @@ public class JitterBuffer implements Serializable {
 					currentTimeFrameRate = 1000 / currentTimeDiff;
 				}
 
+//				System.out.println(this.hashCode() + "--- XXXX CURR TIME DIFF " + currentTimeDiff + " CT " + currentTime);
+
+
 //			System.out.println("XXXX READING PACKET: " + timestamp);
 
-//				System.out.println(this.hashCode() + "-- XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
+
+
+//				System.out.println(this.hashCode() + " -- [ " + System.currentTimeMillis() + "]" + "XXXX READING PACKET: " + size + " " + currentTime  + " CDIFF" + currentTimeDiff  + " AF: " + avgFrameRate + " CF: " + currentTimeFrameRate + " DFS: " + decodedFrameTime.size()) ;
 
 
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
+
+				if (size < BUFFER_SIZE_MIN) {
+//				System.out.println("XXXX NULL 1 ");
+					return null;
+				}
 
 				if (size < BUFFER_SIZE_NOR) {
 					if (currentTimeFrameRate > avgFrameRate) {
@@ -386,8 +395,9 @@ public class JitterBuffer implements Serializable {
 
 				lastFrameRate = currentTimeFrameRate;
 				decodedFrameTime.push(currentTime);
-				avgFrameRate = (currentTime - decodedFrameTime.peekLast()) / decodedFrameTime.size();
-				if (avgFrameRate == 0) avgFrameRate = 50;
+				long frameRateDiff = (currentTime - decodedFrameTime.peekLast());
+				if (frameRateDiff == 0) avgFrameRate = 50;
+				else avgFrameRate = decodedFrameTime.size() * 1000 / frameRateDiff;
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + avgFrameRate + " " + lastFrameRate);
 
 

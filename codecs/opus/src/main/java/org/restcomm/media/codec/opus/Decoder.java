@@ -101,7 +101,7 @@ public class Decoder implements Codec {
             res.setOffset(0);
             res.setLength(frameSize * 2);
             res.setTimestamp(frame.getTimestamp());
-            res.setDuration(frameSize * SAMPLE_LENGTH);
+            res.setDuration(frameSize * SAMPLE_LENGTH * 1000);
             res.setSequenceNumber(frame.getSequenceNumber());
             res.setEOM(frame.isEOM());
             res.setFormat(linear);

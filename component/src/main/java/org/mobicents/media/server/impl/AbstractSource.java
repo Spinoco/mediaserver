@@ -390,14 +390,15 @@ public abstract class AbstractSource extends BaseComponent implements MediaSourc
         		readCount++;
         		frame = evolve(timestamp);
         		if (frame == null) {
-        			if(readCount==1)
+//        			if(readCount==1)
+//        			{
+//        				//stop if frame was not generated
+//        				isSynchronized = false;
+//        				return 0;
+//        			}
+//        			else
         			{
-        				//stop if frame was not generated
-        				isSynchronized = false;
-        				return 0;
-        			}
-        			else
-        			{
+                        timestamp += 20000000;
         				//frame was generated so continue
         				scheduler.submit(this,queueNumber);
         	            return 0;
