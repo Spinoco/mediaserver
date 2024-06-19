@@ -313,7 +313,7 @@ public class JitterBuffer implements Serializable {
 					return null;
 				}
 
-				long currentTime = timestamp + 20000;
+				long currentTime = timestamp/1000 + 20;
 				long currentTimeDiff = currentTime - decodedFrameTime.peekFirst();
 				long currentTimeFrameRate = 1000 / currentTimeDiff;
 
