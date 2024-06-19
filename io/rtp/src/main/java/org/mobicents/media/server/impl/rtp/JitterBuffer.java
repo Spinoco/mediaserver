@@ -128,7 +128,6 @@ public class JitterBuffer implements Serializable {
 		this.lastFrameRate = 1.0f;
 		this.avgFrameRate = 50L;
 
-		this.decodedFrameTime.push(0L);
         if (dumpDir != null) {
 			this.dumpDir = dumpDir;
 			this.dumpConfig = JitterBufferRTPDump.getDumpConfig(dumpDir);
@@ -313,8 +312,13 @@ public class JitterBuffer implements Serializable {
 					return null;
 				}
 
-				long currentTime = timestamp/1000 + 20;
-				long currentTimeDiff = currentTime - decodedFrameTime.peekFirst();
+				long currentTime = System.currentTimeMillis();
+				long currentTimeDiff = 20;
+
+				if (!decodedFrameTime.isEmpty()) {
+					currentTimeDiff = currentTime - decodedFrameTime.peekFirst();
+				}
+
 				long currentTimeFrameRate = 1000 / currentTimeDiff;
 
 //			System.out.println("XXXX READING PACKET: " + timestamp);
@@ -378,7 +382,8 @@ public class JitterBuffer implements Serializable {
 
 				lastFrameRate = currentTimeFrameRate;
 				decodedFrameTime.push(currentTime);
-				avgFrameRate = (currentTime - decodedFrameTime.peekLast()) / decodedFrameTime.size() ;
+				avgFrameRate = (currentTime - decodedFrameTime.peekLast()) / decodedFrameTime.size();
+				if (avgFrameRate == 0) avgFrameRate = 50;
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + avgFrameRate + " " + lastFrameRate);
 
 
@@ -428,7 +433,7 @@ public class JitterBuffer implements Serializable {
 		lastFrameRate = 1.0f;
 		avgFrameRate = 50L;
 
-		decodedFrameTime.push(0L);
+		decodedFrameTime.clear();
 
 		restartRecording();
     }
