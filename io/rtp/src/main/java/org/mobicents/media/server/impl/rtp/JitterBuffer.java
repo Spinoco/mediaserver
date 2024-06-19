@@ -128,7 +128,7 @@ public class JitterBuffer implements Serializable {
 		this.lastFrameRate = 1.0f;
 		this.avgFrameRate = 50.0f;
 
-		this.decodedFrameTime.push(System.currentTimeMillis());
+		this.decodedFrameTime.push(0L);
         if (dumpDir != null) {
 			this.dumpDir = dumpDir;
 			this.dumpConfig = JitterBufferRTPDump.getDumpConfig(dumpDir);
@@ -313,7 +313,7 @@ public class JitterBuffer implements Serializable {
 					return null;
 				}
 
-				long currentTime = System.currentTimeMillis();
+				long currentTime = timestamp + 20000;
 				long currentTimeDiff = currentTime - decodedFrameTime.peekFirst();
 				long currentTimeFrameRate = 1000 / currentTimeDiff;
 
@@ -428,7 +428,7 @@ public class JitterBuffer implements Serializable {
 		lastFrameRate = 1.0f;
 		avgFrameRate = 50.0f;
 
-		decodedFrameTime.push(System.currentTimeMillis());
+		decodedFrameTime.push(0L);
 
 		restartRecording();
     }
