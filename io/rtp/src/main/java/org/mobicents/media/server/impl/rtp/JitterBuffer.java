@@ -64,8 +64,8 @@ public class JitterBuffer implements Serializable {
     private final int BUFFER_SIZE_NOR = 3;
     private final int BUFFER_SIZE_MIN = 1;
 
-	private final double SPEED_FAST = 0.02;
-    private final double SPEED_NOR = 0.05;
+	private final double SPEED_FAST = 2;
+    private final double SPEED_NOR = 1.5;
     private final double SPEED_SLOW = 0.3;
 	private final int NUM_FRAME_TIME_HISTORY = 60;
 	private double avgFrameRate;
@@ -324,34 +324,38 @@ public class JitterBuffer implements Serializable {
 
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
 
-//				if (size < BUFFER_SIZE_NOR) {
-//					if (currentTimeFrameRate > avgFrameRate) {
-////					System.out.println("XXXX NULL 2 ");
-//						return null;
-//					}
-//
-//				}
-//
-//				if (size < BUFFER_SIZE_MAX) {
+				if (size < BUFFER_SIZE_NOR) {
+					if (currentTimeFrameRate > avgFrameRate) {
+//					System.out.println("XXXX NULL 2 ");
+						return null;
+					}
+
+				}
+
+				if (size < BUFFER_SIZE_MAX) {
+					if (currentTimeFrameRate > (SPEED_NOR*avgFrameRate)) {
+//					System.out.println("XXXX NULL 2 ");
+						return null;
+					}
 //					if (currentTimeDiff < (1000 * SPEED_NOR / avgFrameRate) &&
 //							currentTimeDiff < (1000 * SPEED_NOR / lastFrameRate)) {
 ////					System.out.println("XXXX NULL 3 ");
 //						return null;
 //					}
-//				}
-//
-//				if (size >= BUFFER_SIZE_MAX) {
+				}
+
+				if (size >= BUFFER_SIZE_MAX) {
+					if (currentTimeFrameRate > SPEED_FAST*avgFrameRate) {
+//					System.out.println("XXXX NULL 2 ");
+						return null;
+					}
 //					if (currentTimeDiff < (1000 * SPEED_FAST / avgFrameRate) &&
 //							currentTimeDiff < (1000 * SPEED_FAST / lastFrameRate)) {
 ////					System.out.println("XXXX NULL 4 ");
 //						return null;
 //					}
-//				}
-
-				if (currentTimeFrameRate > avgFrameRate) {
-//					System.out.println("XXXX NULL 2 ");
-					return null;
 				}
+
 
 				Frame frame = queue.remove(0);
 
