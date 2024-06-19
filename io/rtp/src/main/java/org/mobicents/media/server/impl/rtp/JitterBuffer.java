@@ -319,7 +319,11 @@ public class JitterBuffer implements Serializable {
 					currentTimeDiff = currentTime - decodedFrameTime.peekFirst();
 				}
 
-				long currentTimeFrameRate = 1000 / currentTimeDiff;
+				long currentTimeFrameRate = 50;
+
+				if (currentTimeDiff != 0) {
+					currentTimeFrameRate = 1000 / currentTimeDiff;
+				}
 
 //			System.out.println("XXXX READING PACKET: " + timestamp);
 
