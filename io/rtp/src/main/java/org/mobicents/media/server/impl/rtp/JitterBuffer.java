@@ -70,7 +70,6 @@ public class JitterBuffer implements Serializable {
 	private final int NUM_FRAME_TIME_HISTORY = 60;
 	private double avgFrameRate;
 	private double lastFrameRate;
-	private double minFrameRate;
 	private LinkedList<Long> decodedFrameTime = new LinkedList<>();
 
 	//The underlying buffer size
@@ -128,7 +127,6 @@ public class JitterBuffer implements Serializable {
         this.scheduler = scheduler;
 		this.lastFrameRate = 1.0f;
 		this.avgFrameRate = 1.0f;
-		this.minFrameRate = 50;
 
 		this.decodedFrameTime.push(System.currentTimeMillis());
         if (dumpDir != null) {
@@ -309,23 +307,24 @@ public class JitterBuffer implements Serializable {
 
 				int size = queue.size();
 
-				long currentTime = System.currentTimeMillis();
-
-//			System.out.println("XXXX READING PACKET: " + timestamp);
-
-//				System.out.println(this.hashCode() + "-- XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
-
 
 				if (size < BUFFER_SIZE_MIN) {
 //				System.out.println("XXXX NULL 1 ");
 					return null;
 				}
 
+				long currentTime = System.currentTimeMillis();
+				long currentTimeDiff = currentTime - decodedFrameTime.peekFirst();
+
+//			System.out.println("XXXX READING PACKET: " + timestamp);
+
+//				System.out.println(this.hashCode() + "-- XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
+
 
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
 
 				if (size < BUFFER_SIZE_NOR) {
-					if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_SLOW / minFrameRate)) {
+					if (currentTimeDiff < (1000 * SPEED_SLOW / avgFrameRate)) {
 //					System.out.println("XXXX NULL 2 ");
 						return null;
 					}
@@ -333,16 +332,16 @@ public class JitterBuffer implements Serializable {
 				}
 
 				if (size < BUFFER_SIZE_MAX) {
-					if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / minFrameRate) &&
-							(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_NOR / lastFrameRate)) {
+					if (currentTimeDiff < (1000 * SPEED_NOR / avgFrameRate) &&
+							currentTimeDiff < (1000 * SPEED_NOR / lastFrameRate)) {
 //					System.out.println("XXXX NULL 3 ");
 						return null;
 					}
 				}
 
 				if (size >= BUFFER_SIZE_MAX) {
-					if ((currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST / lastFrameRate) &&
-							(currentTime - decodedFrameTime.peekFirst()) < (1000 * SPEED_FAST / minFrameRate)) {
+					if (currentTimeDiff < (1000 * SPEED_FAST / avgFrameRate) &&
+							currentTimeDiff < (1000 * SPEED_FAST / lastFrameRate)) {
 //					System.out.println("XXXX NULL 4 ");
 						return null;
 					}
@@ -367,11 +366,9 @@ public class JitterBuffer implements Serializable {
 				frame.setDuration(frame.getDuration() * 1000000L);
 				frame.setTimestamp(frame.getTimestamp() * 1000000L);
 
-				lastFrameRate = 1000.0 / (currentTime - decodedFrameTime.peekFirst());
+				lastFrameRate = 1000.0 / currentTimeDiff;
 				decodedFrameTime.push(currentTime);
 				avgFrameRate = decodedFrameTime.size() * 1000.0 / (currentTime - decodedFrameTime.peekLast());
-				minFrameRate = Math.min(minFrameRate, lastFrameRate);
-
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + avgFrameRate + " " + lastFrameRate);
 
 
@@ -420,7 +417,6 @@ public class JitterBuffer implements Serializable {
 
 		lastFrameRate = 1.0f;
 		avgFrameRate = 1.0f;
-		minFrameRate = 50;
 
 		decodedFrameTime.push(System.currentTimeMillis());
 
