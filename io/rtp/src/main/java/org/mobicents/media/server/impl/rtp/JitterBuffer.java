@@ -68,6 +68,8 @@ public class JitterBuffer implements Serializable {
     private final double SPEED_NOR = 1.5;
     private final double SPEED_SLOW = 0.3;
 	private final int NUM_FRAME_TIME_HISTORY = 60;
+
+	private final int TARGET_FRAME_RATE = 50;
 	private long avgFrameRate;
 	private double lastFrameRate;
 	private LinkedList<Long> decodedFrameTime = new LinkedList<>();
@@ -374,7 +376,13 @@ public class JitterBuffer implements Serializable {
 				}
 
 
+
 				Frame frame = queue.remove(0);
+
+				if (size > BUFFER_SIZE_MIN && avgFrameRate == TARGET_FRAME_RATE && currentTimeFrameRate == TARGET_FRAME_RATE && (currentTime % 1000) == 0) {
+					frame = queue.remove(0);
+				}
+
 
 				if (this.dumpConfig != null) {
 					JitterBufferRTPDump dump = rtpDump.get();
