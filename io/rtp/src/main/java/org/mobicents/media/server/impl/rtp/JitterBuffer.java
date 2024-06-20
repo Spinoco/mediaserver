@@ -70,7 +70,7 @@ public class JitterBuffer implements Serializable {
 	private final int NUM_FRAME_TIME_HISTORY = 60;
 
 	private final int TARGET_FRAME_RATE = 50;
-	private double avgFrameRate;
+	private int avgFrameRate;
 	private double lastFrameRate;
 	private LinkedList<Long> decodedFrameTime = new LinkedList<>();
 
@@ -128,7 +128,7 @@ public class JitterBuffer implements Serializable {
         this.rtpClock = clock;
         this.scheduler = scheduler;
 		this.lastFrameRate = 1.0f;
-		this.avgFrameRate = 1.0f;
+		this.avgFrameRate = 50;
 
         if (dumpDir != null) {
 			this.dumpDir = dumpDir;
@@ -308,9 +308,6 @@ public class JitterBuffer implements Serializable {
 
 				int size = queue.size();
 
-
-
-
 				long currentTime = timestamp / 1000000 + 20;
 				long currentTimeDiff = 20;
 
@@ -411,8 +408,8 @@ public class JitterBuffer implements Serializable {
 				lastFrameRate = 1000.0 / currentTimeDiff;
 				decodedFrameTime.push(currentTime);
 				long frameRateDiff = (currentTime - decodedFrameTime.peekLast());
-				if (frameRateDiff == 0) avgFrameRate = 1.0f;
-				else avgFrameRate = decodedFrameTime.size() * 1000 / frameRateDiff;
+				if (frameRateDiff == 0) avgFrameRate = 50;
+				else avgFrameRate = (int) (decodedFrameTime.size() * 1000 / frameRateDiff);
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + avgFrameRate + " " + lastFrameRate);
 
 
@@ -460,7 +457,7 @@ public class JitterBuffer implements Serializable {
     	isn=-1;
 
 		lastFrameRate = 1.0f;
-		avgFrameRate = 1.0f;
+		avgFrameRate = 50;
 
 		decodedFrameTime.clear();
 
