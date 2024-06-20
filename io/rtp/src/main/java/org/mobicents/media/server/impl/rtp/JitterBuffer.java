@@ -140,17 +140,6 @@ public class JitterBuffer implements Serializable {
     }
 
     /**
-     * 
-     * @return the current value of the network RTP jitter. The value is in normalized form as specified in RFC 3550 
-     * http://tools.ietf.org/html/rfc3550#appendix-A.8
-     */
-    public long getEstimatedJitter() {
-            long jitterEstimate = currentJitter >> 4; 
-            // logger.info(String.format("Jitter estimated at %d. Current transit time is %d.", jitterEstimate, currentTransit));
-            return jitterEstimate;
-    }
-
-    /**
      * Get the number of dropped packets.
      * 
      * @return the number of dropped packets.
@@ -311,7 +300,7 @@ public class JitterBuffer implements Serializable {
 				long currentTime = timestamp / 1000000 + 20;
 				long currentTimeDiff = 20;
 
-//				System.out.println(this.hashCode() + "--- XXXX CURR time frames " + decodedFrameTime.toString());
+				System.out.println(this.hashCode() + "CURR time frames " + decodedFrameTime.toString());
 
 				if (!decodedFrameTime.isEmpty()) {
 					currentTimeDiff = currentTime - decodedFrameTime.peekFirst();
@@ -319,10 +308,10 @@ public class JitterBuffer implements Serializable {
 
 
 
-//				System.out.println(this.hashCode() + "--- XXXX CURR TIME DIFF " + currentTimeDiff + " CT " + currentTime);
+				System.out.println("CURR TIME DIFF " + currentTimeDiff + " CT " + currentTime);
 
 
-//			System.out.println("XXXX READING PACKET: " + timestamp);
+			System.out.println("READING PACKET: " + timestamp);
 
 
 
@@ -344,7 +333,7 @@ public class JitterBuffer implements Serializable {
 
 //			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
 
-				if (size < BUFFER_SIZE_NOR) {
+				else if (size < BUFFER_SIZE_NOR) {
 					if (currentTimeDiff < (1000 * SPEED_SLOW / avgFrameRate)) {
 //					System.out.println("XXXX NULL 2 ");
 						return null;
@@ -352,7 +341,7 @@ public class JitterBuffer implements Serializable {
 
 				}
 
-				if (size < BUFFER_SIZE_MAX) {
+				else if (size < BUFFER_SIZE_MAX) {
 					if (currentTimeDiff < (1000 * SPEED_NOR / avgFrameRate) &&
 							currentTimeDiff < (1000 * SPEED_NOR / lastFrameRate)) {
 //					System.out.println("XXXX NULL 3 ");
@@ -365,7 +354,7 @@ public class JitterBuffer implements Serializable {
 //					}
 				}
 
-				if (size >= BUFFER_SIZE_MAX) {
+				else if (size >= BUFFER_SIZE_MAX) {
 
 					if (currentTimeDiff < (1000 * SPEED_FAST / avgFrameRate) &&
 							currentTimeDiff < (1000 * SPEED_FAST / lastFrameRate)) {
