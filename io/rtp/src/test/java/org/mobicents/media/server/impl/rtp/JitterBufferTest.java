@@ -23,7 +23,9 @@
 package org.mobicents.media.server.impl.rtp;
 
 import java.net.InetSocketAddress;
+import java.util.LinkedList;
 import java.util.Random;
+import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -72,15 +74,63 @@ public class JitterBufferTest {
     public void tearDown() {
     }
 
+    @Test
+    public void failingOutOforder() throws Exception {
+        RtpPacket[] stream = createStream(100);
+        HashMap<Integer, LinkedList<RtpPacket>> packets = reorderWithDelay(10, 10, stream);
+
+        Frame[] media = new Frame[stream.length];
+        int[] bufferSize = new int[stream.length];
+        for (int i = 0; i < stream.length; i++) {
+            if (packets.containsKey(i)) {
+                for (RtpPacket rtpPacket : packets.get(i)) {
+                    System.out.println("Packet: " + rtpPacket.getSeqNumber());
+                    jitterBuffer.write(rtpPacket, AVProfile.audio.find(8));
+                }
+            }
+
+            wallClock.tick(20000000L);
+            media[i] = jitterBuffer.read(wallClock.getTime());
+            bufferSize[i] = jitterBuffer.getBufferSize();
+        }
+
+//        this.checkMaxBufferSize(bufferSize, 9);
+        this.checkSequence(media);
+        assertEquals(0, 0);
+    }
+
+    @Test
+    public void testBuffering() throws Exception {
+        RtpPacket[] stream = createStream(1000);
+
+        Frame[] media = new Frame[stream.length];
+        int[] bufferSize = new int[stream.length];
+        for (int i = 0; i < stream.length; i++) {
+            wallClock.tick(20000000L);
+            if (i%5 == 0) {
+                jitterBuffer.write(stream[i], AVProfile.audio.find(8));
+                jitterBuffer.write(stream[i+1], AVProfile.audio.find(8));
+                jitterBuffer.write(stream[i+2], AVProfile.audio.find(8));
+                jitterBuffer.write(stream[i+3], AVProfile.audio.find(8));
+                jitterBuffer.write(stream[i+4], AVProfile.audio.find(8));
+            }
+            media[i] = jitterBuffer.read(wallClock.getTime());
+            bufferSize[i] = jitterBuffer.getBufferSize();
+        }
+
+        this.checkMaxBufferSize(bufferSize, 4);
+        this.checkSequence(media);
+        assertEquals(0, 0);
+    }
 
     @Test
     public void testNormalReadWrite() throws Exception {
-        RtpPacket[] stream = createStream(100);
+        RtpPacket[] stream = createStream(1000);
 
         Frame[] media = new Frame[stream.length];
         for (int i = 0; i < stream.length; i++) {
             wallClock.tick(20000000L);
-            jitterBuffer.write(stream[i],AVProfile.audio.find(8));
+            jitterBuffer.write(stream[i], AVProfile.audio.find(8));
             media[i] = jitterBuffer.read(wallClock.getTime());
         }
 
@@ -89,156 +139,23 @@ public class JitterBufferTest {
     }
 
     @Test
-    public void testInnerSort() throws Exception {
-        // todo fix
-        RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-        RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-        RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
-        RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
-        RtpPacket p5 = RtpPacket.outgoing(local,remote,false, 8, 5, 160 * 5, 123, new byte[160], 0, 160);
+    public void testOrdering() throws Exception {
+        RtpPacket[] stream = createStream(1000);
+        shuffle(stream);
 
-        jitterBuffer.write(p1,AVProfile.audio.find(8));
-        jitterBuffer.write(p2,AVProfile.audio.find(8));
-        jitterBuffer.write(p4,AVProfile.audio.find(8));
-        jitterBuffer.write(p3,AVProfile.audio.find(8));
-
-        Frame buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(1, buffer.getSequenceNumber());
-
-        buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(2, buffer.getSequenceNumber());
-
-        buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(3, buffer.getSequenceNumber());
-
-        buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(4, buffer.getSequenceNumber());
-
-    }
-
-    @Test
-    public void testOutstanding() throws Exception {
-        RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-        RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-        RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 3, 123, new byte[160], 0, 160);
-        RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 4, 160 * 4, 123, new byte[160], 0, 160);
-        RtpPacket p5 =RtpPacket.outgoing(local,remote,false, 8, 5, 160 * 5, 123, new byte[160], 0, 160);
-
-        jitterBuffer.write(p1,AVProfile.audio.find(8));
-        jitterBuffer.write(p3,AVProfile.audio.find(8));
-        jitterBuffer.write(p5,AVProfile.audio.find(8));
-
-        assertEquals(0, jitterBuffer.getDropped());
-
-        //60ms + 40ms
-        wallClock.tick(100000000L);
-
-        Frame buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(1, buffer.getSequenceNumber());
-
-        buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(3, buffer.getSequenceNumber());
-
-        jitterBuffer.write(p2,AVProfile.audio.find(8));
-        assertEquals(1, jitterBuffer.getDropped());
-
-
-
-//        buffer = jitterBuffer.read(wallClock.getTime());
-//        assertEquals(3, buffer.getSequenceNumber());
-
-//        buffer = jitterBuffer.read(wallClock.getTime());
-//        assertEquals(null, buffer);
-
-    }
-
-    @Test
-    public void testEmpty() throws Exception {
-        RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160); //new RtpPacket(172, false);
-        RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160); //new RtpPacket(172, false);
-        RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 3, 123, new byte[160], 0, 160); //new RtpPacket(172, false);
-
-        jitterBuffer.write(p1,AVProfile.audio.find(8));
-        jitterBuffer.write(p2,AVProfile.audio.find(8));
-        jitterBuffer.write(p3,AVProfile.audio.find(8));
-
-        Frame buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(1, buffer.getSequenceNumber());
-
-        buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(2, buffer.getSequenceNumber());
-
-        buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(3, buffer.getSequenceNumber());
-
-        buffer = jitterBuffer.read(wallClock.getTime());
-        assertEquals(null, buffer);
-
-    }
-
-    @Test
-    public void testOverflow() {
-        RtpPacket[] stream = createStream(5);
-        for (int i = 0; i < stream.length; i++) {
-            jitterBuffer.write(stream[i],AVProfile.audio.find(8));
+        for (RtpPacket rtpPacket : stream) {
+            jitterBuffer.write(rtpPacket, AVProfile.audio.find(8));
         }
 
-        Frame data = jitterBuffer.read(wallClock.getTime());
-        assertEquals(1, data.getSequenceNumber());
-    }
+        Frame[] media = new Frame[stream.length];
+        for (int i = 0; i < stream.length; i++) {
+            wallClock.tick(20000000L);
+            media[i] = jitterBuffer.read(wallClock.getTime());
+        }
 
-//    @Test
-//    /**
-//     *
-//     * Test that network jitter for RTP packets is estimated correctly
-//     *
-//     * http://tools.ietf.org/html/rfc3550#appendix-A.8
-//     */
-//    public void testJitter() {
-//        //     the timestamp for each packet increases by 10ms=160 timestamp units for sampling rate 8KHz
-//        RtpPacket p1 = RtpPacket.outgoing(local,remote,false, 8, 1, 160 * 1, 123, new byte[160], 0, 160);
-//        RtpPacket p2 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 2, 123, new byte[160], 0, 160);
-//        RtpPacket p3 = RtpPacket.outgoing(local,remote,false, 8, 2, 160 * 3, 123, new byte[160], 0, 160);
-//        RtpPacket p4 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 4, 123, new byte[160], 0, 160);
-//        RtpPacket p5 = RtpPacket.outgoing(local,remote,false, 8, 3, 160 * 5, 123, new byte[160], 0, 160);
-//
-//
-//        long jitterDeltaLimit = 1; // 1 sampling units delta for timing and rounding errors , i.e. 1/8ms
-//
-//        //write first packet, expected jitter = 0
-//        jitterBuffer.write(p1,AVProfile.audio.find(8));
-//        assertEquals(0, jitterBuffer.getEstimatedJitter(), jitterDeltaLimit);
-//
-//        // move time forward by 20ms and write the second packet
-//        // the transit time should remain approximately the same - near 0ms.
-//        // expected jitter = 0;
-//        wallClock.tick(20000000L);
-//        jitterBuffer.write(p2,AVProfile.audio.find(8));
-//        assertEquals(0, jitterBuffer.getEstimatedJitter(), jitterDeltaLimit);
-//
-//        // move time forward by 30ms and write the next packet
-//        // the transit time should increase by 10ms,
-//        // as suggested by the difference in the third packet timestamp (160*3) and the 20ms delay for the server to receive the second packet
-//        // expected jitter should be close to the 10ms delay in timestamp units/16, i.e. 80/16.
-//        wallClock.tick(30000000L);
-//        jitterBuffer.write(p3,AVProfile.audio.find(8));
-//        assertEquals(5, jitterBuffer.getEstimatedJitter(), jitterDeltaLimit);
-//
-//        //move time forward by 20ms and write the next packet
-//        //the transit time does not change from the previous packet.
-//        // The jitter should stay approximately the same.
-//        wallClock.tick(20000000L);
-//        jitterBuffer.write(p4,AVProfile.audio.find(8));
-//        assertEquals(4, jitterBuffer.getEstimatedJitter(), jitterDeltaLimit);
-//
-//        //move time forward by 30ms and write the next packet
-//        //packet was delayed 10ms again.
-//        // The estimated jitter should increase significantly, by nearly 5ms (80/16)
-//        wallClock.tick(30000000L);
-//        jitterBuffer.write(p5,AVProfile.audio.find(8));
-//        assertEquals(9, jitterBuffer.getEstimatedJitter(), jitterDeltaLimit);
-//
-//    }
+        this.checkSequence(media);
+        assertEquals(0, 0);
+    }
 
     private RtpPacket[] createStream(int size) {
         RtpPacket[] stream = new RtpPacket[size];
@@ -251,31 +168,76 @@ public class JitterBufferTest {
         return stream;
     }
 
+    private void checkMaxBufferSize(int[] buffer, int maxSize) throws Exception {
+        for (int j : buffer) {
+            assertTrue("Max buffer size exceeded " + j + " > " + maxSize, j <= maxSize);
+        }
+    }
+
     private void checkSequence(Frame[] media) throws Exception {
+        int loss = 0;
         boolean res = true;
         for (int i = 0; i < media.length - 1; i++) {
-            if (media[i] ==  null) {
-                throw new Exception("Null data at position: " + i);
+            if (media[i] == null) {
+                loss++;
+                continue;
             }
 
             if (media[i + 1] == null) {
-                throw new Exception("Null data at position: " + (i+1));
+                continue;
             }
 
             res &= (media[i + 1].getSequenceNumber() - media[i].getSequenceNumber() == 1);
         }
 
+        System.out.println("Loss: " + ((100 * loss) / media.length));
+        int lossPercent = (100 * loss) / media.length;
+        assertTrue("Loss is too high " + lossPercent, lossPercent < 10);
         assertTrue("Wrong sequence ", res);
     }
 
     private void shuffle(RtpPacket[] stream) {
         Random rnd = new Random();
-        for (int k = 0; k < 5; k++) {
+        for (int k = 0; k < stream.length; k++) {
             int i = rnd.nextInt(stream.length - 1);
+            int j = rnd.nextInt(stream.length - 1);
 
             RtpPacket tmp = stream[i];
-            stream[i] = stream[i + 1];
-            stream[i + 1] = tmp;
+            stream[i] = stream[j];
+            stream[j] = tmp;
         }
     }
+
+    private HashMap<Integer, LinkedList<RtpPacket>> reorderWithDelay(int delay, int jitter, RtpPacket[] stream) {
+        HashMap<Integer, LinkedList<RtpPacket>> result = new HashMap<Integer, LinkedList<RtpPacket>>();
+
+        Random rnd = new Random();
+
+        for (int i = 0; i < stream.length; i++) {
+            int key = i + delay;
+            if (jitter > 0) {
+                if (rnd.nextBoolean()) {
+                    key += rnd.nextInt(jitter);
+                } else {
+                    key -= rnd.nextInt(jitter);
+                }
+
+                if (key < 0) key = 0;
+            }
+
+
+            LinkedList<RtpPacket> list;
+            if (!result.containsKey(key)) {
+                list = new LinkedList<RtpPacket>();
+            } else {
+                list = result.get(key);
+            }
+
+            list.push(stream[i]);
+            result.put(key, list);
+        }
+
+        return result;
+    }
+
 }

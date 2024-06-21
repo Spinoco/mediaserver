@@ -64,14 +64,13 @@ public class JitterBuffer implements Serializable {
     private final int BUFFER_SIZE_NOR = 3;
     private final int BUFFER_SIZE_MIN = 1;
 
-	private final double SPEED_FAST = 2;
-    private final double SPEED_NOR = 1.5;
-    private final double SPEED_SLOW = 0.3;
+	private final double SPEED_FAST = 0.3;
+	private final double SPEED_NOR = 0.8;
+	private final double SPEED_SLOW = 1.0;
 	private final int NUM_FRAME_TIME_HISTORY = 60;
 
-	private final int TARGET_FRAME_RATE = 50;
 	private int avgFrameRate;
-	private double lastFrameRate;
+	private int lastFrameRate;
 	private LinkedList<Long> decodedFrameTime = new LinkedList<>();
 
 	//The underlying buffer size
@@ -88,20 +87,8 @@ public class JitterBuffer implements Serializable {
     //initial value equals to infinity
     private long arrivalDeadLine = 0;
 
-    
-    //The number of dropped packets
-    private int dropCount;
-
     //known duration of media wich contains in this buffer.
     private volatile long duration;
-
-    //buffer's monitor
-    private BufferListener listener;
-
-    /**
-     * continuously updated value of network jitter 
-     */
-    private long currentJitter = 0;
 
     //currently used format
     private RTPFormat format;
@@ -127,7 +114,7 @@ public class JitterBuffer implements Serializable {
     public JitterBuffer(RtpClock clock, int jitterBufferSize, PriorityQueueScheduler scheduler, Path dumpDir) {
         this.rtpClock = clock;
         this.scheduler = scheduler;
-		this.lastFrameRate = 1.0f;
+		this.lastFrameRate = 50;
 		this.avgFrameRate = 50;
 
         if (dumpDir != null) {
@@ -139,29 +126,11 @@ public class JitterBuffer implements Serializable {
 		}
     }
 
-    /**
-     * Get the number of dropped packets.
-     * 
-     * @return the number of dropped packets.
-     */
-    public int getDropped() {
-        return dropCount;
-    }
-    
     public void setBufferInUse(boolean useBuffer)
     {
     	this.useBuffer=useBuffer;
     }
     
-    /**
-     * Assigns listener for this buffer.
-     * 
-     * @param listener the listener object.
-     */
-    public void setListener(BufferListener listener) {
-        this.listener = listener;
-    }
-
     /**
      * Accepts specified packet
      *
@@ -175,10 +144,6 @@ public class JitterBuffer implements Serializable {
 				logger.warn("No format specified. Packet dropped!");
 				return;
 			}
-
-
-//			System.out.println("XXXX WRITING PACKET: ");
-
 
 			if (this.format == null || this.format.getID() != format.getID()) {
 				logger.info(
@@ -261,13 +226,16 @@ public class JitterBuffer implements Serializable {
 			if (duration < 0 && queue.size() > 1) {
 				logger.warn("Something messy happened. Reseting jitter buffer!");
 				reset();
-				return;
 			}
 
 		} finally {
 			LOCK.unlock();
 		}
 	}     
+
+	public int getBufferSize() {
+		return queue.size();
+	}
 
     /**
      * Polls packet from buffer's head.
@@ -300,82 +268,37 @@ public class JitterBuffer implements Serializable {
 				long currentTime = timestamp / 1000000 + 20;
 				long currentTimeDiff = 20;
 
-				System.out.println(this.hashCode() + "CURR time frames " + decodedFrameTime.toString());
-
 				if (!decodedFrameTime.isEmpty()) {
 					currentTimeDiff = currentTime - decodedFrameTime.peekFirst();
 				}
 
-
-
-				System.out.println("CURR TIME DIFF " + currentTimeDiff + " CT " + currentTime);
-
-
-			System.out.println("READING PACKET: " + timestamp);
-
-
-
-//				System.out.println(this.hashCode() + " -- [ " + System.currentTimeMillis() + "]" + "XXXX READING PACKET: " + size + " " + currentTime  + " CDIFF" + currentTimeDiff  + " AF: " + avgFrameRate + " CF: " + currentTimeFrameRate + " DFS: " + decodedFrameTime.size()) ;
-
-
-//			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
-
 				if (size < BUFFER_SIZE_MIN) {
-//				System.out.println("XXXX NULL 1 ");
+					System.out.println("SKIP MIN");
 					return null;
 				}
 
-
-//			System.out.println("XXXX READING PACKET: " + timestamp);
-
-//				System.out.println(this.hashCode() + "-- XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
-
-
-//			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + decodedFrameTime.peekFirst() + " " + (currentTime - decodedFrameTime.peekFirst()) + " " + avgFrameRate + " " + lastFrameRate);
-
 				else if (size < BUFFER_SIZE_NOR) {
 					if (currentTimeDiff < (1000 * SPEED_SLOW / avgFrameRate)) {
-//					System.out.println("XXXX NULL 2 ");
+					System.out.println("SKIP NOR: " + currentTimeDiff + " " + (1000 * SPEED_SLOW / avgFrameRate));
 						return null;
 					}
 
-				}
-
-				else if (size < BUFFER_SIZE_MAX) {
+				} else if (size < BUFFER_SIZE_MAX) {
 					if (currentTimeDiff < (1000 * SPEED_NOR / avgFrameRate) &&
 							currentTimeDiff < (1000 * SPEED_NOR / lastFrameRate)) {
-//					System.out.println("XXXX NULL 3 ");
+					System.out.println("SKIP < MAX: " + currentTimeDiff + " " + (1000 * SPEED_NOR / avgFrameRate) + " " + (1000 * SPEED_NOR / lastFrameRate));
 						return null;
 					}
-//					if (currentTimeDiff < (1000 * SPEED_NOR / avgFrameRate) &&
-//							currentTimeDiff < (1000 * SPEED_NOR / lastFrameRate)) {
-////					System.out.println("XXXX NULL 3 ");
-//						return null;
-//					}
-				}
-
-				else if (size >= BUFFER_SIZE_MAX) {
-
+				} else {
 					if (currentTimeDiff < (1000 * SPEED_FAST / avgFrameRate) &&
 							currentTimeDiff < (1000 * SPEED_FAST / lastFrameRate)) {
-//					System.out.println("XXXX NULL 4 ");
+						System.out.println("SKIP >= MAX: " + currentTimeDiff + " " + (1000 * SPEED_FAST / avgFrameRate) + " " + (1000 * SPEED_FAST / lastFrameRate));
 						return null;
 					}
-//					if (currentTimeDiff < (1000 * SPEED_FAST / avgFrameRate) &&
-//							currentTimeDiff < (1000 * SPEED_FAST / lastFrameRate)) {
-////					System.out.println("XXXX NULL 4 ");
-//						return null;
-//					}
+
 				}
 
-
-
 				Frame frame = queue.remove(0);
-
-//				if (size > BUFFER_SIZE_MAX && avgFrameRate == TARGET_FRAME_RATE && currentTimeFrameRate == TARGET_FRAME_RATE && (currentTime % 1000) == 0) {
-//					frame = queue.remove(0);
-//				}
-
 
 				if (this.dumpConfig != null) {
 					JitterBufferRTPDump dump = rtpDump.get();
@@ -385,21 +308,21 @@ public class JitterBuffer implements Serializable {
 					}
 				}
 
-//			System.out.println("XXXX READING AND WILL RETURN: ");
-
-
 				arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
 
 				//convert duration to nanoseconds
 				frame.setDuration(frame.getDuration() * 1000000L);
 				frame.setTimestamp(frame.getTimestamp() * 1000000L);
 
-				lastFrameRate = 1000.0 / currentTimeDiff;
+				lastFrameRate = (int) (1000.0 / currentTimeDiff);
 				decodedFrameTime.push(currentTime);
 				long frameRateDiff = (currentTime - decodedFrameTime.peekLast());
+
+				int dftSize = decodedFrameTime.size()-1 ;
+				if (dftSize == 0) dftSize = 1;
+
 				if (frameRateDiff == 0) avgFrameRate = 50;
-				else avgFrameRate = (int) (decodedFrameTime.size() * 1000 / frameRateDiff);
-//			System.out.println("XXXX READING PACKET: " + size + " " + currentTime + " " + avgFrameRate + " " + lastFrameRate);
+				else avgFrameRate = (int) (dftSize * 1000 / frameRateDiff);
 
 
 				if (decodedFrameTime.size() >= NUM_FRAME_TIME_HISTORY) {
@@ -441,11 +364,10 @@ public class JitterBuffer implements Serializable {
     public void restart() {
     	reset();
     	arrivalDeadLine = 0;
-    	dropCount=0;
     	format=null;
     	isn=-1;
 
-		lastFrameRate = 1.0f;
+		lastFrameRate = 50;
 		avgFrameRate = 50;
 
 		decodedFrameTime.clear();

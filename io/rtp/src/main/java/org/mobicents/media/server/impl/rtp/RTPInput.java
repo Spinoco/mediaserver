@@ -40,7 +40,7 @@ import org.mobicents.media.server.spi.memory.Frame;
  *
  * The Media source of RTP data.
  */
-public class RTPInput extends AbstractSource implements BufferListener {
+public class RTPInput extends AbstractSource {
 	
 	private static final long serialVersionUID = -737259897530641186L;
 
@@ -53,10 +53,7 @@ public class RTPInput extends AbstractSource implements BufferListener {
     
 	//digital signaling processor
     private Processor dsp;
-           
-    protected Integer preEvolveCount=0;
-    protected Integer evolveCount=0;
-    
+
     private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(RTPInput.class);
     
     private AudioInput input;
@@ -100,10 +97,6 @@ public class RTPInput extends AbstractSource implements BufferListener {
         return this.dsp;
     }
     
-    protected int getPacketsLost() {
-        return 0;
-    }    
-
     @Override
     public Frame evolve(long timestamp) {
     	Frame currFrame=rxBuffer.read(timestamp);
@@ -127,14 +120,5 @@ public class RTPInput extends AbstractSource implements BufferListener {
     	
     	return currFrame; 
     }    
-    
-    /**
-     * RX buffer's call back method.
-     * 
-     * This method is called when rxBuffer is full and it is time to start
-     * transmission to the consumer.
-     */
-    public void onFill() {
-    	this.wakeup();
-    }    
+
 }
