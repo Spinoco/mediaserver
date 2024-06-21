@@ -66,7 +66,7 @@ public class JitterBuffer implements Serializable {
 
 	private final double SPEED_FAST = 0.3;
 	private final double SPEED_NOR = 0.8;
-	private final double SPEED_SLOW = 1.0;
+	private final double SPEED_SLOW = 1.5;
 	private final int NUM_FRAME_TIME_HISTORY = 60;
 
 	private int avgFrameRate;
@@ -294,6 +294,10 @@ public class JitterBuffer implements Serializable {
 							currentTimeDiff < (1000 * SPEED_FAST / lastFrameRate)) {
 						System.out.println("SKIP >= MAX: " + currentTimeDiff + " " + (1000 * SPEED_FAST / avgFrameRate) + " " + (1000 * SPEED_FAST / lastFrameRate));
 						return null;
+					}
+
+					if (avgFrameRate > 49 && (currentTime % 200) == 0) {
+						queue.remove(0);
 					}
 
 				}
