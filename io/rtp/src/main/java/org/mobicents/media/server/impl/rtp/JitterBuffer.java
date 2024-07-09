@@ -273,26 +273,26 @@ public class JitterBuffer implements Serializable {
 				}
 
 				if (size < BUFFER_SIZE_MIN) {
-					System.out.println("SKIP MIN");
+//					System.out.println("SKIP MIN");
 					return null;
 				}
 
 				else if (size < BUFFER_SIZE_NOR) {
 					if (currentTimeDiff < (1000 * SPEED_SLOW / avgFrameRate)) {
-					System.out.println("SKIP NOR: " + currentTimeDiff + " " + (1000 * SPEED_SLOW / avgFrameRate));
+//					System.out.println("SKIP NOR: " + currentTimeDiff + " " + (1000 * SPEED_SLOW / avgFrameRate));
 						return null;
 					}
 
 				} else if (size < BUFFER_SIZE_MAX) {
 					if (currentTimeDiff < (1000 * SPEED_NOR / avgFrameRate) &&
 							currentTimeDiff < (1000 * SPEED_NOR / lastFrameRate)) {
-					System.out.println("SKIP < MAX: " + currentTimeDiff + " " + (1000 * SPEED_NOR / avgFrameRate) + " " + (1000 * SPEED_NOR / lastFrameRate));
+//					System.out.println("SKIP < MAX: " + currentTimeDiff + " " + (1000 * SPEED_NOR / avgFrameRate) + " " + (1000 * SPEED_NOR / lastFrameRate));
 						return null;
 					}
 				} else {
 					if (currentTimeDiff < (1000 * SPEED_FAST / avgFrameRate) &&
 							currentTimeDiff < (1000 * SPEED_FAST / lastFrameRate)) {
-						System.out.println("SKIP >= MAX: " + currentTimeDiff + " " + (1000 * SPEED_FAST / avgFrameRate) + " " + (1000 * SPEED_FAST / lastFrameRate));
+//						System.out.println("SKIP >= MAX: " + currentTimeDiff + " " + (1000 * SPEED_FAST / avgFrameRate) + " " + (1000 * SPEED_FAST / lastFrameRate));
 						return null;
 					}
 
