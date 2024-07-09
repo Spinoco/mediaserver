@@ -168,22 +168,6 @@ public class JitterBuffer implements Serializable {
 				isn = packet.getSeqNumber();
 			}
 
-			// drop outstanding packets
-			// packet is outstanding if its timestamp of arrived packet is less
-			// then consumer media time
-			if (packet.getTimestamp() < this.arrivalDeadLine) {
-				logger.warn(
-					"drop packet: dead line=" + arrivalDeadLine +
-							", packet time=" + packet.getTimestamp() +
-							", seq=" + packet.getSeqNumber() +
-							", payload length=" + packet.getPayloadLength() +
-							", format=" + this.format.toString() +
-							", csrc: " + packet.getContributingSource()
-				);
-
-				return;
-			}
-
 			Frame f = packet.toFrame(rtpClock, this.format);
 			f.setDuration(rtpClock.convertToAbsoluteTime(f.getLength()));
 
@@ -210,6 +194,30 @@ public class JitterBuffer implements Serializable {
 								", csrc: " + packet.getContributingSource()
 				);
 				return;
+			}
+
+			if (currIndex == -1 && !queue.isEmpty()) {
+				// drop outstanding packets
+				// packet is outstanding if its timestamp of arrived packet is less
+				// then consumer media time
+				long arrivalDiff = this.arrivalDeadLine - packet.getTimestamp();
+				int maxDiff = packet.getPayloadLength() * 50; //1 second
+				if (arrivalDiff < maxDiff) {
+					System.out.println(
+							"drop packet: dead line=" + arrivalDeadLine +
+									", packet time=" + packet.getTimestamp() +
+									", seq=" + packet.getSeqNumber() +
+									", payload length=" + packet.getPayloadLength() +
+									", format=" + this.format.toString() +
+									", csrc: " + packet.getContributingSource() +
+									", arrivalDiff: " + arrivalDiff +
+									", maxDiff: " + maxDiff
+					);
+
+					return;
+				} else if (arrivalDiff > 0) {
+					currIndex = queue.size() - 1;
+				}
 			}
 
 			queue.add(currIndex + 1, f);
