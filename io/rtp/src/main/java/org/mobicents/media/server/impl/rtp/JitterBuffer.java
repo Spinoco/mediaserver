@@ -203,7 +203,7 @@ public class JitterBuffer implements Serializable {
 				long arrivalDiff = this.arrivalDeadLine - packet.getTimestamp();
 				int maxDiff = packet.getPayloadLength() * 50; //1 second
 				if (arrivalDiff < maxDiff) {
-					System.out.println(
+					logger.warn(
 							"drop packet: dead line=" + arrivalDeadLine +
 									", packet time=" + packet.getTimestamp() +
 									", seq=" + packet.getSeqNumber() +
