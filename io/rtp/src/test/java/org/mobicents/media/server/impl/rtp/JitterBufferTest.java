@@ -160,15 +160,22 @@ public class JitterBufferTest {
     private RtpPacket[] createStream(int size) {
         RtpPacket[] stream = new RtpPacket[size];
 
-        int it = 12345000;
-        int it2 = 12345;
-        for (int i = 0; i < stream.length/2; i++) {
-            stream[i] =  RtpPacket.outgoing(local,remote,false, 8, i + 1, 160 * (i+1) + it, 123, new byte[160], 0, 160);
+        int it = 1234500000;
+        int it2 = 0;
+        int it3 = 1234560000;
+        int segment = stream.length/3;
+        for (int i = 0; i < segment; i++) {
+            stream[i] = RtpPacket.outgoing(local,remote,false, 8, i + 1, 160 * (i+1) + it, 123, new byte[160], 0, 160);
         }
 
-        for (int i = stream.length/2; i < stream.length; i++) {
-            stream[i] =  RtpPacket.outgoing(local,remote,false, 8, i + 1, 160 * (i+1) + it2, 123, new byte[160], 0, 160);
+        for (int i = segment; i < 2*segment; i++) {
+            stream[i] = RtpPacket.outgoing(local,remote,false, 8, i + 1, 160 * (i+1) + it2, 123, new byte[160], 0, 160);
         }
+
+        for (int i = 2*segment; i < stream.length; i++) {
+            stream[i] = RtpPacket.outgoing(local,remote,false, 8, i + 1, 160 * (i+1) + it3, 123, new byte[160], 0, 160);
+        }
+
         return stream;
     }
 

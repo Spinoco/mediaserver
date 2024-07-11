@@ -85,10 +85,8 @@ public class JitterBuffer implements Serializable {
 
     //packet arrival dead line measured on RTP clock.
     //initial value equals to infinity
-    private long arrivalDeadLine = 0;
+    private long arrivalDeadLine = -1;
 
-    //known duration of media wich contains in this buffer.
-    private volatile long duration;
 
     //currently used format
     private RTPFormat format;
@@ -105,6 +103,8 @@ public class JitterBuffer implements Serializable {
 	// directory to dump to. If null, this indicates nothing has to be dump at all
 	private Path dumpDir;
 	private List<String> dumpConfig;
+
+	private long syncSource = -1;
 
     /**
      * Creates new instance of jitter.
@@ -166,6 +166,7 @@ public class JitterBuffer implements Serializable {
 			if (isn == -1) {
 				rtpClock.synchronize(packet.getTimestamp());
 				isn = packet.getSeqNumber();
+				syncSource = packet.getSyncSource();
 			}
 
 			Frame f = packet.toFrame(rtpClock, this.format);
@@ -191,50 +192,43 @@ public class JitterBuffer implements Serializable {
 								", seq=" + packet.getSeqNumber() +
 								", payload length=" + packet.getPayloadLength() +
 								", format=" + this.format.toString() +
-								", csrc: " + packet.getContributingSource()
+								", ssrc: " + packet.getSyncSource()
 				);
 				return;
 			}
 
-			if (currIndex == -1 && !queue.isEmpty()) {
+			if (currIndex == -1 && arrivalDeadLine != -1) {
 				// drop outstanding packets
 				// packet is outstanding if its timestamp of arrived packet is less
 				// then consumer media time
-				long arrivalDiff = this.arrivalDeadLine - packet.getTimestamp();
+				long arrivalDiff = packet.getTimestamp() - this.arrivalDeadLine;
 				int maxDiff = packet.getPayloadLength() * 50; //1 second
-				if (arrivalDiff < maxDiff) {
-					logger.warn(
-							"drop packet: dead line=" + arrivalDeadLine +
-									", packet time=" + packet.getTimestamp() +
-									", seq=" + packet.getSeqNumber() +
-									", payload length=" + packet.getPayloadLength() +
-									", format=" + this.format.toString() +
-									", csrc: " + packet.getContributingSource() +
-									", arrivalDiff: " + arrivalDiff +
-									", maxDiff: " + maxDiff
-					);
+				if (arrivalDiff < 0) {
+					if (Math.abs(arrivalDiff) > maxDiff) {
+						currIndex = queue.size() - 1;
+					} else {
+						logger.warn(
+								"drop packet: dead line=" + arrivalDeadLine +
+										", packet time=" + packet.getTimestamp() +
+										", seq=" + packet.getSeqNumber() +
+										", payload length=" + packet.getPayloadLength() +
+										", format=" + this.format.toString() +
+										", ssrc: " + packet.getSyncSource() +
+										", arrivalDiff: " + arrivalDiff +
+										", maxDiff: " + maxDiff
+						);
 
-					return;
-				} else if (arrivalDiff > 0) {
-					currIndex = queue.size() - 1;
+						return;
+					}
 				}
 			}
 
+			if (syncSource != packet.getSyncSource()) {
+				syncSource = packet.getSyncSource();
+				logger.warn("New SyncSource: " + syncSource);
+			}
+
 			queue.add(currIndex + 1, f);
-
-			// recalculate duration of each frame in queue and overall duration
-			// since we could insert the frame in the middle of the queue
-			duration = 0;
-			if (queue.size() > 1) {
-				duration = queue.get(queue.size() - 1).getTimestamp() - queue.get(0).getTimestamp();
-			}
-
-			// if overall duration is negative we have some mess here,try to
-			// reset
-			if (duration < 0 && queue.size() > 1) {
-				logger.warn("Something messy happened. Reseting jitter buffer!");
-				reset();
-			}
 
 		} finally {
 			LOCK.unlock();
@@ -260,7 +254,11 @@ public class JitterBuffer implements Serializable {
 				} else {
 					Frame frame = queue.remove(0);
 
-					arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
+					if (queue.isEmpty()) {
+						arrivalDeadLine = -1;
+					} else {
+						arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
+					}
 
 					//convert duration to nanoseconds
 					frame.setDuration(frame.getDuration() * 1000000L);
@@ -320,7 +318,12 @@ public class JitterBuffer implements Serializable {
 					}
 				}
 
-				arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
+				if (queue.isEmpty()) {
+					arrivalDeadLine = -1;
+				} else {
+					//set arrival deadline for the next frame (in rtp time
+					arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
+				}
 
 				//convert duration to nanoseconds
 				frame.setDuration(frame.getDuration() * 1000000L);
@@ -375,9 +378,10 @@ public class JitterBuffer implements Serializable {
     
     public void restart() {
     	reset();
-    	arrivalDeadLine = 0;
+    	arrivalDeadLine = -1;
     	format=null;
     	isn=-1;
+		syncSource=-1;
 
 		lastFrameRate = 50;
 		avgFrameRate = 50;
