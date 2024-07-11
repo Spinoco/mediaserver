@@ -224,8 +224,12 @@ public class JitterBuffer implements Serializable {
 			}
 
 			if (syncSource != packet.getSyncSource()) {
+				logger.warn("New SyncSource: " + packet.getSyncSource() +
+						", old SyncSource: " + syncSource +
+						", arrivalDeadline: " + arrivalDeadLine +
+						", timestamp: " + packet.getTimestamp()
+				);
 				syncSource = packet.getSyncSource();
-				logger.warn("New SyncSource: " + syncSource);
 			}
 
 			queue.add(currIndex + 1, f);
@@ -250,15 +254,13 @@ public class JitterBuffer implements Serializable {
 			LOCK.lock();
 			if (!useBuffer) {
 				if (queue.isEmpty()) {
+					arrivalDeadLine = -1;
+
 					return null;
 				} else {
 					Frame frame = queue.remove(0);
 
-					if (queue.isEmpty()) {
-						arrivalDeadLine = -1;
-					} else {
-						arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
-					}
+					arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
 
 					//convert duration to nanoseconds
 					frame.setDuration(frame.getDuration() * 1000000L);
