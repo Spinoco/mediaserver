@@ -23,12 +23,10 @@
 package org.mobicents.media.server.impl.rtp;
 
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.HashMap;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -38,6 +36,8 @@ import org.junit.Test;
 import org.mobicents.media.server.io.sdp.format.AVProfile;
 import org.mobicents.media.server.scheduler.PriorityQueueScheduler;
 import org.mobicents.media.server.spi.memory.Frame;
+
+import static org.junit.Assert.*;
 
 /**
  *
@@ -72,6 +72,38 @@ public class JitterBufferTest {
 
     @After
     public void tearDown() {
+    }
+
+
+    @Test
+    public void testNoPacketsAfter3Packets() throws Exception {
+        RtpPacket[] stream = createStream(100);
+
+        Frame[] media = new Frame[stream.length];
+        for (int i = 0; i < stream.length; i++) {
+            if (i == 3) {
+                // Wait for 3020ms while reading and not writing any packets.
+                for (int j = 0; j < 50 * 3; j++) {
+                    wallClock.tick(20000000L);
+                    media[i] = jitterBuffer.read(wallClock.getTime());
+                }
+                wallClock.tick(20000000L);
+            } else {
+                wallClock.tick(20000000L);
+            }
+            jitterBuffer.write(stream[i], AVProfile.audio.find(8));
+            media[i] = jitterBuffer.read(wallClock.getTime());
+        }
+
+
+        for (int i = 0; i < media.length; i++) {
+            Frame f = media[i];
+            if (i == 0 || i == 1 || i == 4 || i == 5) {
+                assertNull("Frames should be missing", f);
+            } else {
+                assertNotNull("Frames should be present", f);
+            }
+        }
     }
 
     @Test

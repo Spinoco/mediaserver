@@ -341,6 +341,15 @@ public class JitterBuffer implements Serializable {
 				if (frameRateDiff == 0) avgFrameRate = 50;
 				else avgFrameRate = (int) (dftSize * 1000 / frameRateDiff);
 
+				// AVG framerate or last framerate is 0, this would result in a division by zero and the jitter would get stuck
+				// This case can only happen after long times of inactivity, so we reset the values
+				if (avgFrameRate == 0 || lastFrameRate == 0) {
+					avgFrameRate = 50;
+					lastFrameRate = 50;
+					decodedFrameTime.clear();
+					queue.clear();
+				}
+
 
 				if (decodedFrameTime.size() >= NUM_FRAME_TIME_HISTORY) {
 					decodedFrameTime.removeLast();
