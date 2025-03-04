@@ -320,13 +320,6 @@ public class JitterBuffer implements Serializable {
 					}
 				}
 
-				if (queue.isEmpty()) {
-					arrivalDeadLine = -1;
-				} else {
-					//set arrival deadline for the next frame (in rtp time
-					arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
-				}
-
 				//convert duration to nanoseconds
 				frame.setDuration(frame.getDuration() * 1000000L);
 				frame.setTimestamp(frame.getTimestamp() * 1000000L);
@@ -350,6 +343,12 @@ public class JitterBuffer implements Serializable {
 					queue.clear();
 				}
 
+				if (queue.isEmpty()) {
+					arrivalDeadLine = -1;
+				} else {
+					//set arrival deadline for the next frame (in rtp time
+					arrivalDeadLine = rtpClock.convertToRtpTime(frame.getTimestamp() + frame.getDuration());
+				}
 
 				if (decodedFrameTime.size() >= NUM_FRAME_TIME_HISTORY) {
 					decodedFrameTime.removeLast();
