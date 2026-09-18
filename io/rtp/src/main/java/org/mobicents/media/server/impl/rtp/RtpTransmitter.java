@@ -23,6 +23,7 @@ package org.mobicents.media.server.impl.rtp;
 import java.io.IOException;
 import java.net.PortUnreachableException;
 import java.nio.ByteBuffer;
+import java.net.SocketAddress;
 import java.nio.channels.DatagramChannel;
 
 import org.apache.logging.log4j.Logger;
@@ -59,6 +60,8 @@ public class RtpTransmitter {
 	// WebRTC
 	private DtlsHandler dtlsHandler;
 	private boolean secure;
+	// Destination for outbound (S)RTP (ICE: socket stays unconnected).
+	private volatile SocketAddress remotePeer;
 
 	// Details of a transmitted packet
 	private RTPFormats formats;
@@ -125,6 +128,10 @@ public class RtpTransmitter {
 	public void setChannel(final DatagramChannel channel) {
 		this.channel = channel;
 	}
+
+	public void setRemotePeer(final SocketAddress remotePeer) {
+		this.remotePeer = remotePeer;
+	}
 	
 	private boolean isConnected() {
 		return this.channel != null && this.channel.isConnected();
@@ -160,7 +167,8 @@ public class RtpTransmitter {
 		if (this.secure) {
 			ByteBuffer srtpData = packet.dtlsEncodeToSend(this.dtlsHandler);
 			if(srtpData != null) {
-				channel.send(srtpData, channel.socket().getRemoteSocketAddress());
+				SocketAddress target = (this.remotePeer != null) ? this.remotePeer : channel.socket().getRemoteSocketAddress();
+				channel.send(srtpData, target);
 				statistics.onRtpSent(packet);
 			} else {
 				LOGGER.warn("Could not secure RTP packet! Packet dropped :  " + packet);

@@ -354,12 +354,17 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     }
 
     public boolean isConnected() {
-        return this.dataChannel != null && this.dataChannel.isConnected();
+
+        // Channel opened
+        if (this.dataChannel == null || !this.dataChannel.isOpen()) return false;
+        else {
+            // Either channel connected or ICE managed to settle on a peer;
+            return this.dataChannel.isConnected() || (this.ice && this.remotePeer != null);
+        }
     }
 
     public boolean isAvailable() {
-        // The channel is available is is connected
-        boolean available = this.dataChannel != null && this.dataChannel.isConnected();
+        boolean available = isConnected();
         // In case of WebRTC calls the DTLS handshake must be completed
         if (this.secure) {
             available = available && this.dtlsHandler.isHandshakeComplete();
@@ -420,6 +425,9 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     public void enableIce(IceAuthenticator authenticator) {
         if(!this.ice) {
             this.ice = true;
+            // ICE negotiates the peer address; do not latch onto the first sender.
+            // The socket is connected on nomination (see onSelectedCandidates).
+            this.bindToFirstSource = false;
             this.stunHandler.setAuthenticator(authenticator);
             this.handlers.addHandler(this.stunHandler);
         }
@@ -428,6 +436,8 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     public void disableIce() {
         if(this.ice) {
             this.ice = false;
+            // Restore plain-RTP behaviour: connect to the first sender on receive.
+            this.bindToFirstSource = true;
             this.handlers.removeHandler(this.stunHandler);
         }
     }
@@ -581,13 +591,37 @@ public class RtpChannel extends MultiplexedChannel implements DtlsListener, IceE
     
     @Override
     public void onSelectedCandidates(SelectedCandidatesEvent event) {
-            // Connect channel to start receiving traffic from remote peer
-//            this.connect(event.getRemotePeer());
+        /*
+         * A candidate pair has been nominated (USE-CANDIDATE). With ICE the remote
+         * address and port can change during the session -- NAT rebinding,
+         * re-nomination, ICE restart, mobility -- and consent checks continue for
+         * the life of the call. So we deliberately do NOT connect() the UDP socket:
+         * a connected socket source-filters at the kernel and would drop datagrams
+         * (and bounce them with ICMP) from any address other than the one it was
+         * connected to, exactly the failure this change fixes. Instead the socket
+         * stays unconnected and we remember the nominated peer as the destination
+         * for all outbound STUN/DTLS/SRTP. IceHandler only invokes this for the
+         * first nomination or for a later, MESSAGE-INTEGRITY-verified change of
+         * address, so following the update here is safe.
+         */
+        SocketAddress nominatedPeer = event.getRemotePeer();
+        if (nominatedPeer != null) {
+            this.remotePeer = nominatedPeer;
+
+            // Point every outbound path at the nominated peer (socket stays unconnected).
+            this.transmitter.setRemotePeer(nominatedPeer);
+            this.dtlsHandler.setRemotePeer(nominatedPeer);
+            if (this.rtcpMux) {
+                this.rtcpHandler.setRemotePeer(nominatedPeer);
+            }
 
             if (this.secure) {
-                // Start DTLS handshake
+                // Start the DTLS handshake now that we know where to send it. On a later
+                // address change this is a no-op (handshake already complete/in progress)
+                // and media simply follows the updated peer set above.
                 this.dtlsHandler.handshake();
             }
+        }
     }
 
 }

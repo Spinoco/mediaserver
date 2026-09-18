@@ -62,6 +62,10 @@ public class IceHandler implements PacketHandler {
     // Handshake state
     private final IceEventListener iceListener;
     private final AtomicBoolean candidateSelected;
+    // Address of the peer whose nominated (USE-CANDIDATE) check we last accepted.
+    // Used to detect a mid-session change of remote address (NAT rebinding,
+    // re-nomination, mobility) and to gate switching on MESSAGE-INTEGRITY.
+    private volatile InetSocketAddress selectedRemotePeer;
 
     public IceHandler(short componentId, IceEventListener iceListener) {
         // Packet Handler properties
@@ -201,17 +205,37 @@ public class IceHandler implements PacketHandler {
         response.addAttribute(unameAttribute);
 
         byte[] localKey = this.authenticator.getLocalKey(localUFrag);
-        MessageIntegrityAttribute integrityAttribute = StunAttributeFactory.createMessageIntegrityAttribute(remoteUsername,
-                localKey);
+
+        // Authenticate the request: every ICE connectivity/consent check MUST carry a
+        // MESSAGE-INTEGRITY that is a valid HMAC-SHA1 over the message keyed by our
+        // local ICE password (RFC 5389 s.10.1.2 / RFC 8445). A request that fails this
+        // did not come from the peer we negotiated with over signalling, so drop it.
+        // (The RFC allows replying 401; dropping keeps the responder simple and reveals
+        // nothing to an attacker.)
+        if (!request.isMessageIntegrityValid(localKey)) {
+            logger.warn("Dropping STUN request from " + remotePeer + " with missing/invalid MESSAGE-INTEGRITY.");
+            throw new IOException("Invalid message integrity " + remoteUsername);
+        }
+
+        MessageIntegrityAttribute integrityAttribute = StunAttributeFactory.createMessageIntegrityAttribute(remoteUsername, localKey);
         response.addAttribute(integrityAttribute);
 
-        // If the client issues a USE-CANDIDATE, tell ICE Agent to select the candidate
+        // If the client issues a USE-CANDIDATE, select the candidate. The request is
+        // already authenticated (unauthenticated ones were dropped above), so this is
+        // applied uniformly to the first nomination and to any later change of remote
+        // address (NAT rebinding, re-nomination, mobility).
         if (request.containsAttribute(StunAttribute.USE_CANDIDATE)) {
-            if (!this.candidateSelected.get()) {
-                this.candidateSelected.set(true);
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Selected candidate remote: " + remotePeer.toString() + ", local: " + localPeer.toString());
+            boolean firstSelection = (this.selectedRemotePeer == null);
+            boolean addressChanged = !firstSelection && !remotePeer.equals(this.selectedRemotePeer);
+            if (firstSelection || addressChanged) {
+                if (addressChanged) {
+                    logger.info("Remote peer moved from " + this.selectedRemotePeer + " to " + remotePeer
+                            + "; following nominated address.");
+                } else if (logger.isDebugEnabled()) {
+                    logger.debug("Selected candidate remote: " + remotePeer + ", local: " + localPeer);
                 }
+                this.selectedRemotePeer = remotePeer;
+                this.candidateSelected.set(true);
                 this.iceListener.onSelectedCandidates(new SelectedCandidatesEvent(remotePeer));
             }
         }
@@ -236,6 +260,7 @@ public class IceHandler implements PacketHandler {
     public void reset() {
         this.authenticator = null;
         this.candidateSelected.set(false);
+        this.selectedRemotePeer = null;
     }
 
 }

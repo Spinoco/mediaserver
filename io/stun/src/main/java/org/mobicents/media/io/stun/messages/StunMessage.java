@@ -122,6 +122,18 @@ public class StunMessage {
 	protected LinkedHashMap<Character, StunAttribute> attributes = new LinkedHashMap<Character, StunAttribute>();
 
 	/**
+	 * The raw bytes this message was decoded from, kept so that subclasses can
+	 * re-derive integrity/authentication data (e.g. MESSAGE-INTEGRITY) straight
+	 * from the wire bytes instead of re-encoding the decoded attributes.
+	 */
+	protected byte[] rawData;
+
+	/**
+	 * The offset in {@link #rawData} at which this message's STUN header starts.
+	 */
+	protected int rawOffset;
+
+	/**
 	 * Attribute presentity is a thing of RFC 3489 and no longer exists in 5389.
 	 * we are not using it any longer and if at some point we decide we need it
 	 * in certain situations, then make extend use of the following field.
@@ -900,6 +912,9 @@ public class StunMessage {
 				offset += (4 - (att.getDataLength() % 4));
 			}
 		}
+
+		message.rawData = binMessage;
+		message.rawOffset = originalOffset;
 		return message;
 	}
 

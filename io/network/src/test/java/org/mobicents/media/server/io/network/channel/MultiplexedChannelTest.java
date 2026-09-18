@@ -50,10 +50,11 @@ public class MultiplexedChannelTest {
 	public void testQueueEmptyData() {
 		// given
 		MultiplexedChannel channel = new MultiplexedChannel();
+		SocketAddress target = InetSocketAddress.createUnresolved("localhost", 9090);
 
 		// when
-		channel.queueData(null);
-		channel.queueData(new byte[0]);
+		channel.queueData(null, target);
+		channel.queueData(new byte[0], target);
 
 		// then
 		assertFalse(channel.hasPendingData());
@@ -63,9 +64,11 @@ public class MultiplexedChannelTest {
 	public void testQueueData() {
 		// given
 		MultiplexedChannel channel = new MultiplexedChannel();
+		SocketAddress target = InetSocketAddress.createUnresolved("localhost", 9090);
+
 
 		// when
-		channel.queueData("hello".getBytes());
+		channel.queueData("hello".getBytes(), target);
 
 		// then
 		assertTrue(channel.hasPendingData());
