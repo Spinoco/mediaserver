@@ -102,7 +102,8 @@ public class MultiplexedChannel implements Channel {
 		}
 		return 0;
 	}
-	
+
+	//TESTS only
 	public String getRemoteHost() {
 		if(this.dataChannel != null && this.dataChannel.isConnected()) {
 			try {
@@ -113,7 +114,8 @@ public class MultiplexedChannel implements Channel {
 		}
 		return "";
 	}
-	
+
+	//TESTS only
 	public int getRemotePort() {
 		if(this.dataChannel != null && this.dataChannel.isConnected()) {
 			try {
