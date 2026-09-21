@@ -186,7 +186,7 @@ public class MultiplexedChannel implements Channel {
 		if (dataLength == -1) {
 			close();
 			return;
-		} else if (dataLength > 0 && remotePeer != null) { // remotePeer has to be nonnull here, as that is only way we can get data.
+		} else if (dataLength > 0 && remotePeer != null) { // remotePeer has to be @nonnull here, as that is only way we can get data.
 			// Copy data from buffer so we don't mess with original
 			byte[] dataCopy = new byte[dataLength];
 			this.receiveBuffer.rewind();
