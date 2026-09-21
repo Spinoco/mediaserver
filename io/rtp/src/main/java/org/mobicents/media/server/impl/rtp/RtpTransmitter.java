@@ -134,7 +134,7 @@ public class RtpTransmitter {
 	}
 	
 	private boolean isConnected() {
-		return this.channel != null && this.channel.isConnected();
+		return this.channel != null && this.channel.isConnected() || this.remotePeer != null;
 	}
 	
 	private void disconnect() throws IOException {
@@ -155,6 +155,15 @@ public class RtpTransmitter {
 		// Otherwise it would point to incorrect codec.
 		this.currentFormat = null;
 	}
+
+	private SocketAddress getTarget() throws IOException {
+		if (this.remotePeer != null) return this.remotePeer;
+		else if (this.channel != null && this.channel.isConnected()) {
+			return this.channel.getRemoteAddress();
+		} else {
+			return null;
+		}
+	}
 	
 	private void send(RtpPacket packet) throws IOException {
 		// Do not send data while DTLS handshake is ongoing. WebRTC calls only.
@@ -167,7 +176,7 @@ public class RtpTransmitter {
 		if (this.secure) {
 			ByteBuffer srtpData = packet.dtlsEncodeToSend(this.dtlsHandler);
 			if(srtpData != null) {
-				SocketAddress target = (this.remotePeer != null) ? this.remotePeer : channel.socket().getRemoteSocketAddress();
+				SocketAddress target = getTarget();
 				channel.send(srtpData, target);
 				statistics.onRtpSent(packet);
 			} else {
@@ -201,7 +210,7 @@ public class RtpTransmitter {
 		try {
 			RtpPacket oobPacket = RtpPacket.outgoing(
 					this.channel.getLocalAddress()
-					, this.channel.getRemoteAddress()
+					, getTarget()
 					, frame.isMark()
 					, AVProfile.telephoneEventsID
 					, this.sequenceNumber
@@ -259,7 +268,7 @@ public class RtpTransmitter {
 		try {
 			RtpPacket rtpPacket = RtpPacket.outgoing(
 					this.channel.getLocalAddress()
-					, this.channel.getRemoteAddress()
+					, getTarget()
 					, false
 					, currentFormat.getID()
 					, this.sequenceNumber

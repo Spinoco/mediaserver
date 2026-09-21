@@ -9,11 +9,9 @@
 package org.mobicents.media.io.stun.messages;
 
 import java.security.MessageDigest;
-import java.util.Arrays;
 
 import org.apache.logging.log4j.Logger;
 import org.mobicents.media.io.stun.messages.attributes.StunAttribute;
-import org.mobicents.media.io.stun.messages.attributes.StunAttributeFactory;
 import org.mobicents.media.io.stun.messages.attributes.general.MessageIntegrityAttribute;
 
 /**
