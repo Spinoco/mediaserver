@@ -77,7 +77,6 @@ public class RtpHandler implements PacketHandler {
 		this.jitterBuffer = new JitterBuffer(this.rtpClock, this.jitterBufferSize, scheduler, dumpDir);
 		
 		this.rtpInput = new RTPInput(scheduler, jitterBuffer);
-		this.jitterBuffer.setListener(this.rtpInput);
 		this.dtmfInput = new DtmfInput(scheduler, oobClock);
 		
 		this.rtpFormats = new RTPFormats();
@@ -103,11 +102,7 @@ public class RtpHandler implements PacketHandler {
 	public DtmfInput getDtmfInput() {
 		return dtmfInput;
 	}
-	
-	public boolean isLoopable() {
-		return loopable;
-	}
-	
+
 	public void setLoopable(boolean loopable) {
 		this.loopable = loopable;
 	}
@@ -132,7 +127,6 @@ public class RtpHandler implements PacketHandler {
 	 */
 	public void setFormatMap(final RTPFormats rtpFormats) {
 		this.rtpFormats = rtpFormats;
-		this.jitterBuffer.setFormats(rtpFormats);
 	}
 	
 	public RTPFormats getFormatMap() {

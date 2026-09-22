@@ -89,6 +89,8 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
     private AtomicLong startTime = new AtomicLong(0);
 
     private final List<DtlsListener> listeners;
+    // Destination for outbound DTLS records (ICE: socket stays unconnected).
+    private volatile SocketAddress remotePeer;
 
     // SRTP properties
     // http://tools.ietf.org/html/rfc5764#section-4.2
@@ -121,6 +123,15 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
 
     public void setChannel(DatagramChannel channel) {
         this.channel = channel;
+    }
+
+    /**
+     * Destination for outbound DTLS records. With ICE the socket is left
+     * unconnected and the peer address may change during the session, so the
+     * handler sends here rather than relying on a connected socket.
+     */
+    public void setRemotePeer(SocketAddress remotePeer) {
+        this.remotePeer = remotePeer;
     }
 
     public void addListener(DtlsListener listener) {
@@ -249,7 +260,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         try {
             logger.info("Starting DTLS Handshake: " +
                     " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
-                    " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
+                    " remote: " + getTargetString() +
                     " localFingerPrint: " + DtlsHandler.this.localFingerprint +
                     " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
             );
@@ -357,7 +368,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
             close();
             logger.error("DTLS Handshake took too long " +(System.currentTimeMillis() - this.startTime.get())+" (>" + MAX_DELAY + "ms): " +
                     " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
-                    " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
+                    " remote: " + getTargetString() +
                     " localFingerPrint: " + DtlsHandler.this.localFingerprint +
                     " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
             );
@@ -371,7 +382,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                 logger.info("DTLS Handshake packet received delta: " +(System.currentTimeMillis() - this.startTime.get())+"ms " +
                         " attempt: " + attempts +
                         " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
-                        " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
+                        " remote: " + getTargetString() +
                         " localFingerPrint: " + DtlsHandler.this.localFingerprint +
                         " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
                 );
@@ -392,11 +403,31 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         throw new SocketTimeoutException("Could not receive DTLS packet in " + waitMillis);
     }
 
+    private SocketAddress getTarget() throws IOException {
+        if (this.remotePeer != null) return this.remotePeer;
+        else if (this.channel != null && this.channel.isConnected()) {
+            return this.channel.getRemoteAddress();
+        } else {
+            return null;
+        }
+    }
+
+    private String getTargetString()  {
+        try {
+            SocketAddress target = getTarget();
+            return target == null ? "N/A" : target.toString();
+        } catch (IOException e) {
+           return "N/A";
+        }
+    }
+
     @Override
     public void send(byte[] buf, int off, int len) throws IOException {
         if (!hasTimeout()) {
-            if (this.channel != null && this.channel.isOpen() && this.channel.isConnected()) {
-                this.channel.send(ByteBuffer.wrap(buf, off, len), channel.getRemoteAddress());
+            SocketAddress target = getTarget();
+
+            if (this.channel != null && this.channel.isOpen() && target != null) {
+                this.channel.send(ByteBuffer.wrap(buf, off, len), target);
                 //Change Cipher spec has a content type of 20, thus we know that we want to delay the next packet.
                 if ((buf[off] & 0xff) == 20) {
                     try {
@@ -411,7 +442,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
         } else {
             logger.warn("Handler has timed out so send operation will be skipped: " +(System.currentTimeMillis() - this.startTime.get())+" (>" + MAX_DELAY + "ms): " +
                     " local: " + (this.channel != null ? this.channel.getLocalAddress().toString() : "null") +
-                    " remote: " + (this.channel != null ? this.channel.getRemoteAddress().toString() : "null") +
+                    " remote: " + getTargetString() +
                     " localFingerPrint: " + DtlsHandler.this.localFingerprint +
                     " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
             );
@@ -444,7 +475,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                 DtlsHandler.logger.info("Handshake completed in : " + (System.currentTimeMillis() - DtlsHandler.this.startTime.get()) + " ms (" +
                         " qSz: " + sz +
                         " local: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getLocalAddress().toString() : "null") +
-                        " remote: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getRemoteAddress().toString() : "null") +
+                        " remote: " + getTargetString() +
                         " localFingerPrint: " + DtlsHandler.this.localFingerprint +
                         " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint +
                         ")"
@@ -457,7 +488,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                 "Handshake got consensus on: " +
                     "startedHandshakeAT: " + startTime.get() +
                     ", local: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getLocalAddress().toString() : "null") +
-                    ", remote: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getRemoteAddress().toString() : "null") +
+                    ", remote: " + getTargetString() +
                     ", localFingerPrint: " + DtlsHandler.this.localFingerprint +
                     ", remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint +
                     ", serverRandom: " +  StringUtil.toHexString(server.getServerRandom()) +
@@ -488,7 +519,7 @@ public class DtlsHandler implements PacketHandler, DatagramTransport {
                     logger.error("DTLS handshake failed. Reason:" + e.getMessage() + ": " +
                                     " qSz: " + sz +
                                     " local: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getLocalAddress().toString() : "null") +
-                                    " remote: " + (DtlsHandler.this.channel != null ? DtlsHandler.this.channel.getRemoteAddress().toString() : "null") +
+                                    " remote: " + getTargetString() +
                                     " localFingerPrint: " + DtlsHandler.this.localFingerprint +
                                     " remoteFingerPrint: " + DtlsHandler.this.remoteFingerprint
                             , e);

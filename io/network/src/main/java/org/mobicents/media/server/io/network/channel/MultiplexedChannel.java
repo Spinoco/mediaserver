@@ -31,6 +31,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
+
 /**
  * Data channel that supports multiplexing.
  * 
@@ -52,8 +54,16 @@ public class MultiplexedChannel implements Channel {
 	private static final int BUFFER_SIZE = 8192;
 	private final ByteBuffer receiveBuffer;
 	
-	// Data that is pending for writing
-	private final Queue<byte[]> pendingData;
+	// Data that is pending for writing, together with the destination it must be sent to
+	private final Queue<OutboundData> pendingData;
+
+	/*
+	 * When true, the socket is connected to the first peer it receives from.
+	 * This is the correct behaviour for plain (non-ICE) RTP, where it also lets
+	 * the server learn a NAT'd source. ICE-enabled channels set this to false
+	 * and connect on nomination instead (see RtpChannel#onSelectedCandidates).
+	 */
+	protected boolean bindToFirstSource = true;
 
 	public MultiplexedChannel() {
 		this.handlers = new PacketHandlerPipeline();
@@ -92,7 +102,8 @@ public class MultiplexedChannel implements Channel {
 		}
 		return 0;
 	}
-	
+
+	//TESTS only
 	public String getRemoteHost() {
 		if(this.dataChannel != null && this.dataChannel.isConnected()) {
 			try {
@@ -103,7 +114,8 @@ public class MultiplexedChannel implements Channel {
 		}
 		return "";
 	}
-	
+
+	//TESTS only
 	public int getRemotePort() {
 		if(this.dataChannel != null && this.dataChannel.isConnected()) {
 			try {
@@ -125,9 +137,9 @@ public class MultiplexedChannel implements Channel {
 		this.dataChannel = channel;
 	}
 
-    protected void queueData(final byte[] data) {
+    protected void queueData(final byte[] data, @Nonnull final SocketAddress destination) {
         if (data != null && data.length > 0) {
-            this.pendingData.offer(data);
+            this.pendingData.offer(new OutboundData(data, destination));
         }
     }
 	
@@ -161,9 +173,10 @@ public class MultiplexedChannel implements Channel {
 
 		// Read data from channel
 		int dataLength = 0;
+		SocketAddress remotePeer = null;
 		try {
-			SocketAddress remotePeer = dataChannel.receive(this.receiveBuffer);
-			if (!isConnected() && remotePeer != null) {
+			remotePeer = dataChannel.receive(this.receiveBuffer);
+			if (this.bindToFirstSource && !isConnected() && remotePeer != null) {
 				connect(remotePeer);
 			}
 			dataLength = this.receiveBuffer.position();
@@ -175,27 +188,27 @@ public class MultiplexedChannel implements Channel {
 		if (dataLength == -1) {
 			close();
 			return;
-		} else if (dataLength > 0) {
+		} else if (dataLength > 0 && remotePeer != null) { // remotePeer has to be @nonnull here, as that is only way we can get data.
 			// Copy data from buffer so we don't mess with original
 			byte[] dataCopy = new byte[dataLength];
 			this.receiveBuffer.rewind();
 			this.receiveBuffer.get(dataCopy, 0, dataLength);
-			
+
 			// Delegate work to the proper handler
 			PacketHandler handler = this.handlers.getHandler(dataCopy);
 			if (handler != null) {
 				try {
 					// Let the handler process the incoming packet.
 					// A response MAY be provided as result.
-					byte[] response = handler.handle(dataCopy, dataLength, 0, (InetSocketAddress) dataChannel.getLocalAddress(), (InetSocketAddress) dataChannel.getRemoteAddress());
-					
+					byte[] response = handler.handle(dataCopy, dataLength, 0, (InetSocketAddress) dataChannel.getLocalAddress(), (InetSocketAddress) remotePeer);
+
 					/*
-					 * If handler intends to send a response to the remote peer,
-					 * queue the data to send it on writing cycle. Only allowed if
-					 * Selection Key is writable!
+					 * If handler intends to send a response, queue it addressed to
+					 * the peer this packet came from. During ICE that is the
+					 * candidate being probed; once connected it is the nominated peer.
 					 */
 					if (response != null && response.length > 0) {
-						queueData(response);
+						queueData(response, remotePeer);
 					}
 				} catch (PacketHandlerException e) {
 					logger.error("Could not handle incoming packet: " + e.getMessage());
@@ -210,10 +223,11 @@ public class MultiplexedChannel implements Channel {
 
     @Override
     public void send() throws IOException {
-        byte[] data = this.pendingData.poll();
-        if (data != null) {
-            ByteBuffer buffer = ByteBuffer.wrap(data);
-            this.dataChannel.send(buffer, this.dataChannel.getRemoteAddress());
+        OutboundData outbound = this.pendingData.poll();
+        if (outbound != null) {
+            ByteBuffer buffer = ByteBuffer.wrap(outbound.data);
+            SocketAddress destination = outbound.destination;
+            this.dataChannel.send(buffer, destination);
 
             // Keep sending queued data, recursive style
             send();
@@ -262,6 +276,21 @@ public class MultiplexedChannel implements Channel {
 			this.dataChannel = DatagramChannel.open();
 		} else {
 			throw new IOException("Channel is already open.");
+		}
+	}
+
+	/**
+	 * An outbound datagram paired with the destination it must be sent to.
+	 * The destination is only used while the channel is unconnected (ICE phase);
+	 * once connected, the socket's remote address is used instead.
+	 */
+	private static final class OutboundData {
+		private final byte[] data;
+		@Nonnull private final SocketAddress destination;
+
+		private OutboundData(final byte[] data, @Nonnull final SocketAddress destination) {
+			this.data = data;
+			this.destination = destination;
 		}
 	}
 

@@ -23,6 +23,7 @@ package org.mobicents.media.server.impl.rtcp;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.net.SocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +51,8 @@ public class RtcpHandler implements PacketHandler {
 
     /* Core elements */
     private DatagramChannel channel;
+    // Destination for outbound (S)RTCP (ICE: socket stays unconnected).
+    private volatile SocketAddress remotePeer;
     private ByteBuffer byteBuffer;
     private int pipelinePriority;
     
@@ -125,6 +128,10 @@ public class RtcpHandler implements PacketHandler {
 
     public void setChannel(DatagramChannel channel) {
         this.channel = channel;
+    }
+
+    public void setRemotePeer(SocketAddress remotePeer) {
+        this.remotePeer = remotePeer;
     }
 
     /**
@@ -384,6 +391,15 @@ public class RtcpHandler implements PacketHandler {
         return null;
     }
 
+    private SocketAddress getTarget() throws IOException {
+        if (this.remotePeer != null) return this.remotePeer;
+        else if (this.channel != null && this.channel.isConnected()) {
+            return this.channel.getRemoteAddress();
+        } else {
+            return null;
+        }
+    }
+
     private void sendRtcpPacket(RtcpPacket packet) throws IOException {
         // Do NOT attempt to send packet if have not joined RTP session
         if(this.joined.get()) {
@@ -396,7 +412,9 @@ public class RtcpHandler implements PacketHandler {
         }
 
         RtcpPacketType type = packet.hasBye() ? RtcpPacketType.RTCP_BYE : RtcpPacketType.RTCP_REPORT;
-        if (this.channel != null && channel.isOpen() && channel.isConnected()) {
+        SocketAddress rtcpTarget = getTarget();
+
+        if (this.channel != null && channel.isOpen() && rtcpTarget != null) {
             // decode packet
             byte[] data = new byte[RtpPacket.RTP_PACKET_MAX_SIZE];
             packet.encode(data, 0);
@@ -404,7 +422,7 @@ public class RtcpHandler implements PacketHandler {
 
             // If channel is secure, convert RTCP packet to SRTCP. WebRTC calls only.
             if (this.secure) {
-                data = this.dtlsHandler.encodeRTCP(data, 0, dataLength, channel.getLocalAddress(), channel.getRemoteAddress());
+                data = this.dtlsHandler.encodeRTCP(data, 0, dataLength, channel.getLocalAddress(), rtcpTarget);
                 dataLength = data.length;
             }
 
@@ -420,11 +438,11 @@ public class RtcpHandler implements PacketHandler {
                 logger.debug("\nSENDING " + packet.toString());
             }
 
-            // Make double sure channel is still open and connected before sending
-            if (channel.isOpen() && channel.isConnected()) {
+            // Make double sure channel is still open and the peer is known before sending
+            if (channel.isOpen()) {
                 // send packet
                 // XXX Should register on RTP statistics IF sending fails!
-                this.channel.send(this.byteBuffer, this.channel.getRemoteAddress());
+                this.channel.send(this.byteBuffer, rtcpTarget);
             } else {
                 // cancel packet transmission
                 if (logger.isDebugEnabled()) {

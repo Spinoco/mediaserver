@@ -64,20 +64,4 @@ public class CandidatePair {
 		}
 	}
 
-	public int getRemotePort() {
-		try {
-			return ((InetSocketAddress) this.channel.getRemoteAddress()).getPort();
-		} catch (IOException e) {
-			return 0;
-		}
-	}
-
-	public String getRemoteAddress() {
-		try {
-			return ((InetSocketAddress) this.channel.getRemoteAddress()).getHostName();
-		} catch (IOException e) {
-			return "";
-		}
-	}
-
 }

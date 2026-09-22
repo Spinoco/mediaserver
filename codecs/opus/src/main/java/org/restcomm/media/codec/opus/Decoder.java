@@ -52,7 +52,7 @@ public class Decoder implements Codec {
 
     private final int OPUS_SAMPLE_RATE = 8000;
     private final int MAX_FRAME_SIZE = 160;
-    private final int SAMPLE_LENGTH = 1000000 / OPUS_SAMPLE_RATE; // 1s / 8Khz ~ 125000ns / sample
+    private final int SAMPLE_LENGTH = 1000 / OPUS_SAMPLE_RATE; // 1s / 8Khz ~ 125000ns / sample
 
 
     private short[] decodedBuff = new short[MAX_FRAME_SIZE];
